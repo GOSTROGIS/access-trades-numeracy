@@ -50,6 +50,16 @@ main{flex:1;padding-block:40px 56px}
 .go{margin-top:auto;display:inline-flex;align-items:center;gap:8px;align-self:flex-start;background:var(--red);color:#fff;font-family:var(--font-display);font-weight:600;font-size:16px;padding:10px 18px;border-radius:var(--radius)}
 .app:hover .go{background:var(--red-deep)}
 .go svg{width:18px;height:18px}
+.books{margin-top:48px}
+.books h2{margin:0 0 4px;font-family:var(--font-display);font-weight:700;font-size:24px}
+.books-lede{margin:0 0 16px;color:var(--muted);font-size:15px}
+.book-list{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:12px}
+.book{display:grid;gap:2px;background:var(--surface);border:1px solid var(--line);border-left:5px solid var(--gold);border-radius:var(--radius);padding:14px 18px;text-decoration:none;color:inherit}
+.book:hover{border-color:var(--line-strong);border-left-color:var(--gold)}
+.book:focus-visible{outline:3px solid var(--focus);outline-offset:3px}
+.book-t{font-family:var(--font-display);font-weight:600;font-size:17px;color:var(--red-text)}
+.book:hover .book-t{text-decoration:underline}
+.book-s{font-size:14px;color:var(--muted)}
 footer{border-top:1px solid var(--line);padding-block:20px;color:var(--muted);font-size:14px}
 @media (max-width:560px){.wrap{padding-inline:16px}.site-head{padding-block:22px 18px}.lockup{width:140px}.app{padding:22px}}
 </style>
@@ -301,6 +311,24 @@ footer{border-top:1px solid var(--line);padding-block:20px;color:var(--muted);fo
       <span class="go">Open the Canvas <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span>
     </a>
   </div>
+  <section class="wrap books" aria-labelledby="books-h">
+    <h2 id="books-h">Code books</h2>
+    <p class="books-lede">Free official copies, straight from the publishers. Opens in a new tab.</p>
+    <ul class="book-list">
+      <li>
+        <a class="book" href="https://www2.gov.bc.ca/gov/content/industry/construction-industry/building-codes-standards/bc-codes/2024-bc-codes" target="_blank" rel="noopener">
+          <span class="book-t">BC Building Code 2024</span>
+          <span class="book-s">Province of British Columbia · PDF plus revisions and bulletins</span>
+        </a>
+      </li>
+      <li>
+        <a class="book" href="https://nrc-publications.canada.ca/eng/view/object?id=c97ac796-01fc-4383-9c68-b271db2802cf" target="_blank" rel="noopener">
+          <span class="book-t">National Plumbing Code of Canada 2025</span>
+          <span class="book-s">National Research Council Canada · NRC Publications Archive</span>
+        </a>
+      </li>
+    </ul>
+  </section>
 </main>
 <footer>
   <div class="wrap">ACCESS Trades</div>
