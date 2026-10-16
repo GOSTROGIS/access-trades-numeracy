@@ -800,6 +800,28 @@ main.wrap { padding-block: 28px 56px; display: grid; gap: 48px; }
   .calc-hp15c .ti-k { min-height: 34px; }
 }
 .ti-pop.ti-standalone.calc-hp15c { width: 600px; }
+/* the floating Calculator button in ACCESS gold with ACCESS ink (about 11:1), the same in light and dark */
+.ti-fab { background: rgb(255, 188, 0); color: rgb(26, 21, 18); border-color: rgb(26, 21, 18); }
+.ti-fab:hover { background: rgb(255, 205, 64); }
+/* ---------- calculator model selector in the hub header ---------- */
+.app-head .head-inner { position: relative; }
+.calc-pick { margin-left: auto; align-self: flex-start; display: inline-flex; align-items: center; gap: 8px; padding: 6px 8px 6px 10px;
+  background: var(--surface); border: 1.5px solid var(--line-strong); border-radius: var(--radius); }
+.calc-pick-l { display: inline-flex; align-items: center; gap: 6px; font: 600 14px/1 var(--font-body); color: var(--ink); cursor: pointer; white-space: nowrap; }
+.calc-pick-l svg { width: 20px; height: 20px; flex: none; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.calc-pick-sel { font: 600 15px/1.2 var(--font-body); min-height: 40px; padding: 6px 8px; border-radius: var(--radius); cursor: pointer;
+  color: var(--ink); background: var(--surface-2); border: 1.5px solid var(--line-strong); }
+.calc-pick-sel:hover { border-color: var(--slate); }
+.calc-pick-sel:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
+.calc-pick[data-calc-model="el531xt"] { border-left: 4px solid rgb(240, 150, 40); }
+.calc-pick[data-calc-model="hp15c"] { border-left: 4px solid rgb(196, 140, 70); }
+.calc-pick[data-calc-model="ti30xa"] { border-left: 4px solid rgb(118, 186, 40); }
+@media (max-width: 640px) {
+  .calc-pick { position: absolute; top: 0; right: 0; margin: 0; gap: 4px; padding: 4px 4px 4px 6px; }
+  .calc-pick-t { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
+  .calc-pick-sel { font-size: 14px; max-width: 140px; min-height: 36px; padding: 4px 4px; }
+}
+@media print { .calc-pick { display: none !important; } }
 </style>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -1040,6 +1062,11 @@ main.wrap { padding-block: 28px 56px; display: grid; gap: 48px; }
       <p class="eyebrow">Essential Skills for Aboriginal Futures · Skills for Success: Numeracy</p>
       <h1>ACCESS Trades Numeracy Hub</h1>
       <p class="lede">Shapes, order of operations, volume, layout, angles, trig, fabrication, pipe math, the plumbing code book, unit conversions, mechanical aptitude, coordinate systems and measuring tools in one place. Every worked example shows the TI-30Xa keys. Open the calculator any time with the button at the bottom right.</p>
+    </div>
+    <div class="calc-pick">
+      <label class="calc-pick-l" for="calc-model-sel"><svg viewBox="0 0 20 20" aria-hidden="true"><rect x="4" y="2" width="12" height="16" rx="2"/><path d="M7 5h6M7 9h1M10 9h1M13 9h0M7 12h1M10 12h1M7 15h1M10 15h1M13 12v3"/></svg><span class="calc-pick-t">Calculator</span></label>
+      <select id="calc-model-sel" class="calc-pick-sel" aria-describedby="calc-pick-d"><option value="ti30xa">TI-30Xa</option><option value="el531xt">Sharp EL-531XT</option><option value="hp15c">HP-15C</option></select>
+      <span class="sr-only" id="calc-pick-d">Every key sequence, the calculator and the exam answer keys follow this choice.</span>
     </div>
   </div>
 </header>
@@ -20095,6 +20122,32 @@ if (typeof module !== 'undefined' && module.exports) module.exports = CalcKit;
   K.onChange(apply);
   G.CalcModelShell = { apply: apply };
   if (doc.readyState === 'loading') doc.addEventListener('DOMContentLoaded', apply); else apply();
+})(window);
+/* Header calculator selector: "Calculator: TI-30Xa / Sharp EL-531XT / HP-15C" at the top right of the hub header, on
+   every tab. It is the same switch as the menu inside the calculator: both call CalcKit.setModel, and both follow
+   every model change (the saved 'access-calc-model' choice included), so the tabs, the Exam builder and its exports
+   are drawn again exactly as from the calculator's own menu. */
+(function (G) {
+  'use strict';
+  var K = G.CalcKit, doc = G.document;
+  function sel() { return doc.getElementById('calc-model-sel'); }
+  function paint() {
+    var s = sel();
+    if (!s) return;
+    if (s.value !== K.getModel()) s.value = K.getModel();
+    var box = s.closest('.calc-pick');
+    if (box) box.setAttribute('data-calc-model', K.getModel());
+  }
+  function start() {
+    var s = sel();
+    if (!s || s.__calcPick) return;
+    s.__calcPick = true;
+    if (!s.options.length) K.models().forEach(function (m) { var o = doc.createElement('option'); o.value = m.id; o.textContent = m.name; s.appendChild(o); });
+    s.addEventListener('change', function () { K.setModel(s.value); });
+    paint();
+  }
+  K.onChange(paint);
+  if (doc.readyState === 'loading') doc.addEventListener('DOMContentLoaded', start); else start();
 })(window);
 
 /* Exam banks: the list of everything the Exam builder can put in an exam, one registration per bank.
