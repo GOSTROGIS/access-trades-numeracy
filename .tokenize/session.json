@@ -1,0 +1,16 @@
+{
+  "sessionId": "5f677e4b-ee1b-5d37-90f5-16af2f24aca2",
+  "startedAt": "2026-10-18T23:36:56.545Z",
+  "updatedAt": "2026-10-18T23:36:56.545Z",
+  "events": [],
+  "unresolvedByFile": {},
+  "fabrications": [],
+  "metrics": {
+    "violations": 0,
+    "blocks": 0,
+    "rewrites": 0,
+    "escapes": 0,
+    "denies": 0,
+    "resolves": 0
+  }
+}

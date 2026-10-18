@@ -1,0 +1,231 @@
+/* ACCESS Trades Numeracy books: print styles (US Letter, mirrored margins for binding) */
+:root{
+  --red:#D2181F; --deep:#C60016; --deep8:#940010; --deep4:#DD6673; --gold:#FFBC00; --gold1:#FFF8E6; --gold2:#FFEBB2; --gold4:#FFD766;
+  --red1:#FAE8E9; --red2:#F2BABC; --ink:#1A1A1A; --slate:#4A4E54; --mist:#F4F5F6; --line:#D9DCDF; --muted:#6B7076;
+}
+@page{ size: 8.5in 11in; margin: 0.78in 0.7in 0.85in 0.7in;
+  @bottom-center{ content: none } }
+@page :left{ margin-left:0.62in; margin-right:0.9in;
+  @top-left{ content: string(chapterhead); font: 600 8pt "Archivo", "IBM Plex Sans", sans-serif; color: var(--muted); letter-spacing:.04em; text-transform: uppercase; vertical-align: bottom; padding-bottom: 6pt }
+  @bottom-left{ content: counter(page); font: 700 9pt "Archivo", sans-serif; color: var(--deep); vertical-align: top; padding-top: 10pt } }
+@page :right{ margin-left:0.9in; margin-right:0.62in;
+  @top-right{ content: string(sechead); font: 600 8pt "Archivo", "IBM Plex Sans", sans-serif; color: var(--muted); letter-spacing:.04em; text-transform: uppercase; vertical-align: bottom; padding-bottom: 6pt }
+  @bottom-right{ content: counter(page); font: 700 9pt "Archivo", sans-serif; color: var(--deep); vertical-align: top; padding-top: 10pt } }
+@page front{ @top-left{content:none} @top-right{content:none} @bottom-left{content:none} @bottom-right{content:none} }
+@page chapter:first{ @top-left{content:none} @top-right{content:none} }
+@page opener{ @top-left{content:none} @top-right{content:none} }
+@page blank{ @top-left{content:none} @top-right{content:none} }
+.pagedjs_blank_page .pagedjs_margin-content{ display:none }
+
+html{ font-family:"IBM Plex Sans", "DejaVu Sans", sans-serif; font-size:10.4pt; line-height:1.5; color:var(--ink);
+  -webkit-print-color-adjust:exact; print-color-adjust:exact; font-variant-numeric: tabular-nums; hyphens:manual }
+body{ margin:0 }
+p{ margin:0 0 7pt; orphans:3; widows:3 }
+b,strong{ font-weight:600 }
+h1,h2,h3,h4{ font-family:"Archivo","IBM Plex Sans",sans-serif; color:var(--ink); break-after:avoid; line-height:1.15 }
+h2.sec{ position:relative; font-size:16pt; font-weight:700; color:var(--deep); margin:16pt 0 6pt; padding-bottom:3pt; border-bottom:2pt solid var(--gold); }
+h2.sec .n{ color:var(--red); margin-right:6pt }
+h3.sub{ font-size:12pt; font-weight:700; margin:12pt 0 4pt; color:var(--ink) }
+h4{ font-size:10.5pt; font-weight:700; margin:8pt 0 3pt }
+ul,ol{ margin:2pt 0 8pt; padding-left:16pt } li{ margin:1.5pt 0 }
+.small{ font-size:8.8pt; color:var(--slate) }
+.nowrap{ white-space:nowrap }
+.m{ font-family:"IBM Plex Sans","DejaVu Sans",sans-serif; white-space:nowrap }
+.mono{ font-family:"IBM Plex Mono","DejaVu Sans Mono",monospace }
+.kw{ font-weight:600; color:var(--deep8); background:linear-gradient(transparent 62%, var(--gold2) 62%) }
+.ans-line{ display:inline-block; min-width:1.4in; border-bottom:0.7pt solid var(--slate); height:12pt; vertical-align:baseline }
+
+/* fractions */
+.fr{ display:inline-flex; flex-direction:column; vertical-align:middle; text-align:center; line-height:1; margin:0 1pt; font-size:.86em; font-variant-numeric:lining-nums tabular-nums }
+.fr>span:first-child{ border-bottom:0.8pt solid currentColor; padding:0 1.5pt 1pt }
+.fr>span:last-child{ padding:1pt 1.5pt 0 }
+.mx{ white-space:nowrap }
+
+/* chapter opener */
+.chapter{ break-before:right; page: chapter }
+.ch-open{ page: opener; break-after: page; position:relative; height:9.2in }
+.ch-open .band{ border-top:10pt solid var(--deep); padding-top:18pt }
+.ch-open .num{ font:800 64pt/1 "Archivo",sans-serif; color:var(--red) }
+.ch-open .lab{ font:700 10pt "Archivo",sans-serif; letter-spacing:.14em; text-transform:uppercase; color:var(--slate) }
+.ch-open h1{ font-size:30pt; font-weight:800; margin:6pt 0 10pt; color:var(--ink) }
+.ch-open .rule{ width:1.2in; height:5pt; background:var(--gold); margin:4pt 0 16pt }
+.ch-open .intro{ font-size:11.6pt; line-height:1.55; max-width:6in }
+.ch-open .cols{ display:grid; grid-template-columns: 1.25fr 1fr; gap:18pt; margin-top:18pt }
+.ch-open .card{ border:1pt solid var(--line); border-top:4pt solid var(--gold); padding:9pt 12pt 8pt; background:#fff }
+.ch-open .card h4{ margin:0 0 5pt; color:var(--deep) }
+.ch-open .card ul{ margin:0; padding-left:14pt }
+.ch-open .art{ margin-top:18pt; text-align:center }
+.ch-open .art svg{ max-width:100%; max-height:3.1in }
+.sechd{ string-set: sechead content(text); display:block; position:absolute; width:0; height:0; overflow:hidden; font-size:1pt; line-height:0; color:transparent; margin:0 }
+.chline{ string-set: chapterhead content(text); display:block; position:absolute; width:0; height:0; overflow:hidden; font-size:1pt; line-height:0; color:transparent; margin:0 }
+
+/* boxes */
+.box{ break-inside:avoid; margin:9pt 0 10pt; border-radius:3pt; padding:8pt 11pt 7pt; position:relative }
+.box>.hd{ font:700 9pt "Archivo",sans-serif; letter-spacing:.06em; text-transform:uppercase; margin:0 0 4pt }
+.box p:last-child{ margin-bottom:0 }
+.tip{ background:var(--gold1); border-left:4pt solid var(--gold) } .tip>.hd{ color:var(--ink) }
+.watch{ background:var(--red1); border-left:4pt solid var(--red) } .watch>.hd{ color:var(--deep8) }
+.shop{ background:var(--mist); border-left:4pt solid var(--slate) } .shop>.hd{ color:var(--slate) }
+.keyidea{ border:1.2pt solid var(--deep); background:#fff } .keyidea>.hd{ color:var(--deep) }
+.formula{ border:1.2pt solid var(--ink); background:#fff; text-align:center } .formula>.hd{ text-align:left; color:var(--ink) }
+.formula .f{ font:600 13pt "IBM Plex Sans",sans-serif; margin:3pt 0 }
+.formula .f + .k{ font-size:9pt; color:var(--slate) }
+
+/* examples */
+.ex{ border:1pt solid var(--line); border-left:4pt solid var(--deep); border-radius:3pt; margin:10pt 0 11pt; padding:0; break-inside:avoid }
+.ex.long{ break-inside:auto }
+.ex>.hd{ background:var(--red1); padding:5pt 11pt; font:700 10pt "Archivo",sans-serif; color:var(--deep8) }
+.ex>.hd .n{ color:var(--red); margin-right:6pt }
+.ex .bd{ padding:7pt 11pt 8pt }
+.ex .q{ margin-bottom:6pt }
+.ex .lbl{ font:700 8.5pt "Archivo",sans-serif; letter-spacing:.08em; text-transform:uppercase; color:var(--slate); margin:4pt 0 2pt }
+.ex ol.steps{ margin:2pt 0 4pt; padding-left:15pt }
+.ex ol.steps li{ margin:2pt 0 }
+.ex .a{ margin-top:6pt; padding-top:5pt; border-top:0.8pt dashed var(--line); font-weight:600 }
+.ex .a::before{ content:"Answer  "; font:700 8.5pt "Archivo",sans-serif; letter-spacing:.08em; color:var(--red) }
+.ex .fig{ float:right; margin:0 0 4pt 10pt; max-width:46% }
+.ex .fig svg{ width:100%; height:auto }
+.clear{ clear:both }
+
+/* calculator box */
+.calc{ border:1pt solid var(--line); border-radius:3pt; margin:8pt 0 10pt; break-inside:avoid; background:#fff }
+.calc>.hd{ display:flex; align-items:center; gap:6pt; padding:4pt 10pt; background:var(--ink); color:#fff; font:700 8.5pt "Archivo",sans-serif; letter-spacing:.08em; text-transform:uppercase; border-radius:2pt 2pt 0 0 }
+.calc>.hd .t{ font-weight:600; text-transform:none; letter-spacing:0; color:var(--gold4); margin-left:4pt }
+.calc .cols{ display:grid; grid-template-columns:1fr 1fr }
+.calc .col{ padding:6pt 10pt 7pt }
+.calc .col + .col{ border-left:1pt solid var(--line) }
+.calc .mdl{ font:700 9pt "Archivo",sans-serif; color:var(--deep); margin-bottom:4pt }
+.calc .keys{ line-height:2.05 }
+.calc .disp{ margin-top:5pt; display:flex; align-items:center; gap:6pt; font-size:8.5pt; color:var(--slate) }
+.lcd{ display:inline-block; min-width:1.15in; text-align:right; font:500 10.5pt "IBM Plex Mono","DejaVu Sans Mono",monospace; background:#E9EDE3; border:0.8pt solid #9AA394; border-radius:2pt; padding:1pt 6pt; color:var(--ink) }
+.lcd .e{ font-size:7.5pt; vertical-align:super; margin-left:3pt }
+.calc .say{ padding:5pt 10pt 6pt; border-top:1pt solid var(--line); font-size:9.6pt }
+.calc .say b{ color:var(--deep8) }
+.calc .rowlab{ font-size:8.5pt; color:var(--slate); margin:3pt 0 1pt }
+.kc{ display:inline-block; min-width:14pt; padding:0.5pt 4.5pt; border:0.9pt solid #8B9096; border-bottom-width:2pt; border-radius:3pt; background:#fff; font:600 8.8pt "IBM Plex Sans","DejaVu Sans",sans-serif; text-align:center; line-height:1.45; color:var(--ink); white-space:nowrap }
+.kc-num{ background:var(--mist) }
+.kc-op{ background:#fff; border-color:var(--slate) }
+.kc-fn{ background:#fff }
+.kc-shift{ background:var(--gold); border-color:#BF8D00; color:var(--ink) }
+.kc-alpha{ background:#E7F2E4; border-color:#5B7F52 }
+.kc-gap{ display:inline-block; width:3pt }
+.kc-note{ display:block; font-size:8.5pt; color:var(--slate); font-style:italic }
+
+/* figures and tables */
+figure{ margin:8pt 0 10pt; text-align:center; break-inside:avoid }
+figure svg{ max-width:100%; height:auto }
+figcaption{ font-size:8.8pt; color:var(--slate); margin-top:3pt; text-align:center }
+figcaption .n{ font-weight:700; color:var(--deep); margin-right:4pt }
+.figrow{ display:flex; justify-content:space-around; align-items:flex-end; gap:10pt }
+.figrow > figure{ flex:1 }
+table.t{ border-collapse:collapse; margin:6pt auto 10pt; font-size:9.4pt; break-inside:avoid }
+table.t th{ background:var(--ink); color:#fff; font:700 8.6pt "Archivo",sans-serif; text-align:left; padding:3.5pt 8pt; letter-spacing:.03em }
+table.t td{ padding:3pt 8pt; border-bottom:0.7pt solid var(--line); vertical-align:top }
+table.t tr:nth-child(even) td{ background:#FAFAFA }
+table.t td.r, table.t th.r{ text-align:right }
+table.t td.c, table.t th.c{ text-align:center }
+.tcap{ text-align:center; font-size:8.8pt; color:var(--slate); margin-top:-6pt; margin-bottom:10pt }
+.tcap .n{ font-weight:700; color:var(--deep); margin-right:4pt }
+
+/* steps / procedure list */
+ol.how{ counter-reset:how; list-style:none; padding-left:0 }
+ol.how>li{ counter-increment:how; position:relative; padding-left:22pt; margin:4pt 0 }
+ol.how>li::before{ content:counter(how); position:absolute; left:0; top:0.5pt; width:15pt; height:15pt; border-radius:50%; background:var(--deep); color:#fff; font:700 8.5pt/15pt "Archivo",sans-serif; text-align:center }
+
+/* try it (quick practice) */
+.try{ border:1pt solid var(--gold); background:#fff; border-radius:3pt; margin:10pt 0; break-inside:avoid }
+.try>.hd{ background:var(--gold); padding:4pt 10pt; font:700 9pt "Archivo",sans-serif; letter-spacing:.08em; text-transform:uppercase }
+.try ol{ margin:6pt 0 7pt; padding-left:26pt; columns:2; column-gap:18pt }
+.try ol.one{ columns:1 }
+.try li{ break-inside:avoid; margin:2pt 0 6pt }
+.try .note{ padding:0 10pt 6pt; font-size:8.8pt; color:var(--slate) }
+
+/* worksheets: Shape Canvas style */
+.ws{ break-before:page; break-after:avoid }
+.ws-head{ position:relative; display:flex; align-items:stretch; border:1.2pt solid var(--ink); border-radius:3pt; overflow:hidden; margin-bottom:8pt; break-after:avoid }
+.ws-head .tag{ background:var(--deep); color:#fff; font:800 9pt "Archivo",sans-serif; letter-spacing:.1em; text-transform:uppercase; padding:6pt 10pt; display:flex; align-items:center }
+.ws-head .ttl{ flex:1; padding:5pt 10pt; font:700 13pt "Archivo",sans-serif }
+.ws-head .ttl small{ display:block; font:500 8.5pt "IBM Plex Sans",sans-serif; color:var(--slate); margin-top:1pt }
+.ws-head .who{ border-left:1pt solid var(--line); padding:5pt 10pt; font-size:8.5pt; color:var(--slate); min-width:1.7in }
+.ws-head .who div{ border-bottom:0.7pt solid var(--slate); height:12pt; margin-bottom:3pt }
+.ws-intro{ font-size:9.6pt; margin-bottom:6pt }
+.canvas{ border:1pt solid #B8BDC2; border-radius:3pt; background-color:#FCFCFD; background-image: radial-gradient(#C9CDD2 0.8pt, transparent 0.9pt); background-size: 12pt 12pt; padding:6pt 8pt; margin:6pt 0 8pt; break-inside:avoid; position:relative }
+.canvas .cv-bar{ display:flex; gap:6pt; align-items:center; font:700 7.6pt "Archivo",sans-serif; letter-spacing:.08em; text-transform:uppercase; color:var(--slate); margin-bottom:3pt }
+.canvas .cv-bar .dot{ width:7pt; height:7pt; border-radius:50%; background:var(--gold); display:inline-block }
+.canvas .cv-bar .mode{ margin-left:auto; color:var(--deep); }
+.canvas svg{ max-width:100%; height:auto; display:block; margin:0 auto }
+.prob{ break-inside:avoid; margin:6pt 0 10pt; display:grid; grid-template-columns:20pt 1fr; column-gap:4pt }
+.prob>.pn{ font:800 11pt "Archivo",sans-serif; color:var(--red); text-align:right; padding-top:0.5pt }
+.prob>.pbody{ min-width:0 }
+.prob .pq{ margin-bottom:3pt }
+.workbox{ border:1pt solid #B8BDC2; border-radius:3pt; background: repeating-linear-gradient(to bottom, #fff 0, #fff 17pt, #DDE1E5 17pt, #DDE1E5 17.7pt); position:relative; margin-top:3pt }
+.workbox::before{ content:"Working"; position:absolute; top:2pt; left:6pt; font:700 6.8pt "Archivo",sans-serif; letter-spacing:.1em; text-transform:uppercase; color:var(--muted) }
+.workbox .ansrow{ position:absolute; right:6pt; bottom:4pt; font-size:8.5pt; color:var(--slate); background:#fff; padding:0 3pt }
+.workbox .ansrow span{ display:inline-block; width:1.35in; border-bottom:0.8pt solid var(--ink); margin-left:4pt }
+.callout{ font-size:8.6pt }
+.ws-grid{ display:grid; grid-template-columns:1fr 1fr; column-gap:16pt }
+.ws-grid .prob{ grid-template-columns:18pt 1fr }
+
+/* contents */
+.toc{ page: front }
+.toc h1{ font-size:24pt; font-weight:800; margin:0 0 14pt; color:var(--ink); border-bottom:5pt solid var(--gold); padding-bottom:6pt }
+.toc ol{ list-style:none; padding:0; margin:0 }
+.toc li.c{ margin:8pt 0 2pt; font:700 11pt "Archivo",sans-serif }
+.toc li.s{ margin:1pt 0 1pt 22pt; font-size:9.4pt }
+.toc a{ color:inherit; text-decoration:none; display:flex; }
+.toc a .tx{ flex:0 1 auto }
+.toc a .dots{ flex:1 1 auto; border-bottom:0.8pt dotted var(--muted); margin:0 4pt 3pt }
+.toc a::after{ content: target-counter(attr(href), page); font-weight:600 }
+.toc li.c .cn{ color:var(--red); display:inline-block; width:22pt }
+
+/* front matter */
+.front{ page: front }
+.cover{ page: front; height:9.3in; display:flex; flex-direction:column; break-after:page }
+.cover .top{ border-top:14pt solid var(--deep); padding-top:28pt }
+.cover .kicker{ font:700 11pt "Archivo",sans-serif; letter-spacing:.16em; text-transform:uppercase; color:var(--slate) }
+.cover h1{ font:800 44pt/1.02 "Archivo",sans-serif; margin:10pt 0 8pt; color:var(--ink) }
+.cover h1 span{ color:var(--red) }
+.cover .bar{ width:1.6in; height:7pt; background:var(--gold); margin:10pt 0 16pt }
+.cover .sub{ font-size:14pt; line-height:1.4; color:var(--slate); max-width:5.6in }
+.cover .art{ flex:1; display:flex; align-items:center; justify-content:center }
+.cover .foot{ display:flex; align-items:flex-end; justify-content:space-between; border-top:1pt solid var(--line); padding-top:10pt }
+.cover .foot svg{ width:2.1in; height:auto }
+.cover .foot .ed{ font-size:9pt; color:var(--slate); text-align:right }
+.howto .grid{ display:grid; grid-template-columns:1fr 1fr; gap:10pt 16pt }
+
+/* glossary and back matter */
+.backmatter{ break-before:right }
+.gloss dl{ margin:0; columns:2; column-gap:18pt }
+.gloss dt{ font-weight:700; color:var(--deep8); break-after:avoid; margin-top:5pt }
+.gloss dd{ margin:0 0 3pt; font-size:9.2pt; break-inside:avoid }
+.gloss dd .ref{ color:var(--muted); font-size:8pt }
+h1.bm{ font:800 24pt "Archivo",sans-serif; margin:0 0 12pt; border-bottom:5pt solid var(--gold); padding-bottom:6pt }
+.keep{ break-inside:avoid }
+.pb{ break-before:page }
+.twocol{ columns:2; column-gap:18pt }
+.twocol > *{ break-inside:avoid }
+
+.pbp{ break-before:page }
+.pbr{ break-before:right }
+.backmatter2{ break-before:page }
+table.t.long{ break-inside:auto }
+table.t.long tr{ break-inside:avoid }
+.ex-ch{ break-before:page }
+.ex-band{ display:flex; align-items:baseline; gap:12pt; border-top:8pt solid var(--deep); padding-top:10pt; margin-bottom:6pt }
+.ex-band .n{ font:800 40pt/1 "Archivo",sans-serif; color:var(--red) }
+.ex-band .t{ font:800 22pt "Archivo",sans-serif; flex:1 }
+.ex-band .k{ font:700 9pt "Archivo",sans-serif; letter-spacing:.14em; text-transform:uppercase; color:var(--slate) }
+.ex-intro{ font-size:10pt; margin-bottom:8pt; padding-bottom:8pt; border-bottom:2pt solid var(--gold) }
+.ex-ch + .ws{ break-before:avoid }
+.ak-ch{ break-before:page }
+.akcols{ columns:2; column-gap:18pt }
+.ak-set{ break-inside:avoid-column; margin-bottom:8pt }
+.ak-set h4{ margin:0 0 3pt; color:var(--deep); border-bottom:1.2pt solid var(--gold); padding-bottom:1pt; font-size:9.6pt }
+ol.ak{ margin:0; padding-left:18pt; font-size:9pt }
+ol.ak li{ margin:1.5pt 0; break-inside:avoid }
+ol.ak li::marker{ font-weight:700; color:var(--red) }
+ol.ak .aa{ font-weight:600 }
+ol.ak .aw{ font-size:8.2pt; color:var(--slate); line-height:1.4; margin-top:1pt }
+.gloss .gi{ break-inside:avoid }
+.try ol{ padding-right:12pt }
+table.t thead{ display:table-header-group }

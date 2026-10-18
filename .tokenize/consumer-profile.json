@@ -1,0 +1,18 @@
+{
+  "root": "/home/claude/access-trades-numeracy",
+  "surfaces": {
+    "ts": {
+      "convention": "",
+      "confidence": "none",
+      "samples": 0
+    },
+    "css": {
+      "convention": "var(--{kebab})",
+      "confidence": "high",
+      "samples": 150,
+      "conventionCounts": {
+        "var(--{kebab})": 150
+      }
+    }
+  }
+}

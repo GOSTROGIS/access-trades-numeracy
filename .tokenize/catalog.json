@@ -1,0 +1,585 @@
+{
+  "generatedAt": "2026-10-18T23:36:56.529Z",
+  "root": "/home/claude/access-trades-numeracy",
+  "sources": [
+    {
+      "type": "css-vars",
+      "path": "source/book/styles/book.css",
+      "tokenCount": 15
+    },
+    {
+      "type": "css-vars",
+      "path": "source/calculators/src/page.css",
+      "tokenCount": 20
+    }
+  ],
+  "tokens": {
+    "red": {
+      "name": "red",
+      "value": "#D2181F",
+      "type": "color",
+      "tier": "semantic",
+      "originPath": "/home/claude/access-trades-numeracy/source/book/styles/book.css",
+      "originType": "css-vars"
+    },
+    "deep": {
+      "name": "deep",
+      "value": "#C60016",
+      "type": "color",
+      "tier": "semantic",
+      "originPath": "/home/claude/access-trades-numeracy/source/book/styles/book.css",
+      "originType": "css-vars"
+    },
+    "deep8": {
+      "name": "deep8",
+      "value": "#940010",
+      "type": "color",
+      "tier": "semantic",
+      "originPath": "/home/claude/access-trades-numeracy/source/book/styles/book.css",
+      "originType": "css-vars"
+    },
+    "deep4": {
+      "name": "deep4",
+      "value": "#DD6673",
+      "type": "color",
+      "tier": "semantic",
+      "originPath": "/home/claude/access-trades-numeracy/source/book/styles/book.css",
+      "originType": "css-vars"
+    },
+    "gold": {
+      "name": "gold",
+      "value": "#FFBC00",
+      "type": "color",
+      "tier": "semantic",
+      "originPath": "/home/claude/access-trades-numeracy/source/book/styles/book.css",
+      "originType": "css-vars"
+    },
+    "gold1": {
+      "name": "gold1",
+      "value": "#FFF8E6",
+      "type": "color",
+      "tier": "semantic",
+      "originPath": "/home/claude/access-trades-numeracy/source/book/styles/book.css",
+      "originType": "css-vars"
+    },
+    "gold2": {
+      "name": "gold2",
+      "value": "#FFEBB2",
+      "type": "color",
+      "tier": "semantic",
+      "originPath": "/home/claude/access-trades-numeracy/source/book/styles/book.css",
+      "originType": "css-vars"
+    },
+    "gold4": {
+      "name": "gold4",
+      "value": "#FFD766",
+      "type": "color",
+      "tier": "semantic",
+      "originPath": "/home/claude/access-trades-numeracy/source/book/styles/book.css",
+      "originType": "css-vars"
+    },
+    "red1": {
+      "name": "red1",
+      "value": "#FAE8E9",
+      "type": "color",
+      "tier": "semantic",
+      "originPath": "/home/claude/access-trades-numeracy/source/book/styles/book.css",
+      "originType": "css-vars"
+    },
+    "red2": {
+      "name": "red2",
+      "value": "#F2BABC",
+      "type": "color",
+      "tier": "semantic",
+      "originPath": "/home/claude/access-trades-numeracy/source/book/styles/book.css",
+      "originType": "css-vars"
+    },
+    "ink": {
+      "name": "ink",
+      "value": "#1A1A1A",
+      "type": "color",
+      "tier": "semantic",
+      "originPath": "/home/claude/access-trades-numeracy/source/book/styles/book.css",
+      "originType": "css-vars"
+    },
+    "slate": {
+      "name": "slate",
+      "value": "#4A4E54",
+      "type": "color",
+      "tier": "semantic",
+      "originPath": "/home/claude/access-trades-numeracy/source/book/styles/book.css",
+      "originType": "css-vars"
+    },
+    "mist": {
+      "name": "mist",
+      "value": "#F4F5F6",
+      "type": "color",
+      "tier": "semantic",
+      "originPath": "/home/claude/access-trades-numeracy/source/book/styles/book.css",
+      "originType": "css-vars"
+    },
+    "line": {
+      "name": "line",
+      "value": "#D9DCDF",
+      "type": "color",
+      "tier": "semantic",
+      "originPath": "/home/claude/access-trades-numeracy/source/book/styles/book.css",
+      "originType": "css-vars"
+    },
+    "muted": {
+      "name": "muted",
+      "value": "#6B7076",
+      "type": "color",
+      "tier": "semantic",
+      "originPath": "/home/claude/access-trades-numeracy/source/book/styles/book.css",
+      "originType": "css-vars"
+    },
+    "bg": {
+      "name": "bg",
+      "value": "#F7F4F1",
+      "type": "color",
+      "tier": "semantic",
+      "originPath": "/home/claude/access-trades-numeracy/source/calculators/src/page.css",
+      "originType": "css-vars"
+    },
+    "surface": {
+      "name": "surface",
+      "value": "#FFFFFF",
+      "type": "color",
+      "tier": "semantic",
+      "originPath": "/home/claude/access-trades-numeracy/source/calculators/src/page.css",
+      "originType": "css-vars"
+    },
+    "surface.2": {
+      "name": "surface.2",
+      "value": "#FBF9F7",
+      "type": "color",
+      "tier": "semantic",
+      "originPath": "/home/claude/access-trades-numeracy/source/calculators/src/page.css",
+      "originType": "css-vars"
+    },
+    "line.strong": {
+      "name": "line.strong",
+      "value": "#CFC8C0",
+      "type": "color",
+      "tier": "semantic",
+      "originPath": "/home/claude/access-trades-numeracy/source/calculators/src/page.css",
+      "originType": "css-vars"
+    },
+    "red.deep": {
+      "name": "red.deep",
+      "value": "#C60016",
+      "type": "color",
+      "tier": "semantic",
+      "originPath": "/home/claude/access-trades-numeracy/source/calculators/src/page.css",
+      "originType": "css-vars"
+    },
+    "red.text": {
+      "name": "red.text",
+      "value": "#B5141B",
+      "type": "color",
+      "tier": "semantic",
+      "originPath": "/home/claude/access-trades-numeracy/source/calculators/src/page.css",
+      "originType": "css-vars"
+    },
+    "gold.tint": {
+      "name": "gold.tint",
+      "value": "#FFF8E6",
+      "type": "color",
+      "tier": "semantic",
+      "originPath": "/home/claude/access-trades-numeracy/source/calculators/src/page.css",
+      "originType": "css-vars"
+    },
+    "gold.soft": {
+      "name": "gold.soft",
+      "value": "#FFEBB2",
+      "type": "color",
+      "tier": "semantic",
+      "originPath": "/home/claude/access-trades-numeracy/source/calculators/src/page.css",
+      "originType": "css-vars"
+    },
+    "focus": {
+      "name": "focus",
+      "value": "#C60016",
+      "type": "color",
+      "tier": "semantic",
+      "originPath": "/home/claude/access-trades-numeracy/source/calculators/src/page.css",
+      "originType": "css-vars"
+    },
+    "logo.tile": {
+      "name": "logo.tile",
+      "value": "transparent",
+      "type": "other",
+      "tier": "semantic",
+      "originPath": "/home/claude/access-trades-numeracy/source/calculators/src/page.css",
+      "originType": "css-vars"
+    },
+    "font.display": {
+      "name": "font.display",
+      "value": "\"Archivo\", \"Arial Narrow\", \"Helvetica Neue\", Arial, sans-serif",
+      "type": "other",
+      "tier": "semantic",
+      "originPath": "/home/claude/access-trades-numeracy/source/calculators/src/page.css",
+      "originType": "css-vars"
+    },
+    "font.body": {
+      "name": "font.body",
+      "value": "\"IBM Plex Sans\", \"Segoe UI\", \"Helvetica Neue\", Arial, sans-serif",
+      "type": "other",
+      "tier": "semantic",
+      "originPath": "/home/claude/access-trades-numeracy/source/calculators/src/page.css",
+      "originType": "css-vars"
+    },
+    "font.mono": {
+      "name": "font.mono",
+      "value": "\"IBM Plex Mono\", ui-monospace, \"SFMono-Regular\", Menlo, Consolas, monospace",
+      "type": "other",
+      "tier": "semantic",
+      "originPath": "/home/claude/access-trades-numeracy/source/calculators/src/page.css",
+      "originType": "css-vars"
+    },
+    "radius": {
+      "name": "radius",
+      "value": "6px",
+      "type": "dimension",
+      "tier": "semantic",
+      "originPath": "/home/claude/access-trades-numeracy/source/calculators/src/page.css",
+      "originType": "css-vars"
+    }
+  },
+  "valueIndex": {
+    "color": [
+      {
+        "value": "#d2181f",
+        "normalized": {
+          "r": 210,
+          "g": 24,
+          "b": 31,
+          "a": 1
+        },
+        "tokenNames": [
+          "red"
+        ]
+      },
+      {
+        "value": "#c60016",
+        "normalized": {
+          "r": 198,
+          "g": 0,
+          "b": 22,
+          "a": 1
+        },
+        "tokenNames": [
+          "deep",
+          "red.deep",
+          "focus"
+        ]
+      },
+      {
+        "value": "#940010",
+        "normalized": {
+          "r": 148,
+          "g": 0,
+          "b": 16,
+          "a": 1
+        },
+        "tokenNames": [
+          "deep8"
+        ]
+      },
+      {
+        "value": "#dd6673",
+        "normalized": {
+          "r": 221,
+          "g": 102,
+          "b": 115,
+          "a": 1
+        },
+        "tokenNames": [
+          "deep4"
+        ]
+      },
+      {
+        "value": "#ffbc00",
+        "normalized": {
+          "r": 255,
+          "g": 188,
+          "b": 0,
+          "a": 1
+        },
+        "tokenNames": [
+          "gold"
+        ]
+      },
+      {
+        "value": "#fff8e6",
+        "normalized": {
+          "r": 255,
+          "g": 248,
+          "b": 230,
+          "a": 1
+        },
+        "tokenNames": [
+          "gold1",
+          "gold.tint"
+        ]
+      },
+      {
+        "value": "#ffebb2",
+        "normalized": {
+          "r": 255,
+          "g": 235,
+          "b": 178,
+          "a": 1
+        },
+        "tokenNames": [
+          "gold2",
+          "gold.soft"
+        ]
+      },
+      {
+        "value": "#ffd766",
+        "normalized": {
+          "r": 255,
+          "g": 215,
+          "b": 102,
+          "a": 1
+        },
+        "tokenNames": [
+          "gold4"
+        ]
+      },
+      {
+        "value": "#fae8e9",
+        "normalized": {
+          "r": 250,
+          "g": 232,
+          "b": 233,
+          "a": 1
+        },
+        "tokenNames": [
+          "red1"
+        ]
+      },
+      {
+        "value": "#f2babc",
+        "normalized": {
+          "r": 242,
+          "g": 186,
+          "b": 188,
+          "a": 1
+        },
+        "tokenNames": [
+          "red2"
+        ]
+      },
+      {
+        "value": "#1a1a1a",
+        "normalized": {
+          "r": 26,
+          "g": 26,
+          "b": 26,
+          "a": 1
+        },
+        "tokenNames": [
+          "ink"
+        ]
+      },
+      {
+        "value": "#4a4e54",
+        "normalized": {
+          "r": 74,
+          "g": 78,
+          "b": 84,
+          "a": 1
+        },
+        "tokenNames": [
+          "slate"
+        ]
+      },
+      {
+        "value": "#f4f5f6",
+        "normalized": {
+          "r": 244,
+          "g": 245,
+          "b": 246,
+          "a": 1
+        },
+        "tokenNames": [
+          "mist"
+        ]
+      },
+      {
+        "value": "#d9dcdf",
+        "normalized": {
+          "r": 217,
+          "g": 220,
+          "b": 223,
+          "a": 1
+        },
+        "tokenNames": [
+          "line"
+        ]
+      },
+      {
+        "value": "#6b7076",
+        "normalized": {
+          "r": 107,
+          "g": 112,
+          "b": 118,
+          "a": 1
+        },
+        "tokenNames": [
+          "muted"
+        ]
+      },
+      {
+        "value": "#f7f4f1",
+        "normalized": {
+          "r": 247,
+          "g": 244,
+          "b": 241,
+          "a": 1
+        },
+        "tokenNames": [
+          "bg"
+        ]
+      },
+      {
+        "value": "#ffffff",
+        "normalized": {
+          "r": 255,
+          "g": 255,
+          "b": 255,
+          "a": 1
+        },
+        "tokenNames": [
+          "surface"
+        ]
+      },
+      {
+        "value": "#fbf9f7",
+        "normalized": {
+          "r": 251,
+          "g": 249,
+          "b": 247,
+          "a": 1
+        },
+        "tokenNames": [
+          "surface.2"
+        ]
+      },
+      {
+        "value": "#cfc8c0",
+        "normalized": {
+          "r": 207,
+          "g": 200,
+          "b": 192,
+          "a": 1
+        },
+        "tokenNames": [
+          "line.strong"
+        ]
+      },
+      {
+        "value": "#b5141b",
+        "normalized": {
+          "r": 181,
+          "g": 20,
+          "b": 27,
+          "a": 1
+        },
+        "tokenNames": [
+          "red.text"
+        ]
+      }
+    ],
+    "other": [
+      {
+        "value": "transparent",
+        "normalized": "transparent",
+        "tokenNames": [
+          "logo.tile"
+        ]
+      },
+      {
+        "value": "\"Archivo\", \"Arial Narrow\", \"Helvetica Neue\", Arial, sans-serif",
+        "normalized": "\"Archivo\", \"Arial Narrow\", \"Helvetica Neue\", Arial, sans-serif",
+        "tokenNames": [
+          "font.display"
+        ]
+      },
+      {
+        "value": "\"IBM Plex Sans\", \"Segoe UI\", \"Helvetica Neue\", Arial, sans-serif",
+        "normalized": "\"IBM Plex Sans\", \"Segoe UI\", \"Helvetica Neue\", Arial, sans-serif",
+        "tokenNames": [
+          "font.body"
+        ]
+      },
+      {
+        "value": "\"IBM Plex Mono\", ui-monospace, \"SFMono-Regular\", Menlo, Consolas, monospace",
+        "normalized": "\"IBM Plex Mono\", ui-monospace, \"SFMono-Regular\", Menlo, Consolas, monospace",
+        "tokenNames": [
+          "font.mono"
+        ]
+      }
+    ],
+    "dimension": [
+      {
+        "value": "6px",
+        "normalized": {
+          "value": 6,
+          "unit": "px",
+          "px": 6
+        },
+        "tokenNames": [
+          "radius"
+        ]
+      }
+    ]
+  },
+  "conflicts": [
+    {
+      "tokenName": "ink",
+      "definitions": [
+        {
+          "source": "css-vars:/home/claude/access-trades-numeracy/source/book/styles/book.css",
+          "value": "#1A1A1A"
+        },
+        {
+          "source": "css-vars:/home/claude/access-trades-numeracy/source/calculators/src/page.css",
+          "value": "#1A1512"
+        }
+      ],
+      "resolution": "css-vars"
+    },
+    {
+      "tokenName": "line",
+      "definitions": [
+        {
+          "source": "css-vars:/home/claude/access-trades-numeracy/source/book/styles/book.css",
+          "value": "#D9DCDF"
+        },
+        {
+          "source": "css-vars:/home/claude/access-trades-numeracy/source/calculators/src/page.css",
+          "value": "#E5E0DA"
+        }
+      ],
+      "resolution": "css-vars"
+    },
+    {
+      "tokenName": "muted",
+      "definitions": [
+        {
+          "source": "css-vars:/home/claude/access-trades-numeracy/source/book/styles/book.css",
+          "value": "#6B7076"
+        },
+        {
+          "source": "css-vars:/home/claude/access-trades-numeracy/source/calculators/src/page.css",
+          "value": "#625D58"
+        }
+      ],
+      "resolution": "css-vars"
+    }
+  ]
+}

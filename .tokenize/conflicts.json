@@ -1,0 +1,46 @@
+{
+  "conflicts": [
+    {
+      "tokenName": "ink",
+      "definitions": [
+        {
+          "source": "css-vars:/home/claude/access-trades-numeracy/source/book/styles/book.css",
+          "value": "#1A1A1A"
+        },
+        {
+          "source": "css-vars:/home/claude/access-trades-numeracy/source/calculators/src/page.css",
+          "value": "#1A1512"
+        }
+      ],
+      "resolution": "css-vars"
+    },
+    {
+      "tokenName": "line",
+      "definitions": [
+        {
+          "source": "css-vars:/home/claude/access-trades-numeracy/source/book/styles/book.css",
+          "value": "#D9DCDF"
+        },
+        {
+          "source": "css-vars:/home/claude/access-trades-numeracy/source/calculators/src/page.css",
+          "value": "#E5E0DA"
+        }
+      ],
+      "resolution": "css-vars"
+    },
+    {
+      "tokenName": "muted",
+      "definitions": [
+        {
+          "source": "css-vars:/home/claude/access-trades-numeracy/source/book/styles/book.css",
+          "value": "#6B7076"
+        },
+        {
+          "source": "css-vars:/home/claude/access-trades-numeracy/source/calculators/src/page.css",
+          "value": "#625D58"
+        }
+      ],
+      "resolution": "css-vars"
+    }
+  ]
+}

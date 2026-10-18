@@ -1,0 +1,54 @@
+  function chipList(seq) {
+    var out = [];
+=>
+  function chipList(seq) {
+    /* the selected calculator's keys (notes go on their own line, see buildModel) */
+    if (G.CalcKit && G.CalcKit.getModel() !== 'ti30xa') return G.CalcKit.exportChips(seq).filter(function (c) { return c.k !== 'note'; });
+    var out = [];
+=====
+chips: chipList(k.seq), screen: d.main + (d.exp ? ' ×10^' + d.exp : '') }
+=>
+chips: chipList(k.seq), notes: G.CalcKit ? G.CalcKit.notesFor(k.seq) : [], screen: d.main + (d.exp ? ' ×10^' + String(d.exp).trim() : '') }
+=====
+round to the places each question asks for. Use the TI-30Xa in DEG mode.',
+=>
+round to the places each question asks for. ' + (G.CalcKit ? G.CalcKit.examIntro() : 'Use the TI-30Xa in DEG mode.'),
+        calc: G.CalcKit ? G.CalcKit.heading() : null,
+=====
+run('On the TI-30Xa', { bold: true }) + run('   Start with ON/C ON/C and DEG on the screen.', { size: 18, color: '5A5F66' })
+=>
+run(m.calc ? m.calc.title : 'On the TI-30Xa', { bold: true }) + run('   ' + (m.calc ? m.calc.subText : 'Start with ON/C ON/C and DEG on the screen.'), { size: 18, color: '5A5F66' })
+=====
+          s += para(chipRuns(k.chips), { keepNext: true, after: 40, indent: 360 });
+=>
+          s += para(chipRuns(k.chips), { keepNext: true, after: 40, indent: 360 });
+          if (k.notes && k.notes.length) s += para(run(k.notes.join(' '), { italic: true, size: 18, color: '5A5F66' }), { keepNext: true, after: 40, indent: 360 });
+=====
+    '2nd': { fill: '76BA28', color: '141618', border: '467814' }
+  };
+=>
+    '2nd': { fill: '76BA28', color: '141618', border: '467814' },
+    '2ndf': { fill: 'F09628', color: '141618', border: '96500A' },
+    f: { fill: 'E8B068', color: '141618', border: '8C6028' },
+    g: { fill: '70ACE0', color: '141618', border: '285A8C' },
+    alpha: { fill: 'E2E4E6', color: '141618', border: '1E6E3C' }
+  };
+=====
+textBlock([{ text: 'On the TI-30Xa', bold: true }, { text: '    Start with ON/C ON/C and DEG on the screen.', color: MUTED }], 13,
+=>
+textBlock([{ text: m.calc ? m.calc.title : 'On the TI-30Xa', bold: true }, { text: '    ' + (m.calc ? m.calc.subText : 'Start with ON/C ON/C and DEG on the screen.'), color: MUTED }], 13,
+=====
+            g.push(kn(chipBlock(k.chips, 16)));
+=>
+            g.push(kn(chipBlock(k.chips, 16)));
+            if (k.notes && k.notes.length) g.push(kn(textBlock([{ text: k.notes.join(' '), italic: true, color: MUTED }], 12, { indent: 16, after: 4 })));
+=====
+    '2nd': { fill: 'rgb(118, 186, 40)', color: 'rgb(20, 22, 24)', line: 'rgb(70, 120, 20)' }
+  };
+=>
+    '2nd': { fill: 'rgb(118, 186, 40)', color: 'rgb(20, 22, 24)', line: 'rgb(70, 120, 20)' },
+    '2ndf': { fill: 'rgb(240, 150, 40)', color: 'rgb(20, 22, 24)', line: 'rgb(150, 80, 10)' },
+    f: { fill: 'rgb(232, 176, 104)', color: 'rgb(20, 22, 24)', line: 'rgb(140, 96, 40)' },
+    g: { fill: 'rgb(112, 172, 224)', color: 'rgb(20, 22, 24)', line: 'rgb(40, 90, 140)' },
+    alpha: { fill: 'rgb(226, 228, 230)', color: 'rgb(20, 22, 24)', line: 'rgb(30, 110, 60)' }
+  };

@@ -1,0 +1,35 @@
+<section class="panel how" data-model="hp15c" aria-labelledby="how-hp15c">
+  <h2 id="how-hp15c">How this calculator works</h2>
+  <p class="logic">HP-15C: RPN, the numbers first, then the operation</p>
+  <p class="intro">There is no = key. Key the first number, press ENTER, key the second number, then press the operation <span class="cite">(HP pp. 22-23)</span>: <span class="kseq" data-model="hp15c" data-seq="3 + 4 ="></span> shows <output class="kout" data-model="hp15c" data-seq="3 + 4 ="></output></p>
+  <h3>The stack</h3>
+  <p>Numbers wait in a stack of four registers, X, Y, Z and T, and the display shows X <span class="cite">(HP p. 32)</span>. ENTER copies X into Y, ready for the next number <span class="cite">(HP pp. 32-36)</span>. A result already in the display needs no ENTER before the next operation <span class="cite">(HP p. 22)</span>.</p>
+  <h3>Functions of one number</h3>
+  <p>Key the number, then the function <span class="cite">(HP p. 22)</span>: <span class="kseq" data-model="hp15c" data-seq="30 SIN"></span> shows <output class="kout" data-model="hp15c" data-seq="30 SIN"></output> in Degrees mode.</p>
+  <h3>f and g</h3>
+  <p>f, then a key, gives the gold function printed above that key. g gives the blue function printed on the lower face of the key <span class="cite">(HP p. 18)</span>.</p>
+  <h3>Fractions</h3>
+  <p>There is no a b/c key, so a fraction is keyed as a division: <span class="kseq" data-model="hp15c" data-seq="5 ab/c 7 ab/c 8 + 1 ab/c 1 ab/c 8 ="></span> shows <output class="kout" data-model="hp15c" data-seq="5 ab/c 7 ab/c 8 + 1 ab/c 1 ab/c 8 ="></output></p>
+  <h3>Angle modes</h3>
+  <p>g DEG, g RAD and g GRD set the angle mode <span class="cite">(HP p. 26)</span>. Degrees mode shows no annunciator. RAD or GRAD shows on the display when that mode is on <span class="cite">(HP pp. 31, 60)</span>.</p>
+  <h3>Rectangular and polar coordinates</h3>
+  <ul>
+    <li>Rectangular to polar: y, ENTER, x, then g →P shows r, and x≶y shows θ <span class="cite">(HP p. 30)</span>. <span class="kseq" data-model="hp15c" data-seq="10 x⇄y 5 R▸P"></span> shows <output class="kout" data-model="hp15c" data-seq="10 x⇄y 5 R▸P"></output>, then <span class="kseq" data-model="hp15c" data-seq="10 x⇄y 5 R▸P x⇄y"></span> shows <output class="kout" data-model="hp15c" data-seq="10 x⇄y 5 R▸P x⇄y"></output>. These are the handbook's own example, 11.1803 and 26.5651 <span class="cite">(HP p. 31)</span>.</li>
+    <li>Polar to rectangular: θ, ENTER, r, then f →R shows x, and x≶y shows y <span class="cite">(HP p. 31)</span>. <span class="kseq" data-model="hp15c" data-seq="12 x⇄y 30 P▸R"></span> shows <output class="kout" data-model="hp15c" data-seq="12 x⇄y 30 P▸R"></output></li>
+  </ul>
+  <h3>Storage registers</h3>
+  <p>STO 1 stores X in register 1 and RCL 1 brings it back <span class="cite">(HP p. 42)</span>.</p>
+  <h3>Display</h3>
+  <p>At power-up the display shows four decimal places, FIX 4 <span class="cite">(HP p. 58)</span>. Every number is held to 10 digits, and every result is rounded to the 10th digit <span class="cite">(HP p. 60)</span>. A comma separates groups of three digits, as in <output class="kout" data-model="hp15c" data-seq="4245 + 15 ="></output> <span class="cite">(HP p. 61)</span>.</p>
+  <h3>Clearing</h3>
+  <p>← deletes the last digit while a number is being keyed. g CLx clears the display to zero <span class="cite">(HP p. 21)</span>.</p>
+  <h3>Keyboard</h3>
+  <dl class="keyb">
+    <dt>0 to 9 and .</dt><dd>number keys</dd>
+    <dt>+ - * /</dt><dd>+ − × ÷ (x also multiplies)</dd>
+    <dt>^</dt><dd>yˣ</dd>
+    <dt>Enter or =</dt><dd>ENTER</dd>
+    <dt>Backspace</dt><dd>←</dd>
+  </dl>
+  <div class="sources"><p>Sources: HP-15C Owner's Handbook (edition 2.4) and HP 15c Collector's Edition Owner's Handbook (edition 3, February 2023). Both have the same printed page numbers, cited as "HP p.".</p></div>
+</section>

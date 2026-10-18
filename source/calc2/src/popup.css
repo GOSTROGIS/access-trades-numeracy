@@ -1,0 +1,98 @@
+/* ---------- calculator models: model menu, Sharp EL-531XT and HP-15C faceplates (CalcKit) ----------
+   Original drawings in each calculator's own layout and colours. Model names are plain text, no logos. Key-cap
+   colours are fixed, like the TI-30Xa keys, so they read the same in light and dark mode. */
+.ti-msel-w { display: inline-flex; }
+.ti-msel { font: 600 13px/1 var(--font-body, sans-serif); min-height: 32px; max-width: 130px; padding: 4px 6px; border-radius: 8px; cursor: pointer;
+  border: 1px solid rgb(126, 130, 134); background: rgb(40, 43, 46); color: rgb(240, 240, 240); }
+.ti-msel:focus-visible { outline: 3px solid rgb(255, 188, 0); outline-offset: 2px; }
+.ti-notes { margin: 6px 0 0; font-size: 12.5px; line-height: 1.4; color: rgb(255, 214, 102); }
+.ti-notes[hidden] { display: none; }
+.ti-tape .tk-sh-2ndf, .ti-last .tk-sh-2ndf { background: rgb(240, 150, 40); color: rgb(20, 22, 24); border-color: rgb(150, 80, 10); }
+.ti-tape .tk-sh-f, .ti-last .tk-sh-f { background: rgb(232, 176, 104); color: rgb(20, 22, 24); border-color: rgb(140, 96, 40); }
+.ti-tape .tk-sh-g, .ti-last .tk-sh-g { background: rgb(112, 172, 224); color: rgb(20, 22, 24); border-color: rgb(40, 90, 140); }
+.ti-tape .tk-sec-2ndf { box-shadow: 0 2px 0 rgb(150, 80, 10); border-color: rgb(150, 80, 10); }
+.ti-tape .tk-sec-f { box-shadow: 0 2px 0 rgb(140, 96, 40); border-color: rgb(140, 96, 40); }
+.ti-tape .tk-sec-g { box-shadow: 0 2px 0 rgb(40, 90, 140); border-color: rgb(40, 90, 140); }
+.ti-tape .tk-alpha { box-shadow: 0 2px 0 rgb(30, 110, 60); border-color: rgb(30, 110, 60); }
+
+/* Sharp EL-531XT: white upper face with the solar strip and display, charcoal keypad */
+.ti-pop.calc-el531xt { width: 380px; background: rgb(36, 37, 40); }
+.calc-el531xt .ti-bar { background: rgb(24, 25, 27); }
+.sh-head { background: rgb(242, 242, 240); border-radius: 12px; padding: 10px 12px 8px; }
+.sh-solar { display: block; width: 48%; height: 14px; margin: 0 0 8px auto; border-radius: 3px; background: rgb(64, 44, 40); }
+.sh-lcd { background: rgb(200, 207, 198); color: rgb(24, 28, 24); border: 2px solid rgb(120, 124, 120); border-radius: 6px; padding: 4px 8px 6px; }
+.sh-lcd .ti-ind { gap: 2px 8px; }
+.sh-eq { min-height: 17px; margin-top: 2px; font: 500 13px/1.3 var(--font-mono, ui-monospace, monospace); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.sh-lcd .ti-num { min-height: 38px; font-size: 30px; }
+.sh-name { display: flex; justify-content: space-between; margin: 6px 2px 0; font: italic 600 11px/1 var(--font-body, sans-serif); letter-spacing: 0.04em; color: rgb(84, 86, 90); }
+.sh-face { margin-top: 10px; }
+.sh-cell { display: grid; gap: 1px; justify-items: stretch; min-width: 0; }
+.sk-lab { display: flex; justify-content: space-between; gap: 2px; min-height: 12px; font: 600 8.5px/1.3 var(--font-body, sans-serif); white-space: nowrap; overflow: hidden; }
+.sk-2 { color: rgb(255, 176, 72); }
+.sk-a { color: rgb(120, 210, 150); }
+.sh-nav { display: grid; grid-template-columns: 1fr 1.5fr 1fr; gap: 4px 10px; align-items: end; }
+.sh-nav > .sh-cell:nth-child(1) { grid-column: 1; grid-row: 1; }
+.sh-nav > .sh-pad { grid-column: 2; grid-row: 1 / span 2; }
+.sh-nav > .sh-cell:nth-child(3) { grid-column: 3; grid-row: 1; }
+.sh-nav > .sh-cell:nth-child(4) { grid-column: 1; grid-row: 2; }
+.sh-nav > .sh-cell:nth-child(5) { grid-column: 3; grid-row: 2; }
+.sh-pad { display: grid; grid-template-columns: 1fr 1fr 1fr; grid-template-rows: 1fr 1fr 1fr; height: 76px; align-self: center; border-radius: 36px; background: rgb(236, 236, 234); border: 1px solid rgb(20, 22, 24); }
+.sh-ar { border: 0; background: transparent; color: rgb(36, 38, 42); font: 700 11px/1 var(--font-body, sans-serif); cursor: pointer; min-width: 24px; min-height: 24px; border-radius: 6px; touch-action: manipulation; }
+.sh-ar:hover { background: rgb(214, 214, 212); }
+.sh-ar:focus-visible { outline: 3px solid rgb(255, 188, 0); outline-offset: 1px; }
+.sh-ar.is-hit { background: rgb(255, 188, 0); }
+.sh-up { grid-column: 2; grid-row: 1; } .sh-left { grid-column: 1; grid-row: 2; } .sh-right { grid-column: 3; grid-row: 2; } .sh-down { grid-column: 2; grid-row: 3; }
+.sh-row3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px 10px; margin: 6px 0 2px; }
+.sh-fn { display: grid; grid-template-columns: repeat(6, 1fr); gap: 2px 5px; }
+.sh-num { display: grid; grid-template-columns: repeat(5, 1fr); gap: 3px 7px; margin-top: 6px; }
+.sh-eqcell { grid-column: span 2; }
+.calc-el531xt .ti-k { min-height: 28px; font-size: 12.5px; border-radius: 7px; }
+.ti-k.sk-fn { background: rgb(70, 72, 78); color: rgb(255, 255, 255); }
+.ti-k.sk-num { background: rgb(18, 19, 21); color: rgb(255, 255, 255); font-size: 18px; min-height: 36px; }
+.ti-k.sk-op { background: rgb(238, 238, 236); color: rgb(20, 22, 24); font-size: 18px; min-height: 36px; }
+.ti-k.sk-2nd { background: rgb(36, 37, 40); color: rgb(255, 176, 72); border: 1.5px solid rgb(255, 176, 72); }
+.ti-k.sk-alpha { background: rgb(36, 37, 40); color: rgb(120, 210, 150); border: 1.5px solid rgb(120, 210, 150); }
+.ti-k.sk-on { background: rgb(62, 40, 48); color: rgb(255, 160, 180); }
+
+/* HP-15C: brushed upper panel with the display, black keyboard, gold f and blue g legends, ENTER two rows high */
+.ti-pop.calc-hp15c { width: 600px; max-width: calc(100vw - 40px); background: rgb(30, 30, 32); }
+.calc-hp15c .ti-bar { background: rgb(18, 18, 20); }
+.hp-head { display: flex; align-items: center; gap: 12px; padding: 10px 12px; border-radius: 10px; background: rgb(218, 218, 214); border-bottom: 3px solid rgb(150, 150, 146); }
+.hp-lcd { flex: 1; min-width: 0; background: rgb(172, 178, 164); color: rgb(24, 26, 22); border: 3px solid rgb(60, 62, 60); border-radius: 4px; padding: 4px 10px; }
+.hp-lcd .ti-num { justify-content: flex-start; min-height: 36px; font-size: 30px; }
+.hp-lcd .ti-exp { margin-left: auto; }
+.hp-lcd .ti-ind { gap: 2px 14px; min-height: 13px; }
+.hp-name { margin: 0; font: italic 700 15px/1 var(--font-display, sans-serif); color: rgb(52, 54, 58); white-space: nowrap; }
+.hp-face { margin-top: 10px; padding: 6px 6px 8px; border-radius: 8px; background: rgb(20, 20, 22); border: 2px solid rgb(96, 88, 70); }
+.hp-grid { display: grid; grid-template-columns: repeat(10, minmax(0, 1fr)); gap: 2px 5px; }
+.hp-cell { display: grid; grid-template-rows: auto 1fr; gap: 1px; min-width: 0; }
+.hp-enter { grid-column: 6; grid-row: 3 / span 2; }
+.hk-f-lab { min-height: 11px; font: 700 8px/1.3 var(--font-body, sans-serif); color: rgb(232, 176, 104); text-align: center; white-space: nowrap; overflow: hidden; }
+.hp-clr .hk-f-lab { border-top: 1px solid rgb(232, 176, 104); }
+.calc-hp15c .ti-k { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px; min-height: 40px; padding: 2px 1px; border-radius: 5px; min-width: 0; }
+.ti-k.hk-k { background: rgb(52, 52, 56); color: rgb(255, 255, 255); border-color: rgb(8, 8, 10); }
+.ti-k.hk-f { background: rgb(232, 170, 100); color: rgb(20, 22, 24); }
+.ti-k.hk-g { background: rgb(112, 172, 224); color: rgb(20, 22, 24); }
+.hk-face { font: 700 13px/1.1 var(--font-body, sans-serif); white-space: nowrap; }
+.hk-g-lab { font: 700 8px/1.2 var(--font-body, sans-serif); color: rgb(130, 190, 240); white-space: nowrap; }
+.hp-enter .ti-k { height: 100%; }
+.hp-enter .hk-face { writing-mode: vertical-rl; text-orientation: upright; letter-spacing: -1px; font-size: 12px; }
+@media (max-width: 640px) {
+  .ti-pop.calc-hp15c:not(.ti-standalone), .ti-pop.calc-el531xt:not(.ti-standalone) { width: auto; max-width: none; }
+  .hp-grid { gap: 2px 3px; }
+  .hk-face { font-size: 11px; }
+  .hk-f-lab, .hk-g-lab { font-size: 7.5px; }
+  .calc-hp15c .ti-k { min-height: 36px; }
+  .hp-name { font-size: 12px; }
+  .ti-pop.is-playing .ti-keys, .ti-pop.is-playing .sh-name, .ti-pop.is-playing .sh-solar { display: none; }
+}
+@media (min-width: 641px) and (max-height: 820px) {
+  .calc-el531xt .ti-k { min-height: 25px; }
+  .ti-k.sk-num, .ti-k.sk-op { min-height: 30px; }
+  .sh-pad { height: 64px; }
+  .calc-hp15c .ti-k { min-height: 34px; }
+}
+.ti-pop.ti-standalone.calc-hp15c { width: 600px; }
+/* the floating Calculator button in ACCESS gold with ACCESS ink (about 11:1), the same in light and dark */
+.ti-fab { background: rgb(255, 188, 0); color: rgb(26, 21, 18); border-color: rgb(26, 21, 18); }
+.ti-fab:hover { background: rgb(255, 205, 64); }
