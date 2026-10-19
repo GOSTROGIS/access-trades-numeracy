@@ -24,10 +24,5 @@ Your progress in the hub is saved in the browser you use. Using a different brow
 
 ## Carpentry Foundation — Intake 141
 
-Open [the daily math deck index](carpentry/intake-141/START-HERE.html) after downloading the repository. The package covers all 26 scheduled math days and 50 lesson blocks from October 29 to December 16, 2026.
-
-- [Editable PowerPoints](carpentry/intake-141/PowerPoint/): full daily lessons with speaker notes, textbook references, exercises, and Numeracy Hub/Shape Canvas activities.
-- [Daily PDFs](carpentry/intake-141/PDF/): viewing and printing copies without speaker notes.
-- [Instructor guide](carpentry/intake-141/Instructor/Instructor-Guide.pdf) and [schedule index](carpentry/intake-141/Daily-Deck-Index.xlsx): teaching plans, answers, and schedule mapping.
-
-Keep the complete `carpentry/intake-141/` folder together so its links to the included offline ACCESS books and tools continue to work. See [the package instructions](carpentry/intake-141/READ-ME.txt) for details.
+- [PowerPoint slides with speaker notes](carpentry/intake-141/PowerPoint/)
+- [PDF slides](carpentry/intake-141/PDF/)
