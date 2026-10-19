@@ -23,10 +23,5 @@ calculators.html
     The notes and the worked examples change with it. The choice is remembered in this browser and is shared
     with the Numeracy Hub's calculator choice. The three single-calculator pages never change that choice.
 
-The calculators are the same emulators the ACCESS Trades Numeracy Hub uses, so they give the same answers as
+The calculators are the same ones the ACCESS Trades Numeracy Hub uses, so they give the same answers as
 the hub.
-
-Rebuilding (for whoever maintains the files)
-    python3 build.py              rebuilds the four pages from src/ and ../calc2/calc-kit.js
-    node work/test-calculators.js checks them (key presses, answers, both themes, desktop and phone widths)
-    shots/                        screenshots from the last test run
