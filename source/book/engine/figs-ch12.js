@@ -390,4 +390,217 @@ function trigTri(deg, o) {
   return rt(b, h, o)
 }
 
-module.exports = { FK, setK, minPt, auto, fitter, poly, rt, trigTri, pythSquares, angleFig, protractor, straightLine, aroundPoint, boltCircle, cornerCheck, frameDiag, pipeOffset, bevel, mitreCorner, polyFrame, ramp, arcAt, rightAt, dimOut, sideText, D2R }
+/* the four angles at a crossing point p (SVG coords) of a horizontal line and a line at deg (math angle, counter-
+   clockwise from the right). labs: four labels for the sectors 0 to deg, deg to 180, 180 to 180 + deg and the last,
+   '?' draws the chip, null leaves the sector bare. cols: arc colours */
+function crossArcs(p, deg, labs, o) {
+  o = o || {}
+  const st = [0, deg, 180, 180 + deg], en = [deg, 180, 180 + deg, 360]
+  let h = ''
+  labs.forEach((lab, i) => {
+    if (lab == null) return
+    const small = en[i] - st[i] < 90
+    h += FK.arc(p, -en[i] * D2R, -st[i] * D2R, small ? (o.r || 30) : (o.r || 30) - 12, lab, { ask: lab === '?', lr: small ? (o.lr || 16) : (o.lr || 16) + 12, s: o.s || 16, c: small ? C.red : C.dim })
+  })
+  return h
+}
+/* two straight lines that cross: one level, one at deg. labs as in crossArcs */
+function crossLines(deg, labs, o) {
+  o = o || {}
+  const W = 340, H = 210, cx = 170, cy = 105, L1 = 150, L2 = 100
+  const d = [Math.cos(deg * D2R), -Math.sin(deg * D2R)]
+  let h = F.line(cx - L1, cy, cx + L1, cy, { c: C.edge, w: 2.6 })
+  h += F.line(cx - L2 * d[0], cy - L2 * d[1], cx + L2 * d[0], cy + L2 * d[1], { c: C.edge, w: 2.6 })
+  h += crossArcs([cx, cy], deg, labs, o)
+  h += '<circle cx="' + cx + '" cy="' + cy + '" r="3.2" fill="' + C.edge + '"/>'
+  return F.svg(W, H, h, { max: o.max || '2.8in' })
+}
+/* two parallel level lines cut by a transversal at deg. top and bot: four labels each, as in crossArcs.
+   o.names: names written at the right end of the parallel lines */
+function transversal(deg, top, bot, o) {
+  o = o || {}
+  const W = o.W || 400, H = 250, y1 = 70, y2 = 185, gap = y2 - y1
+  const dx = gap / Math.tan(deg * D2R), xm = W / 2, x1 = xm + dx / 2, x2 = xm - dx / 2
+  const ext = 66, d = [Math.cos(deg * D2R), -Math.sin(deg * D2R)]
+  let h = F.line(24, y1, W - 24, y1, { c: C.edge, w: 2.6 }) + F.line(24, y2, W - 24, y2, { c: C.edge, w: 2.6 })
+  /* arrow marks show the two lines are parallel */
+  for (const y of [y1, y2]) {
+    const x = W - 60
+    h += F.line(x - 7, y - 6, x, y, { c: C.edge, w: 2 }) + F.line(x - 7, y + 6, x, y, { c: C.edge, w: 2 })
+  }
+  h += F.line(x2 - ext * d[0], y2 - ext * d[1], x1 + ext * d[0], y1 + ext * d[1], { c: C.ink, w: 2.4 })
+  h += crossArcs([x1, y1], deg, top, o) + crossArcs([x2, y2], deg, bot, o)
+  if (o.names) {
+    h += FK.t(30, y1 - 10, o.names[0], { s: 13, b: true, c: C.deep, a: 'start' }) + FK.t(30, y2 - 10, o.names[1], { s: 13, b: true, c: C.deep, a: 'start' })
+    if (o.names[2]) h += FK.t(x1 + ext * d[0] + 4, y1 + ext * d[1] + 4, o.names[2], { s: 13, b: true, c: C.ink, a: 'start' })
+  }
+  return F.svg(W, H, h, { max: o.max || '3.2in' })
+}
+
+/* side view of a straight stair from floor to floor: n risers of unit rise R and treads of unit run U (model units).
+   o.lab: { rise, run, totalRise, totalRun, stringer } texts, '?' for a chip, null to leave out.
+   o.names: write riser, tread and nosing callouts. o.head: clear height text drawn above the stair */
+function stairSide(n, R, U, o) {
+  o = o || {}
+  const K1 = Math.max(1, K)
+  const lab = o.lab || {}
+  const top = (n - 1) * U, TR = n * R
+  const prof = [[-0.9 * U, 0], [0, 0]]
+  for (let k = 1; k <= n; k++) {
+    prof.push([(k - 1) * U, k * R])
+    if (k < n) prof.push([k * U, k * R])
+  }
+  prof.push([top + 1.3 * U, TR])
+  const pts = prof.concat([[top + 1.3 * U, TR - 0.55 * R], [top, TR - 0.55 * R], [top, 0]])
+  const ext = o.head ? [[top * 0.4, TR + 0.2 * R + (o.headH || 2.6 * R)]] : []
+  const fit = fitter(pts.concat(ext), o.W || 520, o.H || 330, o.pad || 56, o.padX || 104)
+  const P = fit.P
+  let h = F.poly([[0, 0]].concat(prof.slice(2, -1), [[top, 0]]).map(P), { fill: C.fill, w: 1.4 })
+  h += F.poly(prof.map(P), { fill: 'none', w: 2.6, open: true })
+  h += F.poly([[top, TR], [top + 1.3 * U, TR], [top + 1.3 * U, TR - 0.55 * R], [top, TR - 0.55 * R]].map(P), { fill: C.fill2, w: 1.4 })
+  h += F.line(...P([-0.9 * U, 0]), ...P([top + 1.3 * U, 0]), { c: C.ink, w: 1.4 })
+  const ch = (v, a, b, off) => v == null ? '' : FK.dim(...P(a), ...P(b), v, off, { ask: v === '?', s: 13 })
+  /* stringer line, bottom corner to top corner */
+  if (lab.stringer !== null) {
+    h += F.line(...P([0, 0]), ...P([top, TR]), { c: C.red, w: 1.8, dash: '8 5' })
+    const m = P([top * 0.55, TR * 0.55]), uu = unit(sub(P([top, TR]), P([0, 0])))
+    const off = (lab.stringer === '?' ? 26 : 46) * K1
+    h += lab.stringer === '?' ? FK.label(m[0] - off * uu[1], m[1] + off * uu[0] + 6, '?', { ask: true, s: 14 }) : FK.label(m[0] - off * uu[1], m[1] + off * uu[0] + 6, lab.stringer || 'stringer', { s: 13, c: C.deep })
+  }
+  h += ch(lab.totalRun, [0, 0], [top, 0], 30 * K1)
+  h += ch(lab.totalRise, [top + 1.3 * U, 0], [top + 1.3 * U, TR], 34 * K1)
+  if (n > 2) {
+    h += ch(lab.rise, [-0.2 * U, 0], [-0.2 * U, R], -30 * K1)
+    h += ch(lab.run, [0, R], [U, R], -22 * K1)
+  }
+  if (o.names && n > 4) {
+    const r1 = P([(n - 2) * U, (n - 1.5) * R]), t1 = P([2.5 * U, 3 * R]), ns = P([(n - 3) * U, (n - 2) * R])
+    h += FK.callout(r1[0], r1[1], r1[0] + 45, r1[1] + 25, 'riser', { s: 12 })
+    h += FK.callout(t1[0], t1[1], t1[0] - 90, t1[1] - 30, 'tread', { s: 12 })
+    h += FK.callout(ns[0], ns[1], ns[0] - 60, ns[1] - 70, 'nosing', { s: 12 })
+  }
+  if (o.head) {
+    const xb = top * 0.4, yb = xb * TR / top, yt = yb + (o.headH || 2.6 * R)
+    h += F.rect(...P([xb - 0.6 * U, yt + 0.35 * R]), (1.2 * U) * fit.s, 0.35 * R * fit.s, { fill: C.light })
+    h += F.line(...P([xb, yb]), ...P([xb, yt]), { c: C.dim, w: 1.2, dash: '4 3' })
+    h += FK.dim(...P([xb, yb]), ...P([xb, yt]), o.head, 20, { ask: o.head === '?', s: 13 })
+  }
+  return F.svg(fit.w, fit.h, h, { max: o.max || '4.2in' })
+}
+
+/* gable roof seen from the end: span along the bottom, ridge in the middle.
+   o.lab: { span, run, rise, rafter } texts ('?' for a chip, null to leave out). o.slope: [rise, run] slope mark */
+function gable(span, rise, o) {
+  o = o || {}
+  const K1 = Math.max(1, K)
+  const lab = o.lab || {}
+  const pts = { L: [0, 0], R: [span, 0], T: [span / 2, rise] }
+  const fit = fitter([pts.L, pts.R, pts.T], o.W || 460, o.H || 260, o.pad || 66 + 30 * K, o.padX || 40)
+  const P = fit.P
+  const L0 = P(pts.L), R0 = P(pts.R), T0 = P(pts.T), M0 = P([span / 2, 0])
+  let h = F.poly([L0, R0, T0], { fill: C.fill })
+  h += F.line(T0[0], T0[1], M0[0], M0[1], { c: C.dim, w: 1.2, dash: '6 4' }) + F.rightMark(M0, [1, 0], [0, -1], 11)
+  const ch = (v, a, b, off) => v == null ? '' : FK.dim(a[0], a[1], b[0], b[1], v, off, { ask: v === '?', s: 13 })
+  h += ch(lab.span, L0, R0, 52 * K1)
+  h += ch(lab.run, M0, R0, 20 * K1)
+  if (lab.rise != null) h += lab.rise === '?' ? FK.label(M0[0] - 22, (M0[1] + T0[1]) / 2 + 6, '?', { ask: true, s: 14 }) : FK.label(M0[0] - 8 - String(lab.rise).length * 4 * K, (M0[1] + T0[1]) / 2 + 6, lab.rise, { s: 13 })
+  if (lab.rafter != null) h += sideText(T0, R0, M0, lab.rafter, { ask: lab.rafter === '?', chip: true, off: 24, s: 13, along: String(lab.rafter).length > 3 ? 40 : 0 })
+  if (o.slope) {
+    /* slope mark on the left rafter: a small level line of length 12 units and a rise */
+    const a = P([span * 0.1, rise * 0.2]), k = span * 0.12 / o.slope[1]
+    const b = P([span * 0.1 + o.slope[1] * k, rise * 0.2]), c = P([span * 0.1 + o.slope[1] * k, rise * 0.2 + o.slope[0] * k])
+    h += F.line(a[0], a[1] + 14, b[0], b[1] + 14, { c: C.ink, w: 1.2 }) + F.line(b[0], b[1] + 14, c[0], c[1] + 14, { c: C.ink, w: 1.2 })
+    h += FK.t((a[0] + b[0]) / 2, a[1] + 32, String(o.slope[1]), { s: 12, b: true }) + FK.t(b[0] + 6, (b[1] + c[1]) / 2 + 18, String(o.slope[0]), { s: 12, b: true, a: 'start' })
+  }
+  return F.svg(fit.w, fit.h, h, { max: o.max || '3.6in' })
+}
+
+/* a common rafter at slope deg, with a plumb cut at the ridge end and a birdsmouth (seat cut and heel cut)
+   over a wall plate. o.askTop, o.askSeat draw ? chips for the two cut angles */
+function rafterCuts(deg, o) {
+  o = o || {}
+  const t = Math.tan(deg * D2R), s = Math.sin(deg * D2R), c = Math.cos(deg * D2R)
+  const d = 1.15, X = 5, xt = -1.1, xa = 1.1, ys = xa * t + 0.6 * d / c
+  const xb = ys / t
+  const topY = x => d / c + x * t
+  const pts = [[xt, xt * t], [xa, xa * t], [xa, ys], [xb, ys], [X, X * t], [X, topY(X)], [xt, topY(xt)]]
+  const plate = [[xa, ys], [xb + 0.7, ys], [xb + 0.7, ys - 1.4], [xa, ys - 1.4]]
+  const fit = fitter(pts.concat(plate), o.W || 520, o.H || 340, o.pad || 70, o.padX || 70)
+  const P = fit.P
+  let h = F.poly(plate.map(P), { fill: C.light, w: 1.4 }) + F.poly(pts.map(P), { fill: C.fill })
+  h += F.line(...P([xa, xa * t]), ...P([xa, ys]), { c: C.red, w: 2.6 }) + F.line(...P([xa, ys]), ...P([xb, ys]), { c: C.red, w: 2.6 }) + F.line(...P([X, X * t]), ...P([X, topY(X)]), { c: C.red, w: 2.6 })
+  /* angle between the plumb cut and the top edge, and between the seat cut and the bottom edge */
+  h += arcAt(P([X, topY(X)]), P([X, X * t]), P([X - 3, topY(X - 3)]), 40, o.askTop ? '?' : (o.topLab || L2(90 - deg) + '°'), { ask: o.askTop, lr: 18, s: 14 })
+  h += arcAt(P([xb, ys]), P([xa, ys]), P([xa, xa * t]), 40, null, {})
+  const sp = P([xb, ys])
+  h += o.askSeat ? FK.label(sp[0] - 22, sp[1] + 38, '?', { ask: true, s: 14 }) : FK.t(sp[0] - 22, sp[1] + 38, o.seatLab || L2(deg) + '°', { s: 14, b: true, c: C.red })
+  const pc = P([X, (X * t + topY(X)) / 2]), sc = P([(xa + xb) / 2, ys]), hc = P([xa, (xa * t + ys) / 2])
+  h += FK.callout(pc[0], pc[1], pc[0] + 20, pc[1] + 80, 'plumb cut', { s: 12 })
+  h += FK.callout(sc[0], sc[1], sc[0] - 10, sc[1] + 84, 'seat cut', { s: 12 })
+  h += FK.callout(hc[0], hc[1], hc[0] - 80, hc[1] + 60, 'heel cut', { s: 12 })
+  return F.svg(fit.w, fit.h, h, { max: o.max || '4in' })
+}
+function L2(x) { return String(Math.round(x * 100) / 100) }
+
+/* ---------- degrees, minutes and seconds ---------- */
+/* decimal degrees to [d, m, s], seconds rounded to dp places (0 = whole seconds), with carries */
+function dms(x, dp) {
+  dp = dp || 0
+  const f = Math.pow(10, dp)
+  let tot = Math.round(Math.abs(x) * 3600 * f) / f
+  const d = Math.floor(tot / 3600 + 1e-9)
+  tot = Math.round((tot - d * 3600) * f) / f
+  const m = Math.floor(tot / 60 + 1e-9)
+  const s = Math.round((tot - m * 60) * f) / f
+  return [d, m, s]
+}
+const pad2 = v => (v < 10 ? '0' : '') + v
+/* text form 36°52′12″ (minutes and seconds kept, even when zero) */
+function dmsText(x, dp) { const [d, m, s] = dms(x, dp); return d + '°' + m + '′' + s + '″' }
+/* the TI-30Xa entry D.MMSS for d m s */
+function dmsKey(d, m, s) { return d + '.' + pad2(m) + pad2(s) }
+const dd = (d, m, s) => d + m / 60 + s / 3600
+
+/* a calculator box for angles in D°M′S. The TI-30Xa keys are the canonical sequence. The Sharp shows a sum or
+   difference of D°M′S values in D°M′S, and its 2ndF ↔DEG key switches the display between D°M′S and decimal
+   (Sharp EL-531XT Calculation Examples [10]), so for the Sharp the box uses the sequence with or without the final
+   DD▸DMS that leaves its display in the same form as the TI-30Xa. Both sequences are checked on both emulators. */
+const CALC = require('./calc.js')
+function dmsCalc(B, o) {
+  const rows = o.rows || [{ seq: o.seq, expect: o.expect, label: o.label }]
+  const isDms = (s, id) => /°/.test(CALC.screenText(s, id).main)
+  rows.forEach(r => {
+    const want = isDms(r.seq, 'ti30xa')
+    const alt = /\sDD▸DMS$/.test(r.seq) ? r.seq.replace(/\sDD▸DMS$/, '') : r.seq + ' DD▸DMS'
+    r.sh = [r.seq, alt].find(s => isDms(s, 'el531xt') === want)
+    if (!r.sh) throw new Error('no Sharp sequence shows the same form for ' + r.seq)
+    B.check(r.seq, r.expect)
+    if (r.sh !== r.seq) B.check(r.sh, r.expect)
+  })
+  const esc = s => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+  const col = md => {
+    let h = '<div class="col"><div class="mdl">' + md.name + '</div>'
+    rows.forEach(r => {
+      const s = md.id === 'ti30xa' ? r.seq : r.sh, d = CALC.screenText(s, md.id)
+      h += (r.label ? '<div class="rowlab">' + r.label + '</div>' : '') + '<div class="keys">' + CALC.chips(s, md.id) + '</div>' +
+        '<div class="disp">Display <span class="lcd">' + esc(d.main) + (d.exp ? '<span class="e">' + esc(d.exp) + '</span>' : '') + '</span></div>'
+    })
+    return h + '</div>'
+  }
+  return '<div class="calc"><div class="hd">Calculator' + (o.title ? '<span class="t">' + o.title + '</span>' : '') + '</div>' +
+    '<div class="cols">' + CALC.MODELS.map(col).join('') + '</div>' + (o.say ? '<div class="say">' + o.say + '</div>' : '') + '</div>'
+}
+
+/* ---------- BCBC plates ---------- */
+/* one numbered figure with two or more cropped plates side by side (PL.figure takes one plate). parts: [{ num, crop, width }] */
+function plateFig(B, parts, caption) {
+  const PL = require('./plates.js')
+  const nums = Array.from(new Set(parts.map(p => p.num)))
+  /* each plate sits in a box of fixed height, so the page layout knows its size before the drawing loads */
+  const hgt = p => (parseFloat(p.width) * p.crop[3] / p.crop[2]).toFixed(3) + 'in'
+  const body = '<div style="display:flex;gap:6pt;justify-content:center">' + parts.map(p => '<div style="width:' + p.width + ';height:' + hgt(p) + ';overflow:hidden">' + PL.svg(p.num, { crop: p.crop }) + '</div>').join('') + '</div>'
+  const src = '<span class="src">Source: ' + nums.map(n => PL.cite(n)).join(', and ') + '</span>'
+  return B.figure(body, caption + ' ' + src, { cls: 'plate', width: parts.length > 1 ? null : parts[0].width }).replace('<figure class="plate">', '<figure class="plate" style="break-inside:avoid">')
+}
+
+module.exports = { FK, setK, minPt, auto, fitter, poly, rt, trigTri, pythSquares, angleFig, protractor, straightLine, aroundPoint, boltCircle, cornerCheck, frameDiag, pipeOffset, bevel, mitreCorner, polyFrame, ramp, arcAt, rightAt, dimOut, sideText, D2R, crossArcs, crossLines, transversal, stairSide, gable, rafterCuts, dms, dmsText, dmsKey, dd, dmsCalc, plateFig }

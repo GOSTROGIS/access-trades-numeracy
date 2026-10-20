@@ -1,6 +1,8 @@
-/* Build a book: node build.js --book textbook [--only 1,4] [--name out-name] [--png] [--no-front]
+/* Build a book: node build.js --book textbook [--only 1,4,A] [--name out-name] [--png] [--no-front] [--front-only]
    Assembles HTML from front matter, chapter modules and back matter, paginates with Paged.js in Chromium and
-   prints a US Letter PDF. Writes out/<name>.html, .pdf, -answers.json, -calcs.json, -glossary.json, -report.json */
+   prints a US Letter PDF. Writes out/<name>.html, .pdf, -answers.json, -calcs.json, -glossary.json, -report.json
+   With --web it writes the screen edition out/<name>-web.html from the same assembled body (engine/web.js, styles/web.css),
+   the Paged.js page as out/<name>-paged.html and the same JSON files, and skips Paged.js and the PDF. */
 const fs = require('fs'), path = require('path'), cp = require('child_process');
 const L = require('./engine/lib.js');
 const args = process.argv.slice(2);
@@ -10,6 +12,7 @@ const only = arg('only', null);
 const name = arg('name', bookKind + (only ? '-ch' + String(only).replace(/,/g, '-') : ''));
 const OUT = path.join(__dirname, 'out');
 fs.mkdirSync(OUT, { recursive: true });
+const WEB = args.includes('--web')
 
 const META = {
   textbook: { title: 'ACCESS Trades Numeracy', kind: 'Textbook' },
@@ -20,14 +23,25 @@ const B = new L.Book(META[bookKind]);
 B.kind = bookKind;
 if (bookKind === 'exercise') B.wsLabel = 'Exercise';
 
-/* chapter modules for this book, in order */
+/* chapter modules for this book, in order: chNN-*.js, then appendices app-<letter>-*.js after the last chapter.
+   --only takes chapter numbers and appendix letters: --only 13,A
+   --front-only builds the front matter alone, to preview it (no chapters, no back matter) */
+const FRONT_ONLY = args.includes('--front-only')
 const dir = path.join(__dirname, bookKind === 'exercise' ? 'exercises' : 'chapters');
-let files = bookKind !== 'answers' && fs.existsSync(dir) ? fs.readdirSync(dir).filter(f => /^ch\d\d.*\.js$/.test(f)).sort() : [];
-if (only) { const set = String(only).split(',').map(Number); files = files.filter(f => set.includes(+f.slice(2, 4))); }
+const listed = bookKind !== 'answers' && fs.existsSync(dir) ? fs.readdirSync(dir).sort() : []
+let files = listed.filter(f => /^ch\d\d.*\.js$/.test(f))
+let appx = listed.filter(f => /^app-[a-z]-.*\.js$/.test(f))
+if (only) {
+  const set = String(only).split(',').map(s => s.trim())
+  files = files.filter(f => set.includes(String(+f.slice(2, 4))))
+  appx = appx.filter(f => set.map(s => s.toUpperCase()).includes(f[4].toUpperCase()))
+}
+if (FRONT_ONLY) { files = []; appx = [] }
 
 let body = '';
-const front = !args.includes('--no-front') && (!only || bookKind === 'answers');
+const front = !args.includes('--no-front') && (!only || bookKind === 'answers' || FRONT_ONLY);
 const fm = path.join(__dirname, 'engine', 'front-' + bookKind + '.js');
+/* the front matter is built once, before the chapters. The contents list is filled in after the last module. */
 if (front && fs.existsSync(fm)) body += require(fm)(B, L, 'front');
 const chapters = [];
 for (const f of files) {
@@ -36,22 +50,68 @@ for (const f of files) {
   chapters.push(mod(B, L));
   console.log('  built ' + f + ' (' + (Date.now() - t0) + ' ms)');
 }
-if (front && fs.existsSync(fm)) body = require(fm)(B, L, 'front');
+/* Appendices: the module opens with B.chapter (or B.exChapter) with num set to its letter, so sections, Examples,
+   Figures, Tables and Try it sets read A.1, A.2. Worksheets and exercise sets are numbered A1, A2 (not AA, AB),
+   the opener and running heads say Appendix, and no chapter number before it changes. */
+for (const f of appx) {
+  const letter = f[4].toUpperCase()
+  const mod = require(path.join(dir, f))
+  const t0 = Date.now()
+  const ws0 = B.worksheet
+  B.worksheet = function (o, items) {
+    const h = ws0(o, items)
+    const old = B.ch + String.fromCharCode(64 + B.wsN), neu = B.ch + B.wsN
+    B.curWs = B.curWs.replace(old, neu)
+    const e = B.toc[B.toc.length - 1]
+    e.num = neu
+    e.id = 'ws-' + neu
+    return h.replace(new RegExp('(ws-|\\s)' + old + '(?=[<"\\u2002])', 'g'), '$1' + neu)
+  }
+  let h
+  try { h = mod(B, L) } finally { B.worksheet = ws0 }
+  if (String(B.ch) !== letter) throw new Error(f + ' must open with num: \'' + letter + '\'')
+  const open = B.toc.find(e => e.level === 'c' && String(e.num) === letter)
+  if (open) open.app = true
+  h = h.replace(/<div class="lab">Chapter<\/div>/g, '<div class="lab">Appendix</div>')
+    .replace(/<h4>In this chapter you will<\/h4>/g, '<h4>In this appendix you will</h4>')
+    .replace(new RegExp('Chapter ' + letter + '(?=[\\u2002 <])', 'g'), 'Appendix ' + letter)
+  chapters.push(h)
+  console.log('  built ' + f + ' as Appendix ' + letter + ' (' + (Date.now() - t0) + ' ms)')
+}
 body += chapters.join('\n');
-if (front && fs.existsSync(fm)) body += require(fm)(B, L, 'back');
+if (front && !FRONT_ONLY && fs.existsSync(fm)) body += require(fm)(B, L, 'back');
 /* contents placeholder is filled after chapters so the toc list is complete */
 body = body.replace('<!--TOC-->', tocHtml(B));
-/* keep a number with its unit on one line: a non-breaking space in reading text (not inside tags or SVG) */
-body = body.replace(/(<svg[\s\S]*?<\/svg>)|(<[^>]+>)|([^<]+)/g, (all, svgPart, tag, text) => {
-  if (svgPart || tag) return all;
-  return text.replace(/(\d) (?=(mm|cm|km|m|in|ft|yd|mi|L|mL|kg|g|t|lb|psi|kPa|bar|US gal|imperial gal|gal|mm²|cm²|m²|in²|ft²|mm³|cm³|m³|in³|ft³|pieces|holes|bolts|boxes)(?![A-Za-z]))/g, '$1\u00A0');
+/* Drawings are set aside before the two passes and put back after, so no pass can touch them. A BCBC plate holds
+   an svg inside its svg, and a lazy match to the first closing tag would let the passes edit its point lists. */
+const svgKeep = []
+{
+  let out = '', depth = 0, start = 0, last = 0, m
+  const re = /<svg\b|<\/svg>/g
+  while ((m = re.exec(body))) {
+    if (m[0] !== '</svg>') { if (depth++ === 0) start = m.index }
+    else if (depth > 0 && --depth === 0) {
+      out += body.slice(last, start) + '\u0000SVG' + svgKeep.length + '\u0000'
+      svgKeep.push(body.slice(start, re.lastIndex))
+      last = re.lastIndex
+    }
+  }
+  body = out + body.slice(last)
+}
+/* one unit list for both non-breaking-space passes below */
+const UNITS = 'mm|cm|km|m|in|ft|yd|mi|L|mL|kg|g|t|lb|oz|psi|kPa|bar|US gal|imperial gal|gal|mm²|cm²|m²|in²|ft²|mm³|cm³|m³|in³|ft³|°F|°C|sixteenths|cups?|Tbsp|tsp|pieces|holes|bolts|boxes|portions'
+/* keep a number with its unit on one line: a non-breaking space in reading text (not inside tags; the drawings
+   are stashed above, so no SVG is left in the body here) */
+body = body.replace(/(<[^>]+>)|([^<]+)/g, (all, tag, text) => {
+  if (tag) return all;
+  return text.replace(new RegExp('(\\d) (?=(' + UNITS + ')(?![A-Za-z]))', 'g'),'$1\u00A0');
 });
 /* second pass across inline tags (stacked fractions, number spans): units, formula operators,
    "D = 800" style values, mixed numbers with a fraction glyph, and digit groups like 3.785 411 784 */
 {
   const C = '(?:<\\/(?:span|b|strong|em|i|sup|sub)>)*'
   const O = '(?:<(?:span|b|strong|em|i|sup|sub)(?:\\s[^>]*)?>)*'
-  const U = '(?:mm|cm|km|m|in|ft|yd|mi|L|mL|kg|g|lb|psi|kPa|gal|mm²|cm²|m²|in²|ft²|mm³|cm³|m³|in³|ft³|°F|°C|sixteenths)(?![A-Za-z])'
+  const U = '(?:' + UNITS + ')(?![A-Za-z])'
   const NB = ' '
   const fixChunk = s => s
     .replace(new RegExp('(\\d' + C + ') (?=' + O + U + ')', 'g'), '$1' + NB)
@@ -59,13 +119,15 @@ body = body.replace(/(<svg[\s\S]*?<\/svg>)|(<[^>]+>)|([^<]+)/g, (all, svgPart, t
     .replace(/(\b[A-Za-z]) = (?=[\d−])/g, '$1' + NB + '=' + NB)
     .replace(/(\d) (?=[½⅓⅔¼¾⅛⅜⅝⅞⅕⅖⅗⅘⅙⅚]|<span class="fr)/g, '$1' + NB)
     .replace(/(\d) (?=\d{3}(?!\d))/g, '$1' + NB)
-  body = body.replace(/(<svg[\s\S]*?<\/svg>)|((?:(?!<svg)[\s\S])+)/g, (all, svgPart, rest) => svgPart ? all : fixChunk(rest))
+  body = fixChunk(body)
 }
+body = body.replace(/\u0000SVG(\d+)\u0000/g, (all, i) => svgKeep[+i])
 
 function tocHtml(B) {
   let h = '<ol>';
   B.toc.forEach(e => {
-    if (e.level === 'c') h += '<li class="c"><a href="#' + e.id + '"><span class="tx"><span class="cn">' + e.num + '</span>' + e.title + '</span><span class="dots"></span></a></li>';
+    if (e.level === 'c' && e.app) h += '<li class="c app"><a href="#' + e.id + '"><span class="tx"><span class="cn"></span>Appendix ' + e.num + '&ensp;' + e.title + '</span><span class="dots"></span></a></li>';
+    else if (e.level === 'c') h += '<li class="c"><a href="#' + e.id + '"><span class="tx"><span class="cn">' + e.num + '</span>' + e.title + '</span><span class="dots"></span></a></li>';
     else if (e.level === 's' && !/^Worksheet/.test(e.title)) h += '<li class="s"><a href="#' + e.id + '"><span class="tx">' + e.num + '&ensp;' + e.title + '</span><span class="dots"></span></a></li>';
     else if (e.level === 'x') h += '<li class="s"><a href="#' + e.id + '"><span class="tx">Exercise ' + e.num + '&ensp;' + e.title + '</span><span class="dots"></span></a></li>';
     else if (e.level === 'b') h += '<li class="c"><a href="#' + e.id + '"><span class="tx">' + e.title + '</span><span class="dots"></span></a></li>';
@@ -73,18 +135,24 @@ function tocHtml(B) {
   return h + '</ol>';
 }
 const rel = p => path.relative(OUT, path.join(__dirname, p)).split(path.sep).join('/');
+/* the Paged.js page. In --web mode it is written as out/<name>-paged.html, so test-web.js can compare the web file
+   with the PDF path's HTML of the same body without a second build. */
 const html = '<!doctype html><html lang="en-CA"><head><meta charset="utf-8"><title>' + META[bookKind].title + ' ' + META[bookKind].kind + '</title>' +
   '<link rel="stylesheet" href="' + rel('styles/fonts.css') + '"><link rel="stylesheet" href="' + rel('styles/book.css') + '">' +
   '<script>window.PagedConfig={auto:true,after:function(flow){window.__pages=flow.total}}</script>' +
   '<script src="' + rel('vendor/node_modules/pagedjs/dist/paged.polyfill.js') + '"></script></head><body>' + body + '</body></html>';
-fs.writeFileSync(path.join(OUT, name + '.html'), html);
+if (WEB) {
+  fs.writeFileSync(path.join(OUT, name + '-web.html'), require('./engine/web.js')({ body, B, meta: META[bookKind], kind: bookKind, root: __dirname }))
+  fs.writeFileSync(path.join(OUT, name + '-paged.html'), html)
+} else fs.writeFileSync(path.join(OUT, name + '.html'), html)
 fs.writeFileSync(path.join(OUT, name + '-answers.json'), JSON.stringify(B.answers, null, 1));
 fs.writeFileSync(path.join(OUT, name + '-calcs.json'), JSON.stringify(B.calcs, null, 1));
 fs.writeFileSync(path.join(OUT, name + '-glossary.json'), JSON.stringify(B.glossary, null, 1));
 fs.writeFileSync(path.join(OUT, name + '-toc.json'), JSON.stringify(B.toc, null, 1));
 console.log('HTML written: ' + B.calcs.length + ' calculator sequences checked, ' + B.answers.length + ' answers, ' + Object.keys(B.glossary).length + ' glossary terms');
+if (WEB) console.log('Web edition: ' + path.join(OUT, name + '-web.html') + ' (' + Math.round(fs.statSync(path.join(OUT, name + '-web.html')).size / 1024) + ' KB). No PDF in web mode.')
 
-(async () => {
+if (!WEB) (async () => {
   const { chromium } = require('/opt/npm-tools/node_modules/playwright');
   /* Paged.js reads the stylesheets with XHR, so the book is served over a local HTTP server */
   const http = require('http');
@@ -144,6 +212,8 @@ console.log('HTML written: ' + B.calcs.length + ' calculator sequences checked, 
       if (!c) return;
       const r = c.getBoundingClientRect();
       c.querySelectorAll('figure, .ex, .calc, .box, table, .prob, .canvas, svg, .try').forEach(el => {
+        /* an svg inside an svg (the logo on a BCBC plate) is clipped by its outer drawing, so only the outer one counts */
+        if (el.tagName.toLowerCase() === 'svg' && el.parentElement && el.parentElement.closest('svg')) return
         const b = el.getBoundingClientRect();
         if (b.width > 0 && (b.right > r.right + 2 || b.bottom > r.bottom + 2)) over.push({ page: i + 1, cls: el.className.baseVal != null ? 'svg' : el.className, by: Math.round(Math.max(b.right - r.right, b.bottom - r.bottom)) });
       });

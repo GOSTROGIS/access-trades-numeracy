@@ -5,6 +5,7 @@ module.exports = function (B, L) {
   const C = F.C
   const n = L.num
   const r2 = x => L.round(x, 2)
+  const f2 = x => n(L.round(x, 2), 2), f3 = x => n(L.round(x, 3), 3)
   const hyp = (a, b) => Math.sqrt(a * a + b * b)
   const leg = (c, a) => Math.sqrt(c * c - a * a)
   const D2R = Math.PI / 180
@@ -83,6 +84,39 @@ module.exports = function (B, L) {
   const quad = quadPts([85, 100, 75, 100], 6)
   if (!(quad.x > 0 && quad.y > 0)) throw new Error('quadrilateral does not close')
 
+  /* Sections 12.7 to 12.10: angle pairs, degrees minutes and seconds, stairs, rafters and layout */
+  const PL = require('../engine/plates.js')
+  const dmsT = G.dmsText, dk = G.dmsKey, dd = G.dd
+  const cr = 62, gt = 52
+  const d1 = [36, 52, 12], d1v = dd(...d1)
+  const d2 = 47.37, d2m = (d2 - 47) * 60, d2s = (d2m - Math.floor(d2m)) * 60
+  const ad1 = [27, 45, 30], ad2 = [18, 32, 45], adv = dd(...ad1) + dd(...ad2)
+  const sb = [37, 25, 15], sbv = 90 - dd(...sb)
+  /* a metric stair: total rise, the private stair maximum rise from Table 9.8.4.1, a chosen run */
+  const st = { tr: 2720, max: 200, run: 265 }
+  st.n = Math.ceil(st.tr / st.max)
+  st.ur = st.tr / st.n
+  st.t = st.n - 1
+  st.trun = st.t * st.run
+  st.len = hyp(st.tr, st.trun)
+  /* an imperial deck stair */
+  const si = { n: 6, r: 7.25, u: 10.5 }
+  si.tr = si.n * si.r
+  si.trun = (si.n - 1) * si.u
+  si.len = hyp(si.tr, si.trun)
+  si.rmm = si.r * 25.4
+  si.umm = si.u * 25.4
+  const unif = [191, 194, 189, 195, 192, 190]
+  const adj = unif.slice(1).map((v, i) => Math.abs(v - unif[i])), adjMax = Math.max(...adj), spread = Math.max(...unif) - Math.min(...unif)
+  /* rafters and layout */
+  const rf = { span: 7200, p: 5, run: 3600 }
+  rf.rise = rf.run * rf.p / 12
+  rf.len = hyp(rf.run, rf.rise)
+  const ri = { run: 138, p: 6, rise: 138 * 6 / 12 }
+  ri.len = hyp(ri.run, ri.rise)
+  ri.pf = hyp(12, ri.p)
+  const lay = { l: 9600, w: 6000, m1: 3600, m2: 4800, d1: 11332, d2: 11309, d: hyp(9600, 6000) }
+
   return L.join([
     B.chapter({
       num: 12, id: 'triangles', title: 'Angles and Right Triangles',
@@ -127,6 +161,7 @@ module.exports = function (B, L) {
       steps: ['The two angles sit on a straight line, so they add to 180°.', 'Missing angle = 180° − 125° = 55°.'],
       answer: '55°, an acute angle.'
     }),
+    B.p('Angles that add to 90° or to 180°, the equal angles across from each other where two lines cross, and the angles made where a line crosses two parallel lines are in Section 12.7, Angle pairs and parallel lines.'),
     B.tryIt([
       { q: 'Name each angle: 35°, 90°, 150°, 89°, 180°.', a: 'acute, right, obtuse, acute, straight' },
       { q: 'Two angles on a straight line. One is 72°. Find the other.', a: n(180 - 72) + '°' },
@@ -246,6 +281,193 @@ module.exports = function (B, L) {
       { q: 'A frame measures 2,013 mm on one diagonal and 2,020 mm on the other. Is it square?', a: 'No. The diagonals are not equal.' },
       { q: 'A door opening is 36″ by 80″. Find the diagonal to the nearest 1/16″.', a: L.inch(hyp(36, 80), 16) }
     ]),
+
+    /* ---------- 12.7 Angle pairs and parallel lines ---------- */
+    B.section('Angle pairs and parallel lines'),
+    B.p('Some pairs of angles come up so often that they have names. Two angles that add to 90° are ' + B.term('complementary angles', 'Two angles that add to 90°.') + '. The two acute angles of a right triangle are complementary. Two angles that add to 180° are ' + B.term('supplementary angles', 'Two angles that add to 180°.') + '. The two angles at the bend of the strap in Example 12.2 are supplementary: 125° + 55° = 180°.',
+      'When two straight lines cross, they make four angles. The angles across from each other are ' + B.term('vertically opposite angles', 'The angles across from each other where two straight lines cross. They are always equal.') + ', and they are always equal. Each angle and the angle beside it sit on a straight line, so they are supplementary.'),
+    B.figure(A(() => G.crossLines(cr, [cr + '°', (180 - cr) + '°', cr + '°', (180 - cr) + '°'], { max: '2.6in' }), FULL), 'Two lines cross. The angles across from each other are equal: ' + cr + '° and ' + cr + '°, ' + (180 - cr) + '° and ' + (180 - cr) + '°. Any two angles side by side add to 180°.'),
+    B.p('Two lines are ' + B.term('parallel lines', 'Lines that run in the same direction and stay the same distance apart. They never meet.', 'parallel') + ' when they run in the same direction and stay the same distance apart, like the two rails of a gate or the top and bottom plates of a wall. A line that crosses two or more lines is a ' + B.term('transversal', 'A line that crosses two or more other lines.') + '. Where a transversal crosses two parallel lines, it makes the same four angles at each crossing.'),
+    B.figure(A(() => G.transversal(gt, ['a', 'b', 'c', 'd'], ['e', 'f', 'g', 'h'], { max: '3.3in' }), FULL), 'A transversal crosses two parallel lines and makes eight angles, a to h. The arrow marks show that the two lines are parallel.'),
+    B.table(['Angle pair', 'Where the angles are', 'Rule', 'In ' + 'Figure ' + B.ch + '.' + B.fig], [
+      ['Complementary', 'any two angles', 'add to 90°', 'the two acute angles of a right triangle'],
+      ['Supplementary', 'any two angles', 'add to 180°', 'a and b, a and d'],
+      ['Vertically opposite', 'across from each other at a crossing', 'equal', 'a and c, b and d'],
+      ['Corresponding', 'in the same position at each crossing', 'equal', 'a and e, d and h'],
+      ['Alternate', 'between the parallel lines, on opposite sides of the transversal', 'equal', 'c and e, d and f'],
+      ['Co-interior', 'between the parallel lines, on the same side of the transversal', 'add to 180°', 'd and e, c and f']
+    ], { align: ['', '', 'c', ''], caption: 'Angle pairs and their rules.' }),
+    B.example({
+      title: 'Angles on a gate brace',
+      q: 'A brace crosses the two parallel rails of a gate. At the top rail, angle a is ' + gt + '°. Find angles b to h.',
+      fig: A(() => G.transversal(gt, [gt + '°', 'b', 'c', 'd'], ['e', 'f', 'g', 'h'], { max: '2.7in', W: 380 }), EX),
+      long: true,
+      steps: ['b sits beside a on the straight rail: b = 180° − ' + gt + '° = ' + (180 - gt) + '°.', 'c is opposite a, so c = ' + gt + '°. d is opposite b, so d = ' + (180 - gt) + '°.', 'Corresponding angles are equal, so the bottom crossing repeats the top one: e = ' + gt + '°, f = ' + (180 - gt) + '°, g = ' + gt + '°, h = ' + (180 - gt) + '°.', 'Check with a co-interior pair: d + e = ' + (180 - gt) + '° + ' + gt + '° = 180°.'],
+      answer: 'a, c, e and g are ' + gt + '°. b, d, f and h are ' + (180 - gt) + '°.'
+    }),
+    B.example({
+      title: 'Crossed braces',
+      q: 'Two braces cross like an X. One of the four angles where they cross is 68°. Find the other three.',
+      fig: A(() => G.crossLines(68, ['68°', '?', '?', '?'], { max: '2.3in' }), EX),
+      steps: ['The angle beside 68° makes a straight line with it: 180° − 68° = 112°.', 'Vertically opposite angles are equal: 68° across from 68°, and 112° across from 112°.', 'Check: 68° + 112° + 68° + 112° = 360°, a full turn.'],
+      answer: '112°, 68° and 112°.'
+    }),
+    B.tryIt([
+      { q: 'Find the complement of 28°.', a: n(90 - 28) + '°' },
+      { q: 'Find the supplement of 28°.', a: n(180 - 28) + '°' },
+      { q: 'Two lines cross. One angle is 104°. Find the other three.', a: n(180 - 104) + '°, 104° and ' + n(180 - 104) + '°' },
+      { q: 'A transversal crosses two parallel lines. One of the eight angles is 41°. What sizes are the other seven?', a: 'Three more of 41° and four of ' + n(180 - 41) + '°' },
+      { q: 'Two alternate angles lie between two parallel lines. One is 73°. Find the other.', a: '73° (alternate angles are equal)' },
+      { q: 'Two co-interior angles lie between two parallel lines. One is 115°. Find the other.', a: n(180 - 115) + '°' }
+    ]),
+
+    /* ---------- 12.8 Degrees, minutes and seconds ---------- */
+    B.section('Degrees, minutes and seconds'),
+    B.p('A degree can be split into smaller parts. One degree is 60 ' + B.term('minutes of angle', 'One sixtieth of a degree, written ′. 60′ = 1°.', 'minutes') + ', and one minute is 60 ' + B.term('seconds of angle', 'One sixtieth of a minute of angle, written ″. 60″ = 1′.', 'seconds') + '. An angle written this way is in degrees, minutes and seconds, D°M′S for short. 36°52′12″ is read "36 degrees, 52 minutes, 12 seconds".',
+      'The marks ′ and ″ are the same marks used for feet and inches. After a degree sign they mean minutes and seconds. An angle can also be written in decimal degrees, such as 36.87°. The SIN, COS and TAN keys work in decimal degrees, so you need to change from one form to the other.'),
+    B.formula('Degrees, minutes and seconds', ['1° = 60′ and 1′ = 60″, so 1° = 3,600″', 'decimal degrees = D + M ÷ 60 + S ÷ 3,600', 'minutes = decimal part of the degrees × 60', 'seconds = decimal part of the minutes × 60'],'D, M and S are the degrees, minutes and seconds.'),
+    B.example({
+      title: 'D°M′S to decimal degrees',
+      q: 'A drawing gives an angle of ' + d1[0] + '°' + d1[1] + '′' + d1[2] + '″. Change it to decimal degrees.',
+      steps: ['Minutes: ' + d1[1] + ' ÷ 60 = ' + n(L.round(d1[1] / 60, 6), 6) + '.', 'Seconds: ' + d1[2] + ' ÷ 3,600 = ' + n(L.round(d1[2] / 3600, 6), 6) + '.', 'Add: ' + d1[0] + ' + ' + n(L.round(d1[1] / 60, 6), 6) + ' + ' + n(L.round(d1[2] / 3600, 6), 6) + ' = ' + n(L.round(d1v, 6)) + '°.'],
+      after: G.dmsCalc(B, { seq: dk(...d1) + ' DMS▸DD', expect: n(L.round(d1v, 2)), say: 'On the TI-30Xa, key the angle as ' + dk(...d1) + ': the degrees, the decimal point, then two digits of minutes and two of seconds. 2nd DMS▸DD changes it to decimal degrees. On the Sharp, press D°M′S after the degrees and after the minutes. The Sharp shows the angle in D°M′S, and 2ndF ↔DEG switches the display to decimal degrees.' }),
+      answer: n(L.round(d1v, 6)) + '°'
+    }),
+    B.example({
+      title: 'Decimal degrees to D°M′S',
+      q: 'Change ' + d2 + '° to degrees, minutes and seconds.',
+      steps: ['The whole number is the degrees: 47°.', 'Minutes: 0.37 × 60 = ' + n(L.round(d2m, 4)) + '. The whole number is the minutes: ' + Math.floor(L.round(d2m, 4)) + '′.', 'Seconds: ' + n(L.round(d2m - Math.floor(L.round(d2m, 4)), 4)) + ' × 60 = ' + n(L.round(d2s, 4)) + '″.'],
+      after: G.dmsCalc(B, { seq: d2 + ' DD▸DMS', expect: String(d2), say: 'On the TI-30Xa, 2nd DD▸DMS shows the angle in D°M′S while you look at it. The next calculation goes on in decimal degrees. On the Sharp, 2ndF ↔DEG switches the display between decimal degrees and D°M′S.' }),
+      answer: dmsT(d2)
+    }),
+    B.tip('Keying angles in D°M′S', 'TI-30Xa: key D.MMSS, with two digits for the minutes and two for the seconds, using 0s where needed. 48°5′3″ is keyed 48.0503. Change a D°M′S value with 2nd DMS▸DD before you use it in a calculation.', 'Sharp EL-531XT: key the degrees, D°M′S, the minutes, D°M′S, then the seconds. The Sharp adds and subtracts D°M′S values as they are and shows the result in D°M′S.', 'Sources: TI-30Xa Guidebook, page 7 (DMS), and Sharp EL-531XT Operation Manual, Calculation Examples [10].'),
+    B.example({
+      title: 'Adding angles',
+      q: 'Add ' + ad1[0] + '°' + ad1[1] + '′' + ad1[2] + '″ + ' + ad2[0] + '°' + ad2[1] + '′' + ad2[2] + '″.',
+      steps: ['Add each column: ' + (ad1[0] + ad2[0]) + '°, ' + (ad1[1] + ad2[1]) + '′ and ' + (ad1[2] + ad2[2]) + '″.', (ad1[2] + ad2[2]) + '″ is more than 60″: ' + (ad1[2] + ad2[2]) + '″ = 1′ ' + (ad1[2] + ad2[2] - 60) + '″. Carry 1 to the minutes: ' + (ad1[1] + ad2[1] + 1) + '′.', (ad1[1] + ad2[1] + 1) + '′ = 1° ' + (ad1[1] + ad2[1] + 1 - 60) + '′. Carry 1 to the degrees: ' + (ad1[0] + ad2[0] + 1) + '°.'],
+      after: G.dmsCalc(B, { seq: dk(...ad1) + ' DMS▸DD + ' + dk(...ad2) + ' DMS▸DD = DD▸DMS', expect: n(L.round(adv, 4)), say: 'The TI-30Xa adds in decimal degrees, and 2nd DD▸DMS shows the sum in D°M′S. The Sharp adds the D°M′S values and shows the sum in D°M′S.' }),
+      answer: dmsT(adv)
+    }),
+    B.example({
+      title: 'Subtracting from 90°',
+      q: 'Find 90° − ' + sb[0] + '°' + sb[1] + '′' + sb[2] + '″, the complement of ' + sb[0] + '°' + sb[1] + '′' + sb[2] + '″.',
+      steps: ['Write 90° as 89°59′60″: borrow 1° = 60′, then 1′ = 60″.', 'Subtract each column: 89 − ' + sb[0] + ' = ' + (89 - sb[0]) + '°, 59 − ' + sb[1] + ' = ' + (59 - sb[1]) + '′, 60 − ' + sb[2] + ' = ' + (60 - sb[2]) + '″.'],
+      after: G.dmsCalc(B, { seq: '90 − ' + dk(...sb) + ' DMS▸DD = DD▸DMS', expect: n(L.round(sbv, 4)) }),
+      answer: dmsT(sbv)
+    }),
+    B.watch('36.52° is not 36°52′', 'Decimal degrees and minutes are not the same thing. 36°52′ = 36 + 52 ÷ 60 = ' + n(L.round(dd(36, 52, 0), 4), 4) + '°, but 36.52° = ' + dmsT(36.52) + '. Always change one form to the other before you compare or calculate.'),
+    B.check('36 + 52 ÷ 60 =', n(L.round(dd(36, 52, 0), 4), 4)),
+    B.tryIt([
+      { q: 'Change 25°30′ to decimal degrees.', a: n(dd(25, 30, 0)) + '°' },
+      { q: 'Change 12°15′36″ to decimal degrees.', a: n(L.round(dd(12, 15, 36), 6)) + '°' },
+      { q: 'Change 63.75° to D°M′S.', a: dmsT(63.75) },
+      { q: 'Change 18.125° to D°M′S.', a: dmsT(18.125) },
+      { q: 'Add 14°38′50″ + 22°45′25″.', a: dmsT(dd(14, 38, 50) + dd(22, 45, 25)) },
+      { q: 'Find the supplement of 72°41′36″.', a: dmsT(180 - dd(72, 41, 36)) }
+    ]),
+    B.check('12.1536 DMS▸DD', n(L.round(dd(12, 15, 36), 6))),
+    B.check('14.3850 DMS▸DD + 22.4525 DMS▸DD = DD▸DMS', n(L.round(dd(14, 38, 50) + dd(22, 45, 25), 4))),
+    B.check('180 − 72.4136 DMS▸DD = DD▸DMS', n(L.round(180 - dd(72, 41, 36), 4))),
+
+    /* ---------- 12.9 Stair geometry ---------- */
+    B.section('Stair geometry'),
+    B.p('A straight stair is a row of small right triangles that make one large right triangle. Each step has a ' + B.b('unit rise') + ', the height of one riser, and a ' + B.b('unit run') + ', the depth of one tread measured from nosing to nosing. The whole flight has a ' + B.b('total rise') + ' from floor to floor and a ' + B.b('total run') + ' along the floor. The stringer, the board that carries the treads, slopes along the long side.',
+      'Chapter 8 shows the stair formulas: how many risers a stair needs, the unit rise and the total run. This section puts those numbers on a drawing, checks them against the BC Building Code and finds the stringer line with the Pythagorean theorem.'),
+    B.figure(A(() => G.stairSide(6, 190, 260, { names: true, lab: { rise: 'unit rise', run: 'unit run', totalRise: 'total rise', totalRun: 'total run', stringer: 'stringer line' }, max: '4.4in' }), FULL), 'A straight flight with 6 risers and 5 treads. The upper floor is the last step, so this flight has one tread fewer than it has risers. The dashed stringer line runs from the bottom corner to the top corner.'),
+    B.formula('Stair geometry', ['treads = risers − 1 (a flight from floor to floor)', 'total rise = risers × unit rise', 'total run = treads × unit run', 'stringer line = √(total rise² + total run²)'], 'The stringer line is the hypotenuse of the right triangle that has the total rise and the total run as its legs. The board for a stringer is longer than the line, to leave room for the cuts at each end.'),
+    B.sub('What the BC Building Code says'),
+    B.p('The BC Building Code 2024 (BCBC), Division B, Part 9, limits the rise and run of stairs. The limits depend on the stair type. In the code, private stairs are "exterior and interior stairs that serve a. single dwelling units, b. houses with a secondary suite including their common spaces, or c. garages that serve houses described in Clause a) or b)". Public stairs are "all stairs not described as service stairs or private stairs" (Notes to Tables 9.8.4.1. and 9.8.4.2., page 9-31). The rise and run tables do not apply to "stairs serving areas only used as service rooms or service spaces".'),
+    B.table(['What is limited', 'Private stair', 'Public stair', 'Where in the BCBC 2024, Division B'], [
+      ['Rise, maximum', '200 mm', '180 mm', 'Article 9.8.4.1, Sentence (1), Table 9.8.4.1, page 9-31'],
+      ['Rise, minimum', '125 mm', '125 mm', 'Article 9.8.4.1, Sentence (1), Table 9.8.4.1, page 9-31'],
+      ['Run, maximum', '355 mm', 'No limit', 'Article 9.8.4.2, Sentence (1), Table 9.8.4.2, page 9-31'],
+      ['Run, minimum', '255 mm', '280 mm', 'Article 9.8.4.2, Sentence (1), Table 9.8.4.2, page 9-31'],
+      ['Depth of a rectangular tread', 'not less than its run and not more than its run plus 25 mm', 'the same', 'Article 9.8.4.2, Sentence (2), page 9-31'],
+      ['Risers in one flight', '5 mm between adjacent treads or landings, 10 mm between the tallest and shortest', 'the same', 'Article 9.8.4.4, Sentence (1), page 9-32'],
+      ['Runs of rectangular treads in one flight', '5 mm between adjacent treads, 10 mm between the deepest and shallowest', 'the same', 'Article 9.8.4.4, Sentence (3), page 9-32']
+    ], { align: ['', 'c', 'c', ''], caption: 'Stair limits quoted from the BCBC 2024. The rise "is measured as the vertical nosing-to-nosing distance" (Sentence 9.8.4.1.(1)).' }),
+    B.p('Clear height over a stair is measured "vertically, over the clear width of the stair, from a straight line tangent to the tread and landing nosings to the lowest point above". It "shall not be less than 2 050 mm", and over stairs "serving a single dwelling unit or a house with a secondary suite including their common spaces" it "shall not be less than 1 950 mm" (Article 9.8.2.2, Sentences (1) to (3), page 9-30).'),
+    G.plateFig(B, [{ num: '9.8.4.1', crop: [660, 398, 340, 218], width: '3.05in' }, { num: '9.8.4.2', crop: [586, 398, 336, 218], width: '3.05in' }], 'Rise (left) and run (right) are both measured from nosing to nosing. Tread depth (right) is measured from the nosing to the riser, so it is a little more than the run.'),
+    B.example({
+      title: 'Laying out a stair',
+      q: 'A stair in a house runs from one floor to the next. The total rise is ' + n(st.tr) + ' mm. Use the private stair maximum rise of ' + st.max + ' mm to find the number of risers and the unit rise. The treads have a unit run of ' + st.run + ' mm. Check both against Table 12.3, then find the total run and the stringer line, to two decimal places.',
+      fig: A(() => G.stairSide(st.n, st.ur, st.run, { lab: { totalRise: n(st.tr) + ' mm', totalRun: '?', stringer: '?' }, max: '2.6in' }), EX),
+      steps: ['Risers (Chapter 8): ' + n(st.tr) + ' ÷ ' + st.max + ' = ' + n(st.tr / st.max) + '. Round up to ' + st.n + ' risers, so no riser is taller than ' + st.max + ' mm.', 'Unit rise = ' + n(st.tr) + ' ÷ ' + st.n + ' = ' + f2(st.ur) + ' mm. It is between 125 mm and 200 mm.', 'Treads = ' + st.n + ' − 1 = ' + st.t + '. The unit run of ' + st.run + ' mm is between 255 mm and 355 mm.', 'Total run = ' + st.t + ' × ' + st.run + ' = ' + n(st.trun) + ' mm.', 'Stringer line = √(' + n(st.tr) + '² + ' + n(st.trun) + '²).'],
+      calc: { rows: [{ label: 'Unit rise', seq: st.tr + ' ÷ ' + st.n + ' =', expect: f2(st.ur) }, { label: 'Stringer line', seq: '( ' + st.tr + ' x² + ' + st.trun + ' x² ) √x', expect: f2(st.len) }] },
+      answer: st.n + ' risers of ' + f2(st.ur) + ' mm and ' + st.t + ' treads. Total run ' + n(st.trun) + ' mm, stringer line ' + f2(st.len) + ' mm.'
+    }),
+    B.example({
+      title: 'A deck stair in inches',
+      q: 'A deck stair has ' + si.n + ' risers of ' + L.mx(7, 1, 4) + '″ and ' + (si.n - 1) + ' treads with a unit run of ' + L.mx(10, 1, 2) + '″. Find the total rise, the total run and the stringer line to the nearest 1/16″. Then change the unit rise and run to millimetres (1 in = 25.4 mm, Chapter 7) and check them against the private stair limits.',
+      steps: ['Total rise = ' + si.n + ' × 7.25 = ' + n(si.tr) + '″. Total run = ' + (si.n - 1) + ' × 10.5 = ' + n(si.trun) + '″.', 'Stringer line = √(' + n(si.tr) + '² + ' + n(si.trun) + '²) = ' + f3(si.len) + '″, which is ' + L.inch(si.len, 16) + ' or ' + L.ftin(si.len, 16) + '.', 'Unit rise: 7.25 × 25.4 = ' + f2(si.rmm) + ' mm, between 125 mm and 200 mm. Unit run: 10.5 × 25.4 = ' + f2(si.umm) + ' mm, between 255 mm and 355 mm.'],
+      calc: { seq: '( ' + si.tr + ' x² + ' + si.trun + ' x² ) √x', expect: f3(si.len) },
+      answer: 'Total rise ' + n(si.tr) + '″, total run ' + n(si.trun) + '″, stringer line ' + L.ftin(si.len, 16) + '. Both step sizes are inside the private stair limits.'
+    }),
+    B.check('7.25 × 25.4 =', f2(si.rmm)),
+    B.check('10.5 × 25.4 =', f2(si.umm)),
+    B.example({
+      title: 'Checking the risers of a flight',
+      q: 'The risers in one flight measure ' + unif.join(', ') + ' mm, from the bottom up. Does the flight meet Article 9.8.4.4, Sentence (1)?',
+      steps: ['Differences between neighbours: ' + adj.join(', ') + ' mm. The largest is ' + adjMax + ' mm, more than the 5 mm allowed between adjacent treads or landings.', 'Tallest minus shortest: ' + Math.max(...unif) + ' − ' + Math.min(...unif) + ' = ' + spread + ' mm. That is inside the 10 mm allowed in a flight.'],
+      answer: 'No. The flight passes the 10 mm check but fails the 5 mm check between the ' + unif[2] + ' mm and ' + unif[3] + ' mm risers.'
+    }),
+    B.tryIt([
+      { q: 'A stair has 12 risers of 185 mm and 11 treads with a 270 mm unit run. Find the total rise, the total run and the stringer line to two decimal places.', a: 'Total rise ' + n(12 * 185) + ' mm, total run ' + n(11 * 270) + ' mm, stringer line ' + f2(hyp(12 * 185, 11 * 270)) + ' mm' },
+      { q: 'Is a unit rise of 205 mm allowed on a private stair? On a public stair?', a: 'No on both. The maximum rise is 200 mm for private stairs and 180 mm for public stairs (Table 9.8.4.1).' },
+      { q: 'A public stair has a unit run of 275 mm. Does it meet Table 9.8.4.2?', a: 'No. The minimum run for a public stair is 280 mm.' },
+      { q: 'A rectangular tread has a run of 260 mm. What tread depths does Sentence 9.8.4.2.(2) allow?', a: '260 mm to ' + (260 + 25) + ' mm' },
+      { q: 'Measured straight up from the nosing line, a beam is 2,000 mm above a stair. Is that enough over a stair serving a single dwelling unit? Over a public stair?', a: 'Yes for the dwelling unit (1,950 mm minimum). No for the public stair (2,050 mm minimum).' },
+      { q: 'A stair has 4 risers of 7½″ and 3 treads of 11″. Find the stringer line to the nearest 1/16″.', a: L.inch(hyp(4 * 7.5, 3 * 11), 16) + ' (' + f3(hyp(4 * 7.5, 3 * 11)) + '″)' }
+    ]),
+    B.check('( 2220 x² + 2970 x² ) √x', f2(hyp(2220, 2970))),
+    B.check('( 30 x² + 33 x² ) √x', f3(hyp(30, 33))),
+
+    /* ---------- 12.10 Rafters and squaring a layout ---------- */
+    B.section('Rafters and squaring a layout'),
+    B.p('A gable roof is two right triangles back to back. In this section the ' + B.b('run') + ' of a rafter is the level distance it covers, from the wall line to the centre line of the ridge, and the ' + B.b('rise') + ' is how far it climbs over that run. The rafter line length is the hypotenuse. When the ridge is in the middle, the run is half the span.',
+      'Roof slope is often written as rise in 12: the number of units the roof rises for every 12 units of run. A 5 in 12 roof rises 5 mm for every 12 mm of run, or 5″ for every foot. Chapter 13 finds the angle of the roof from the same two numbers.'),
+    B.figure(A(() => G.gable(24, 5, { lab: { span: 'span', run: 'run', rise: 'rise', rafter: 'rafter line length' }, slope: [5, 12], max: '3.8in' }), FULL), 'A gable roof with a 5 in 12 slope. The rafter line length is the hypotenuse of the triangle with the run and the rise as legs. The small triangle on the left shows the slope: 5 up for every 12 across.'),
+    B.formula('Rafter line length', ['rise = run × (rise in 12) ÷ 12', 'rafter line length = √(run² + rise²)', 'length per foot of run = √(12² + (rise in 12)²), in inches'], 'Multiply the length per foot of run by the run in feet to get the rafter line length in inches.'),
+    B.example({
+      title: 'Rafter line length in millimetres',
+      q: 'A building is ' + n(rf.span) + ' mm wide with the ridge in the middle. The roof slope is ' + rf.p + ' in 12. Find the run, the rise and the rafter line length.',
+      fig: A(() => G.gable(rf.span, rf.rise, { lab: { span: n(rf.span) + ' mm', run: '?', rise: '?', rafter: '?' }, slope: [rf.p, 12], max: '2.6in' }), EX),
+      steps: ['Run = ' + n(rf.span) + ' ÷ 2 = ' + n(rf.run) + ' mm.', 'Rise = ' + n(rf.run) + ' × ' + rf.p + ' ÷ 12 = ' + n(rf.rise) + ' mm.', 'Rafter line length = √(' + n(rf.run) + '² + ' + n(rf.rise) + '²).'],
+      calc: { seq: '( ' + rf.run + ' x² + ' + rf.rise + ' x² ) √x', expect: n(rf.len) },
+      answer: 'Run ' + n(rf.run) + ' mm, rise ' + n(rf.rise) + ' mm, rafter line length ' + n(rf.len) + ' mm. The sides are 12, 5 and 13 times ' + n(rf.run / 12) + ' mm.'
+    }),
+    B.example({
+      title: 'Rafter line length in feet and inches',
+      q: 'A ' + ri.p + ' in 12 roof has a rafter run of 11′ 6″. Find the rafter line length to the nearest 1/16″, two ways.',
+      steps: ['Run = 11 × 12 + 6 = ' + ri.run + '″. Rise = ' + ri.run + ' × ' + ri.p + ' ÷ 12 = ' + n(ri.rise) + '″.', 'Way 1: √(' + ri.run + '² + ' + n(ri.rise) + '²) = ' + f3(ri.len) + '″.', 'Way 2: length per foot of run = √(12² + ' + ri.p + '²) = ' + f3(ri.pf) + '″. The run is 11.5 ft, and 11.5 × ' + f3(ri.pf) + ' = ' + f3(11.5 * L.round(ri.pf, 3)) + '″. The rounded constant makes the last digit differ a little.'],
+      calc: { rows: [{ label: 'Way 1', seq: '( ' + ri.run + ' x² + ' + ri.rise + ' x² ) √x', expect: f3(ri.len) }, { label: 'Length per foot of run', seq: '( 12 x² + ' + ri.p + ' x² ) √x', expect: f3(ri.pf) }] },
+      answer: L.inch(ri.len, 16) + ', which is ' + L.ftin(ri.len, 16) + '.'
+    }),
+    B.check('11.5 × ' + f3(ri.pf) + ' =', f3(11.5 * L.round(ri.pf, 3))),
+    B.sub('Squaring a layout'),
+    B.p('The outline of a building, a deck or a wall is laid out square with the methods of Sections 12.5 and 12.6. Use the largest multiple of 3, 4 and 5 that fits at a corner, then check that both diagonals match.'),
+    B.example({
+      title: 'Squaring a foundation layout',
+      q: 'A foundation layout is ' + n(lay.l) + ' mm by ' + n(lay.w) + ' mm. (a) What 3-4-5 marks would you use at a corner, with 1,200 mm as the unit? (b) What should each diagonal measure, to the nearest millimetre? (c) The diagonals measure ' + n(lay.d1) + ' mm and ' + n(lay.d2) + ' mm. Is the layout square?',
+      fig: A(() => G.frameDiag(lay.l, lay.w, { l: n(lay.l) + ' mm', w: n(lay.w) + ' mm', askD: true, max: '2.6in', W: 380 }), EX),
+      long: true,
+      steps: ['(a) 3 × 1,200 = ' + n(lay.m1) + ' mm along one side and 4 × 1,200 = ' + n(lay.m2) + ' mm along the other. The marks should be 5 × 1,200 = ' + n(hyp(lay.m1, lay.m2)) + ' mm apart.', '(b) d = √(' + n(lay.l) + '² + ' + n(lay.w) + '²) = ' + f2(lay.d) + ' mm.', '(c) The diagonals differ by ' + n(lay.d1) + ' − ' + n(lay.d2) + ' = ' + (lay.d1 - lay.d2) + ' mm, so the layout is not square.'],
+      calc: { seq: '( ' + lay.l + ' x² + ' + lay.w + ' x² ) √x', expect: f2(lay.d) },
+      answer: '(a) ' + n(lay.m1) + ' mm and ' + n(lay.m2) + ' mm, ' + n(hyp(lay.m1, lay.m2)) + ' mm apart. (b) ' + n(Math.round(lay.d)) + ' mm. (c) No. Push the two corners at the ends of the ' + n(lay.d1) + ' mm diagonal toward each other until both diagonals read ' + n(Math.round(lay.d)) + ' mm.'
+    }),
+    B.tryIt([
+      { q: 'A roof has a 4 in 12 slope and a run of 3,000 mm. Find the rise and the rafter line length to two decimal places.', a: 'Rise ' + n(3000 * 4 / 12) + ' mm, rafter line ' + f2(hyp(3000, 1000)) + ' mm' },
+      { q: 'A building is 9,000 mm wide with the ridge in the middle and an 8 in 12 slope. Find the run, the rise and the rafter line length to two decimal places.', a: 'Run ' + n(4500) + ' mm, rise ' + n(4500 * 8 / 12) + ' mm, rafter line ' + f2(hyp(4500, 3000)) + ' mm' },
+      { q: 'A 12 in 12 roof has a run of 10′. Find the rafter line length to the nearest 1/16″.', a: L.inch(hyp(120, 120), 16) + ', which is ' + L.ftin(hyp(120, 120), 16) },
+      { q: 'Find the length per foot of run for a 7 in 12 roof, to three decimal places.', a: f3(hyp(12, 7)) + '″' },
+      { q: 'A deck frame is 4,800 mm by 3,600 mm. What should each diagonal measure?', a: n(hyp(4800, 3600)) + ' mm' },
+      { q: 'A wall layout is 20′ by 12′. What should the diagonal be, to the nearest 1/16″?', a: L.ftin(hyp(240, 144), 16) + ' (' + f3(hyp(240, 144)) + '″)' }
+    ]),
+    B.check('( 3000 x² + 1000 x² ) √x', f2(hyp(3000, 1000))),
+    B.check('( 4500 x² + 3000 x² ) √x', f2(hyp(4500, 3000))),
+    B.check('( 120 x² + 120 x² ) √x', f3(hyp(120, 120))),
+    B.check('( 12 x² + 7 x² ) √x', f3(hyp(12, 7))),
+    B.check('( 240 x² + 144 x² ) √x', f3(hyp(240, 144))),
 
     B.worksheet({ title: 'Angles on the canvas', sub: 'Each drawing shows the angles at their true size. Find every red ?', intro: 'Use the angle facts from this chapter: a straight line is 180°, a full turn is 360° and the angles of a triangle add to 180°. Write the fact you used in the working box.' }),
     B.grid2(

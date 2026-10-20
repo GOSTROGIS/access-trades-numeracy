@@ -131,4 +131,68 @@ function rectFig(l, w, unit, o) {
   if (!o.square) h += F.dim(x0 + W, y0 + H, x0 + W, y0, o.askW ? '?' : fmt(w) + ' ' + unit, 46, { ask: o.askW, s: 13 });
   return readable(F.svg(x0 + W + 120, y0 + H + 80, h, { max: o.max || '1.8in' }), parseFloat(o.max || '1.8'), 13);
 }
-module.exports = { rectFig, printSize, readable, shapers, balanceBody, balance, circleCallout, radCircle, washer, cyl3d, cylNet };
+/* side view of a straight flight of n risers (n − 1 treads) from one floor to the next, drawn with unit run
+   and unit rise in proportion. o.rise, o.run, o.ur, o.un are the labels for total rise, total run, unit rise and
+   unit run. A label of '?' draws the red ? chip. o.max: print width */
+function stairFig(n, o) {
+  o = o || {};
+  const ratio = o.ratio || 0.72;
+  const rx = Math.min(34, 360 / (n - 1)), ry = rx * ratio, H = n * ry, W = (n - 1) * rx;
+  const x0 = 70, yb = H + 46, yT = yb - H, xL = x0 + W, xR = xL + 104;
+  const ls = Math.max(13, printSize(xR + 40, parseFloat(o.max || '4')));
+  let pts = [[x0, yb]];
+  for (let i = 0; i < n - 1; i++) { pts.push([x0 + i * rx, yb - (i + 1) * ry]); pts.push([x0 + (i + 1) * rx, yb - (i + 1) * ry]); }
+  pts.push([xL, yT]);
+  const prof = pts.slice();
+  pts = pts.concat([[xL, yT + ry * 1.2], [x0 + rx * 1.2, yb]]);
+  let h = F.poly(pts, { fill: C.fill, w: 1.4, c: C.dim });
+  h += '<path d="M' + prof.map(p => F.f(p[0]) + ' ' + F.f(p[1])).join('L') + '" fill="none" stroke="' + C.edge + '" stroke-width="2.6" stroke-linejoin="round"/>';
+  h += F.rect(xL, yT, xR + 14 - xL, 12, { fill: C.light, c: C.dim, w: 1.4 });
+  h += F.line(x0 - 50, yb, xR + 14, yb, { c: C.ink, w: 2.6 });
+  h += F.t(xR + 12, yb + 20, 'lower floor', { s: ls * 0.9, a: 'end', c: C.dim });
+  h += F.t(xR + 12, yT - 8, 'upper floor', { s: ls * 0.9, a: 'end', c: C.dim });
+  const ask = s => s === '?';
+  if (o.rise) h += F.dim(xR - 18, yb, xR - 18, yT + 12, o.rise, 0.001, { ask: ask(o.rise), s: ls }).replace(/<path d="M[^"]*" stroke="#4A4E54" stroke-width="1.1"[^>]*\/>/g, '');
+  if (o.run) h += F.dim(x0, yb, xL, yb, o.run, 30, { ask: ask(o.run), s: ls });
+  /* one riser and one tread marked in red, each with a callout */
+  const k = Math.min(3, n - 2), xr = x0 + k * rx, y1 = yb - k * ry, y2 = yb - (k + 1) * ry;
+  h += F.line(xr, y1, xr, y2, { c: C.red, w: 4 }) + F.line(xr, y2, xr + rx, y2, { c: C.red, w: 4 });
+  const call = (px, py, bx, by, s) => s === '?' ? F.line(px, py, bx, by, { c: C.deep, w: 1.2 }) + F.label(bx, by + 6, '?', { ask: true, s: ls }) : F.callout(px, py, bx, by, s, { s: ls });
+  if (o.ur) h += call(xr, (y1 + y2) / 2, x0 - 6, y2 - 3 * ry, o.ur);
+  if (o.un) h += call(xr + rx / 2, y2, xr + 2.6 * rx, y2 - 6 * ry, o.un);
+  return readable(F.svg(xR + 40, yb + 56, h, { max: o.max || '4in' }), parseFloat(o.max || '4'), ls);
+}
+/* a cropped BCBC plate keeps every element of the full plate, and Paged.js counts the parts below the crop as
+   overflow, which pushes the figure to the next page and leaves an empty frame behind. pruneCrop drops the
+   elements that lie wholly outside the crop box and trims the full-size background rectangle to it.
+   Elements with a transform are kept as they are. */
+function pruneCrop(svg, crop) {
+  const [cx, cy, cw, ch] = crop, X2 = cx + cw, Y2 = cy + ch, pad = 4;
+  const num = (a, k) => { const m = new RegExp('\\s' + k + '="([-\\d.]+)"').exec(a); return m ? +m[1] : 0; };
+  const outside = (x1, y1, x2, y2) => x2 < cx - pad || x1 > X2 + pad || y2 < cy - pad || y1 > Y2 + pad;
+  const pts = s => { const v = (s.match(/-?\d+(?:\.\d+)?/g) || []).map(Number), xs = [], ys = []; for (let i = 0; i + 1 < v.length; i += 2) { xs.push(v[i]); ys.push(v[i + 1]); } return xs.length ? [Math.min(...xs), Math.min(...ys), Math.max(...xs), Math.max(...ys)] : null; };
+  const box = (tag, a) => {
+    if (/\stransform=/.test(a)) return null;
+    if (tag === 'rect' || tag === 'image') { const x = num(a, 'x'), y = num(a, 'y'); return [x, y, x + num(a, 'width'), y + num(a, 'height')]; }
+    if (tag === 'line') return [Math.min(num(a, 'x1'), num(a, 'x2')), Math.min(num(a, 'y1'), num(a, 'y2')), Math.max(num(a, 'x1'), num(a, 'x2')), Math.max(num(a, 'y1'), num(a, 'y2'))];
+    if (tag === 'circle') { const r = num(a, 'r'); return [num(a, 'cx') - r, num(a, 'cy') - r, num(a, 'cx') + r, num(a, 'cy') + r]; }
+    if (tag === 'polygon' || tag === 'polyline') { const m = /\spoints="([^"]*)"/.exec(a); return m ? pts(m[1]) : null; }
+    if (tag === 'path') { const m = /\sd="([^"]*)"/.exec(a); return m && !/[aAhHvVmlcsqt]/.test(m[1].replace(/^\s*M/, '')) ? pts(m[1]) : null; }
+    if (tag === 'text') { const x = num(a, 'x'), y = num(a, 'y'), fs = num(a, 'font-size') || 14; return [x - 800, y - fs, x + 800, y + fs * 0.3]; }
+    return null;
+  };
+  let out = svg.replace(/<(text)\b([^>]*)>[\s\S]*?<\/text>|<(rect|image|line|circle|polygon|polyline|path)\b([^>]*?)\/>/g, (all, t1, a1, t2, a2) => {
+    const tag = t1 || t2, a = a1 || a2, b = box(tag, a);
+    if (!b) return all;
+    if (tag === 'text') {
+      const x = num(a, 'x'), y = num(a, 'y'), fs = num(a, 'font-size') || 14, w = all.replace(/<[^>]+>/g, '').length * fs * 0.58;
+      const anc = (/text-anchor="(\w+)"/.exec(a) || [0, 'start'])[1], x1 = anc === 'middle' ? x - w / 2 : anc === 'end' ? x - w : x;
+      return outside(x1, y - fs, x1 + w, y + fs * 0.3) ? '' : all;
+    }
+    if (outside(...b)) return '';
+    if (tag === 'rect' && b[2] - b[0] >= 1500 && b[3] - b[1] >= 900) return all.replace(/\s(x|y|width|height)="[^"]*"/g, '').replace('<rect', '<rect x="' + cx + '" y="' + cy + '" width="' + cw + '" height="' + ch + '"');
+    return all;
+  });
+  return out;
+}
+module.exports = { rectFig, printSize, readable, shapers, balanceBody, balance, circleCallout, radCircle, washer, cyl3d, cylNet, stairFig, pruneCrop };

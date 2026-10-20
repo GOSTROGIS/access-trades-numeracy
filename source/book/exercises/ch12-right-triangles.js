@@ -125,6 +125,66 @@ module.exports = function (B, L) {
       B.prob({ q: 'Break it down. A cube has 500 mm edges. Find the diagonal of one face. Then use it and an edge as legs to find the longest rod that fits inside, corner to corner. Two decimal places.', canvas: g(B.shape('cube', { s: 500 }, { units: 'mm', width: '2.2in' })), a: 'Face diagonal ' + f2(500 * Math.SQRT2) + ' mm. Rod √(' + f2(500 * Math.SQRT2) + '² + 500²) = ' + f2(500 * Math.sqrt(3)) + ' mm', lines: 3 })
     ),
     B.check('( 900 x² + 300 x² ) √x', f2(plateB)),
-    B.check('( 500 x² + 500 x² + 500 x² ) √x', f2(500 * Math.sqrt(3)))
+    B.check('( 500 x² + 500 x² + 500 x² ) √x', f2(500 * Math.sqrt(3))),
+
+    /* ---------- 12D Angles and DMS ---------- */
+    B.worksheet({ title: 'Angles and DMS', sub: 'Angle pairs, parallel lines, and degrees, minutes and seconds.' }),
+    B.grid2(
+      B.prob({ q: 'Find the complement of 34°.', a: n(90 - 34) + '°', lines: 2 }),
+      B.prob({ q: 'Find the supplement of 117°.', a: n(180 - 117) + '°', lines: 2 }),
+      B.prob({ q: 'Two lines cross. Find each ?', canvas: g(G.auto(() => G.crossLines(47, ['47°', '?', '?', '?'], { max: '1.45in' }), 2.7)), a: n(180 - 47) + '°, 47° and ' + n(180 - 47) + '° (going round from the 47° angle)', lines: 2 }),
+      B.prob({ q: 'The two level lines are parallel. Angle a is 64°. Find angles d, e and f.', canvas: g(G.auto(() => G.transversal(64, ['64°', 'b', 'c', 'd'], ['e', 'f', 'g', 'h'], { max: '1.8in', W: 380 }), 2.7)), a: 'd = ' + n(180 - 64) + '°, e = 64°, f = ' + n(180 - 64) + '°', lines: 2 }),
+      B.prob({ q: 'A brace crosses two parallel rails. One alternate angle between the rails is 58°. What is the other?', a: '58°', lines: 2 }),
+      B.prob({ q: 'A brace crosses two parallel rails. One co-interior angle is 109°. What is the other?', a: n(180 - 109) + '°', lines: 2 }),
+      B.prob({ q: 'Change 52°18′ to decimal degrees.', a: n(G.dd(52, 18, 0)) + '°', lines: 4 }),
+      B.prob({ q: 'Change 19°44′24″ to decimal degrees.', a: n(L.round(G.dd(19, 44, 24), 6)) + '°', lines: 4 }),
+      B.prob({ q: 'Change 28.65° to degrees, minutes and seconds.', a: G.dmsText(28.65), lines: 4 }),
+      B.prob({ q: 'Change 71.2525° to degrees, minutes and seconds.', a: G.dmsText(71.2525), work: '0.2525 × 60 = 15.15′, 0.15 × 60 = 9″', lines: 4 }),
+      B.prob({ q: 'Add 33°27′48″ + 41°50′35″.', a: G.dmsText(G.dd(33, 27, 48) + G.dd(41, 50, 35)), work: '74°77′83″ = 74°78′23″ = 75°18′23″', lines: 4 }),
+      B.prob({ q: 'Find 180° − 96°42′15″.', a: G.dmsText(180 - G.dd(96, 42, 15)), work: '179°59′60″ − 96°42′15″', lines: 4 })
+    ),
+    B.check('52.18 DMS▸DD', n(G.dd(52, 18, 0))),
+    B.check('19.4424 DMS▸DD', n(L.round(G.dd(19, 44, 24), 6))),
+    B.check('28.65 DD▸DMS', '28.65'),
+    B.check('71.2525 DD▸DMS', '71.2525'),
+    B.check('33.2748 DMS▸DD + 41.5035 DMS▸DD = DD▸DMS', n(L.round(G.dd(33, 27, 48) + G.dd(41, 50, 35), 4))),
+    B.check('180 − 96.4215 DMS▸DD = DD▸DMS', n(L.round(180 - G.dd(96, 42, 15), 4))),
+
+    /* ---------- 12E Stairs ---------- */
+    B.worksheet({ title: 'Stairs', sub: 'Risers, treads, total rise and run, and the stringer line.' }),
+    B.prob({ q: 'A stair has 15 risers of 188 mm and 14 treads with a 270 mm unit run. Find the total rise, the total run and the stringer line to two decimal places.', a: 'Total rise ' + n(15 * 188) + ' mm, total run ' + n(14 * 270) + ' mm, stringer line ' + f2(hyp(15 * 188, 14 * 270)) + ' mm', work: '√(2,820² + 3,780²)', lines: 3 }),
+    B.prob({ q: 'A private stair has a total rise of 2,560 mm. Use the 200 mm maximum rise to find the number of risers, then the unit rise to two decimal places.', a: Math.ceil(2560 / 200) + ' risers of ' + f2(2560 / Math.ceil(2560 / 200)) + ' mm', work: '2,560 ÷ 200 = 12.8, round up to 13. 2,560 ÷ 13', lines: 3 }),
+    B.prob({ q: 'A public stair has a total rise of 2,880 mm. Using the 180 mm maximum rise and the 280 mm minimum run, find the number of risers, the number of treads, the total run and the stringer line to two decimal places.', a: '16 risers of 180 mm, 15 treads, total run ' + n(15 * 280) + ' mm, stringer line ' + f2(hyp(2880, 4200)) + ' mm', work: '2,880 ÷ 180 = 16. 15 × 280 = 4,200. √(2,880² + 4,200²)', lines: 3 }),
+    B.prob({ q: 'A stair has 8 risers of ' + L.mx(7, 3, 8) + '″ and 7 treads of ' + L.mx(10, 1, 4) + '″. Find the total rise, the total run and the stringer line to the nearest 1/16″.', a: 'Total rise ' + n(8 * 7.375) + '″, total run ' + n(7 * 10.25) + '″, stringer line ' + L.inch(hyp(59, 71.75), 16) + ' (' + L.ftin(hyp(59, 71.75), 16) + ')', work: '√(59² + 71.75²) = ' + f3(hyp(59, 71.75)) + '″', lines: 3 }),
+    B.prob({ q: 'The risers of one flight measure 182, 185, 183, 187, 190 and 186 mm. Do they meet Article 9.8.4.4, Sentence (1): 5 mm between adjacent risers and 10 mm between the tallest and shortest?', a: 'Yes. The largest step between neighbours is 4 mm, and 190 − 182 = 8 mm.', lines: 3 }),
+    B.prob({ q: 'The tread runs of one flight measure 265, 268, 262, 271 and 266 mm. Do they meet Article 9.8.4.4, Sentence (3)?', a: 'No. 268 mm to 262 mm is 6 mm and 262 mm to 271 mm is 9 mm between adjacent treads (5 mm allowed). The 10 mm check passes: 271 − 262 = 9 mm.', lines: 3 }),
+    B.prob({ q: 'A rectangular tread has a run of 255 mm and a depth of 290 mm. Does it meet Sentence 9.8.4.2.(2)? What is the largest depth allowed?', a: 'No. The depth may be at most 255 + 25 = 280 mm.', lines: 2 }),
+    B.prob({ q: 'Find the stringer line, bottom corner to top corner, to two decimal places.', canvas: full(G.auto(() => G.stairSide(7, 190, 260, { lab: { totalRise: '1,330 mm', totalRun: '1,560 mm', stringer: '?' }, max: '3.4in' }), 6)), a: f2(hyp(1330, 1560)) + ' mm', lines: 2 }),
+    B.check('( 2820 x² + 3780 x² ) √x', f2(hyp(2820, 3780))),
+    B.check('2560 ÷ 13 =', f2(2560 / 13)),
+    B.check('( 2880 x² + 4200 x² ) √x', f2(hyp(2880, 4200))),
+    B.check('( 59 x² + 71.75 x² ) √x', f3(hyp(59, 71.75))),
+    B.check('( 1330 x² + 1560 x² ) √x', f2(hyp(1330, 1560))),
+
+    /* ---------- 12K Carpentry and the BCBC ---------- */
+    (() => { B.wsN = 10; return '' })(),
+    B.worksheet({ title: 'Carpentry and the BCBC', sub: 'Rafters, layout and stairs. Code values are from the BC Building Code 2024, Division B.' }),
+    B.prob({ q: 'A building is 8,400 mm wide with the ridge in the middle and a 6 in 12 roof. Find the run, the rise and the rafter line length to two decimal places.', a: 'Run 4,200 mm, rise 2,100 mm, rafter line ' + f2(hyp(4200, 2100)) + ' mm', work: '4,200 × 6 ÷ 12 = 2,100. √(4,200² + 2,100²)', lines: 3 }),
+    B.prob({ q: 'A 4 in 12 roof has a rafter run of 13′ 0″. Find the rise and the rafter line length to the nearest 1/16″.', a: 'Rise 52″, rafter line ' + L.inch(hyp(156, 52), 16) + ' (' + L.ftin(hyp(156, 52), 16) + ')', work: '156 × 4 ÷ 12 = 52. √(156² + 52²) = ' + f3(hyp(156, 52)) + '″', lines: 3 }),
+    B.prob({ q: 'Find the length per foot of run of a 9 in 12 roof. Use it to find the rafter line length for a 10′ run, in feet and inches.', a: n(hyp(12, 9)) + '″ per foot. 10 × 15 = 150″ = ' + L.ftin(150, 16), lines: 3 }),
+    B.prob({ q: 'A deck frame is 4.2 m by 3.0 m. What should each diagonal measure, to the nearest millimetre?', a: n(Math.round(hyp(4200, 3000))) + ' mm (' + f2(hyp(4200, 3000)) + ' mm)', lines: 2 }),
+    B.prob({ q: 'You square a wall layout with 3-4-5 using 900 mm as the unit. Where are the two marks, and how far apart should they be?', a: '2,700 mm and 3,600 mm from the corner, ' + n(hyp(2700, 3600)) + ' mm apart', lines: 2 }),
+    B.prob({ q: 'A wall layout is 7,800 mm by 3,000 mm. The diagonals measure 8,362 mm and 8,349 mm. What should they be, to the nearest millimetre? Which corners do you move?', a: n(Math.round(hyp(7800, 3000))) + ' mm. Push the two corners at the ends of the 8,362 mm diagonal toward each other.', lines: 3 }),
+    B.prob({ q: 'A private stair has a total rise of 2,450 mm. Using the 200 mm maximum rise in Table 9.8.4.1 (Article 9.8.4.1, page 9-31), find the number of risers and the unit rise to two decimal places. Is the unit rise above the 125 mm minimum?', a: Math.ceil(2450 / 200) + ' risers of ' + f2(2450 / 13) + ' mm. Yes.', work: '2,450 ÷ 200 = 12.25, round up to 13', lines: 3 }),
+    B.prob({ q: 'A public stair is drawn with a unit rise of 185 mm. Does it meet Table 9.8.4.1 (page 9-31)? For a total rise of 2,700 mm, how many risers does it need at the public stair maximum?', a: 'No, the public maximum is 180 mm. 2,700 ÷ 180 = ' + n(2700 / 180) + ' risers of 180 mm.', lines: 3 }),
+    B.prob({ q: 'Measured straight up from the nosing line, a beam is 1,980 mm above a stair. Article 9.8.2.2 (page 9-30) asks for 2,050 mm, or 1,950 mm over stairs serving a single dwelling unit or a house with a secondary suite. Is the clear height enough for a stair in a house? For a public stair?', a: 'Yes in a house (1,980 ≥ 1,950). No for a public stair (1,980 < 2,050).', lines: 3 }),
+    B.prob({ q: 'The risers of a flight measure 192, 196, 193, 199 and 195 mm. Do they meet Article 9.8.4.4, Sentence (1) (page 9-32)?', a: 'No. 193 mm to 199 mm is 6 mm between adjacent risers (5 mm allowed). The tallest and shortest differ by 7 mm, which is inside 10 mm.', lines: 3 }),
+    B.prob({ q: 'A building is 6,000 mm wide with the ridge in the middle and a 4 in 12 roof. Find each ? to two decimal places.', canvas: full(G.auto(() => G.gable(6000, 1000, { lab: { span: '6,000 mm', run: '?', rise: '?', rafter: '?' }, slope: [4, 12], max: '3.4in' }), 6)), a: 'Run 3,000 mm, rise 1,000 mm, rafter line ' + f2(hyp(3000, 1000)) + ' mm', lines: 3 }),
+    B.check('( 4200 x² + 2100 x² ) √x', f2(hyp(4200, 2100))),
+    B.check('( 156 x² + 52 x² ) √x', f3(hyp(156, 52))),
+    B.check('( 4200 x² + 3000 x² ) √x', f2(hyp(4200, 3000))),
+    B.check('( 7800 x² + 3000 x² ) √x', f2(hyp(7800, 3000))),
+    B.check('2450 ÷ 13 =', f2(2450 / 13)),
+    B.check('( 3000 x² + 1000 x² ) √x', f2(hyp(3000, 1000)))
   ])
 }

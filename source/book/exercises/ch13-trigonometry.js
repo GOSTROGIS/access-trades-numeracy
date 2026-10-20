@@ -125,6 +125,29 @@ module.exports = function (B, L) {
     B.prob({ q: 'Change one value. A 45° offset with a 300 mm set has a travel of ' + f2(300 / sin(45)) + ' mm. Double the set to 600 mm. What is the travel, to two decimal places? Did it double?', a: f2(600 / sin(45)) + ' mm. Yes, it doubled: the set and the travel keep the same ratio.', lines: 4 }),
     B.check('15 × 40 TAN =', f3(C3)), B.check('28 SIN × 1800 =', f2(C1)), B.check('2.4 ÷ 55 COS =', f2(C2)), B.check('( 560 ÷ 1200 ) TAN⁻¹', f2(C4)),
     B.check('( 380 ÷ 610 ) SIN⁻¹', f2(C5)), B.check('16 ÷ 45 SIN =', f3(C7)), B.check('( 250 ÷ 6000 ) TAN⁻¹', f2(C8)), B.check('12 × 37.5 TAN =', f2(C10)),
-    B.check('( 350 x² + 200 x² ) √x', f2(Math.hypot(350, 200))), B.check('( 350 x² + 200 x² ) √x ÷ 60 SIN =', f2(Math.hypot(350, 200) / sin(60)))
+    B.check('( 350 x² + 200 x² ) √x', f2(Math.hypot(350, 200))), B.check('( 350 x² + 200 x² ) √x ÷ 60 SIN =', f2(Math.hypot(350, 200) / sin(60))),
+
+    /* ---------- 13K Carpentry and the BCBC ---------- */
+    (() => { B.wsN = 10; return '' })(),
+    B.worksheet({ title: 'Carpentry and the BCBC', sub: 'Roof slopes, inches per foot, stairs, ramps and rafter cuts. Code values are from the BC Building Code 2024, Division B.' }),
+    B.grid2(
+      B.prob({ q: 'Find the angle of a 3 in 12 roof and of a 9 in 12 roof, to two decimal places.', a: deg(atan(3 / 12)) + ' and ' + deg(atan(9 / 12)), lines: 3 }),
+      B.prob({ q: 'A drain slopes ' + L.fr(1, 2) + '″ per foot. Write it as 1 in …, as a percent grade and as an angle, to two decimal places.', a: '1 in ' + n(12 / 0.5) + ', ' + f2(0.5 / 12 * 100) + '%, ' + deg(atan(0.5 / 12)), lines: 3 }),
+      B.prob({ q: 'A roof rises ' + L.mx(7, 1, 2) + '″ per foot of run. Write it as rise in 12 and as 1 in …, then find its angle to two decimal places.', a: '7.5 in 12, 1 in ' + n(12 / 7.5) + ', ' + deg(atan(7.5 / 12)), lines: 3 }),
+      B.prob({ q: 'A stair has a unit rise of ' + L.mx(7, 1, 4) + '″ and a unit run of ' + L.mx(10, 1, 2) + '″. Find the stair angle to two decimal places.', a: deg(atan(7.25 / 10.5)), lines: 3 })
+    ),
+    B.prob({ q: 'A roof is 3.5 in 12. Table 9.26.3.1 (Sentence 9.26.3.1.(1), page 9-242) gives a minimum slope for asphalt shingles of 1 in 3 for normal application and 1 in 6 for low slope application, and 1 in 4 for wood shingles. Which of the three may go on this roof?', a: '3.5 in 12 is 1 in ' + f2(12 / 3.5) + '. Asphalt shingles in normal application: no (needs 4 in 12). Low slope application: yes (needs 2 in 12). Wood shingles: yes (needs 3 in 12).', lines: 4 }),
+    B.prob({ q: 'A 2 in 12 roof framed with trusses covers an insulated ceiling of 150 m². Sentence 9.19.1.2.(1) (page 9-136) asks for a vent area of at least 1/300 of the insulated ceiling area. Sentence (2) asks for 1/150 where the roof slope is less than 1 in 6. Which Sentence applies, and what is the least vent area?', a: '2 in 12 is exactly 1 in 6, not less, so Sentence (1) applies: 150 ÷ 300 = ' + n(150 / 300) + ' m².', lines: 4 }),
+    B.grid2(
+      B.prob({ q: 'An interior ramp in a residential occupancy rises 380 mm at the steepest slope Clause 9.8.5.4.(1)(b) allows, 1 in 10 (page 9-33). Find the run, the length along the slope to two decimal places and the angle.', a: 'Run ' + n(3800) + ' mm, length ' + f2(Math.hypot(3800, 380)) + ' mm, angle ' + deg(atan(0.1)), lines: 4 }),
+      B.prob({ q: 'A ramp in an occupancy covered by Clause 9.8.5.4.(1)(d), 1 in 8 (page 9-34), has 4,000 mm of run. What is the most it can rise? What is its angle?', a: 'Rise ' + n(4000 / 8) + ' mm, angle ' + deg(atan(1 / 8)), lines: 4 }),
+      B.prob({ q: 'A rafter is 5 in 12. Find the roof angle, the angle between the seat cut and the rafter edge, and the angle between the plumb cut and the rafter edge.', a: 'Roof angle ' + deg(atan(5 / 12)) + ', seat cut ' + deg(atan(5 / 12)) + ', plumb cut ' + deg(90 - L.round(atan(5 / 12), 2)), lines: 4 }),
+      B.prob({ q: 'Find the steepest stair angle that the public stair limits allow: the 180 mm maximum rise (Table 9.8.4.1) with the 280 mm minimum run (Table 9.8.4.2), page 9-31.', a: deg(atan(180 / 280)), lines: 4 })
+    ),
+    B.prob({ q: 'The rafter is 4 in 12. Find each ? to two decimal places.', canvas: full(G.auto(() => G.rafterCuts(atan(4 / 12), { askTop: true, askSeat: true, max: '3.6in' }), 6)), a: 'Seat cut ' + deg(atan(4 / 12)) + ', plumb cut ' + deg(90 - L.round(atan(4 / 12), 2)) + ' to the rafter edge', lines: 3 }),
+    B.check('( 3 ÷ 12 ) TAN⁻¹', f2(atan(3 / 12))), B.check('( 9 ÷ 12 ) TAN⁻¹', f2(atan(9 / 12))), B.check('( 0.5 ÷ 12 ) TAN⁻¹', f2(atan(0.5 / 12))), B.check('0.5 ÷ 12 × 100 =', f2(0.5 / 12 * 100)),
+    B.check('( 7.5 ÷ 12 ) TAN⁻¹', f2(atan(7.5 / 12))), B.check('( 7.25 ÷ 10.5 ) TAN⁻¹', f2(atan(7.25 / 10.5))), B.check('12 ÷ 3.5 =', f2(12 / 3.5)),
+    B.check('( 3800 x² + 380 x² ) √x', f2(Math.hypot(3800, 380))), B.check('( 1 ÷ 10 ) TAN⁻¹', f2(atan(0.1))), B.check('( 1 ÷ 8 ) TAN⁻¹', f2(atan(1 / 8))),
+    B.check('( 5 ÷ 12 ) TAN⁻¹', f2(atan(5 / 12))), B.check('( 180 ÷ 280 ) TAN⁻¹', f2(atan(180 / 280))), B.check('( 4 ÷ 12 ) TAN⁻¹', f2(atan(4 / 12)))
   ])
 }

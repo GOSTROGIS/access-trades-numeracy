@@ -1,0 +1,496 @@
+{
+"9": [
+{
+"num": "9.8.2.2",
+"title": "Height over Stairs",
+"section": [
+"9.8",
+"Stairs, Ramps, Landings, Handrails and Guards"
+],
+"subsection": [
+"9.8.2",
+"Stair Dimensions"
+],
+"line": 50075,
+"pages": [],
+"text": "1) The clear height over stairs shall be measured vertically, over the clear width of\n                  the stair, from a straight line tangent to the tread and landing nosings to the lowest\n                  point above. (See Note A-3.4.3.4. and Note A-9.5.3.1.)\n                     2) Except as provided in Sentence (3), the clear height over stairs shall not be less\n                  than 2 050 mm.\n                      3) The clear height over stairs serving a single dwelling unit or a house with a\n                  secondary suite including their common spaces shall not be less than 1 950 mm.\n                     4) Reserved",
+"pdfpage": 952
+},
+{
+"num": "9.8.3.3",
+"title": "Maximum Height of Stairs",
+"section": [
+"9.8",
+"Stairs, Ramps, Landings, Handrails and Guards"
+],
+"subsection": [
+"9.8.3",
+"Stair Configurations"
+],
+"line": 50114,
+"pages": [],
+"text": "1) The vertical height of any flight of stairs shall not exceed 3.7 m.",
+"pdfpage": 952
+},
+{
+"num": "9.8.4.1",
+"title": "Dimensions for Risers",
+"section": [
+"9.8",
+"Stairs, Ramps, Landings, Handrails and Guards"
+],
+"subsection": [
+"9.8.4",
+"Step Dimensions"
+],
+"line": 50121,
+"pages": [
+30
+],
+"text": "(See Note A-9.8.4.)\n\n\n\n                     1) Except for stairs serving areas only used as service rooms or service spaces, the rise,\n                 which is measured as the vertical nosing-to-nosing distance, shall comply with Table\n                 9.8.4.1.\n\n                                                   Table 9.8.4.1.\n                          Rise for Rectangular Treads, Tapered Treads (Including Winders)\n                                         Forming Part of Sentence 9.8.4.1.(1)\n                                             Rectangular Treads, Tapered Treads (Including Winders)\n\n       Stair Type                                                     Rise, mm\n\n                                               Max.                                                Min.\n\n  Private (1)           200                                                   125\n\n  Public (2)            180                                                   125\n\n  Notes to Table 9.8.4.1.:\n  (1) Private stairs are exterior and interior stairs that serve\n        a. single dwelling units,\n        b. houses with a secondary suite including their common spaces, or\n        c. garages that serve houses described in Clause a) or b).\n\n  (2) Public stairs are all stairs not described as service stairs or private stairs.",
+"pdfpage": 952
+},
+{
+"num": "9.8.4.2",
+"title": "Dimensions for Rectangular Treads",
+"section": [
+"9.8",
+"Stairs, Ramps, Landings, Handrails and Guards"
+],
+"subsection": [
+"9.8.4",
+"Step Dimensions"
+],
+"line": 50152,
+"pages": [
+31
+],
+"text": "(See Note A-9.8.4.)\n\n\n                     1) Except for stairs serving areas only used as service rooms or service spaces, the run\n                 shall comply with Table 9.8.4.2.\n\n                                                     Table 9.8.4.2.\n                                              Run for Rectangular Treads\n                                           Forming Part of Sentence 9.8.4.2.(1)\n                                                                            Rectangular Treads\n\n                    Stair Type                                                   Run, mm\n\n                                                                    Max.                                  Min.\n\n  Private (1)                                  355                                           255\n\n  Public (2)                                   No limit                                      280\n\n  Notes to Table 9.8.4.2.:\n  (1) Private stairs are exterior and interior stairs that serve\n        a. single dwelling units,\n        b. houses with a secondary suite including their common spaces, or\n        c. garages that serve houses described in Clause a) or b).\n\n  (2) Public stairs are all stairs not described as service stairs or private stairs.\n\n                     2) The depth of a rectangular tread shall be not less than its run and not more than\n                 its run plus 25 mm.",
+"pdfpage": 953
+},
+{
+"num": "9.8.4.4",
+"title": "Uniformity and Tolerances for Risers, Runs and Treads",
+"section": [
+"9.8",
+"Stairs, Ramps, Landings, Handrails and Guards"
+],
+"subsection": [
+"9.8.4",
+"Step Dimensions"
+],
+"line": 50201,
+"pages": [],
+"text": "1) Except as provided in Sentence (2), risers shall be of uniform height in any one\n                  flight, with a maximum tolerance of\n                       a) 5 mm between adjacent treads or landings, and\n                       b) 10 mm between the tallest and shortest risers in a flight.\n                     2) Except for required exit stairs, where the top or bottom riser in a stair adjoins a\n                  sloping finished walking surface, such as a garage floor, driveway or sidewalk, the\n                  height of the riser across the stair shall vary by not more than 1 in 12.\n                     3) Rectangular treads shall have a uniform run with a maximum tolerance of\n                      a) 5 mm between adjacent treads, and\n                      b) 10 mm between the deepest and shallowest treads in a flight.\n                     4) Tapered treads in a flight shall have a uniform run in accordance with the\n                  construction tolerances stipulated in Sentence (3) when measured at a point 300 mm\n                  from the centre line of the handrail as described in Sentence 9.8.7.1.(5).\n                     5) The slope of treads shall not exceed 1 in 50.",
+"pdfpage": 954
+},
+{
+"num": "9.8.5.4",
+"title": "Ramp Slope",
+"section": [
+"9.8",
+"Stairs, Ramps, Landings, Handrails and Guards"
+],
+"subsection": [
+"9.8.5",
+"Ramps"
+],
+"line": 50286,
+"pages": [
+33
+],
+"text": "1) The slope of ramps shall be not more than\n                     a) 1 in 10 for exterior ramps,\n                     b) 1 in 10 for interior ramps serving residential occupancies,\n\n\n                      c) 1 in 6 for industrial occupancies, and\n                      d) 1 in 8 for all other occupancies.",
+"pdfpage": 955
+},
+{
+"num": "9.8.7.4",
+"title": "Height of Handrails",
+"section": [
+"9.8",
+"Stairs, Ramps, Landings, Handrails and Guards"
+],
+"subsection": [
+"9.8.7",
+"Handrails"
+],
+"line": 50443,
+"pages": [
+36
+],
+"text": "(See Note A-9.8.7.4.)\n\n\n                     1) The height of handrails on stairs and ramps shall be measured vertically from the\n                  top of the handrail to\n                      a) a straight line drawn tangent to the tread nosings of the stair served by the\n                          handrail, or\n                      b) the surface of the ramp, floor or landing served by the handrail.\n\n\n                    2) Except as provided in Sentence (3) and Clause 3.8.3.5.(1)(e), required handrails\n                 shall be 865 mm to 1 070 mm high.\n                    3) Handrails installed in addition to required handrails need not comply with\n                 Sentence (2).",
+"pdfpage": 958
+},
+{
+"num": "9.8.8.3",
+"title": "Height of Guards",
+"section": [
+"9.8",
+"Stairs, Ramps, Landings, Handrails and Guards"
+],
+"subsection": [
+"9.8.8",
+"Guards"
+],
+"line": 50623,
+"pages": [],
+"text": "(See Note A-9.8.8.3.)\n\n\n                    1) Except as provided in Sentences (2) and (3), all guards shall be not less than 1 070\n                  mm high.\n                     2) All guards within dwelling units or within houses with a secondary suite including\n                  their common spaces shall be not less than 900 mm high.\n                      3) Exterior guards serving not more than one dwelling unit or a house with a\n                  secondary suite including their common spaces shall be not less than 900 mm high where\n                  the walking surface served by the guard is not more than 1 800 mm above the finished\n                  ground level.\n                     4) The height of guards for flights of steps shall be measured vertically from the top\n                  of the guard to a line drawn through the tread nosing served by the guard.",
+"pdfpage": 962
+},
+{
+"num": "9.15.3.4",
+"title": "Basic Footing Widths and Areas",
+"section": [
+"9.15",
+"Footings and Foundations"
+],
+"subsection": [
+"9.15.3",
+"Footings"
+],
+"line": 54898,
+"pages": [
+120
+],
+"text": "1) Except as provided in Sentences (2) and (3) and in Articles 9.15.3.5. to 9.15.3.7.,\n                   the minimum footing width or area shall comply with Table 9.15.3.4.\n                      2) Where the supported joist span exceeds 4.9 m in buildings with light wood-frame\n                   walls, floors and roofs, strip footing widths shall be determined according to\n                       a) Section 4.2., or\n                       b) the following formula\n\n                          where\n                           W = minimum footing width,\n                           w = minimum width of footings supporting joists not exceeding 4.9 m, as\n                          defined by Table 9.15.3.4.,\n                           Σ sjs = sum of the supported joist spans on each storey bearing on an exterior\n                          wall whose load is transferred to the footing, or sum of half of the supported\n                          joist spans on each storey bearing on both sides of an interior wall whose load is\n                          transferred to the footing, and\n                           storeys = number of storeys supported by the footing.\n                   (See Note A-9.15.3.4.(2).)\n                       3) Where a foundation rests on gravel, sand or silt in which the water table level is\n                   less than the width of the footings below the bearing surface,\n                        a) the footing width for walls shall be not less than twice the width required by\n                           Sentences (1) and (2), and Articles 9.15.3.5. and 9.15.3.6., and\n                        b) the footing area for columns shall be not less than twice the area required by\n                           Sentences (1) and (2) and Article 9.15.3.7.\n\n                                                         Table 9.15.3.4.\n                                                    Minimum Footing Sizes\n                                               Forming Part of Sentence 9.15.3.4.(1)\n                               Minimum Width of Strip Footings, mm\n      No. of Floors                                                          Minimum Footing Area for Columns Spaced 3 m\n                            Supporting Exterior        Supporting Interior\n        Supported                                                                            o.c., (1) m2\n                                   Walls (2)                Walls (3)\n\n            1                        250                      200                                0.4\n\n            2                        350                      350                               0.75\n\n            3                        450                      500                                1.0\n\n  Notes to Table 9.15.3.4.:\n  (1) See Sentence 9.15.3.7.(1).\n  (2) See Sentence 9.15.3.5.(1).\n  (3) See Sentence 9.15.3.6.(1).",
+"pdfpage": 1042
+},
+{
+"num": "9.15.3.5",
+"title": "Adjustments to Footing Widths for Exterior Walls",
+"section": [
+"9.15",
+"Footings and Foundations"
+],
+"subsection": [
+"9.15.3",
+"Footings"
+],
+"line": 54948,
+"pages": [],
+"text": "1) The strip footing widths for exterior walls shown in Table 9.15.3.4. shall be\n                 increased by\n                     a) 65 mm for each storey of masonry veneer over wood-frame construction\n                        supported by the foundation wall,\n                     b) 130 mm for each storey of masonry construction supported by the foundation\n                        wall, and\n                     c) 150 mm for each storey of flat insulating concrete form wall construction\n                        supported by the foundation wall.",
+"pdfpage": 1043
+},
+{
+"num": "9.15.3.7",
+"title": "Adjustments to Footing Area for Columns",
+"section": [
+"9.15",
+"Footings and Foundations"
+],
+"subsection": [
+"9.15.3",
+"Footings"
+],
+"line": 54968,
+"pages": [],
+"text": "1) The footing area for column spacings other than shown in Table 9.15.3.4. shall be\n                 adjusted in proportion to the distance between columns.",
+"pdfpage": 1043
+},
+{
+"num": "9.15.3.8",
+"title": "Footing Thickness",
+"section": [
+"9.15",
+"Footings and Foundations"
+],
+"subsection": [
+"9.15.3",
+"Footings"
+],
+"line": 54973,
+"pages": [],
+"text": "1) Footing thickness shall be not less than the greater of\n                     a) 100 mm, or\n                     b) the width of the projection of the footing beyond the supported element.",
+"pdfpage": 1043
+},
+{
+"num": "9.15.4.6",
+"title": "Extension above Ground Level",
+"section": [
+"9.15",
+"Footings and Foundations"
+],
+"subsection": [
+"9.15.4",
+"Foundation Walls"
+],
+"line": 55409,
+"pages": [],
+"text": "1) Exterior foundation walls shall extend not less than 150 mm above finished\n                 ground level.",
+"pdfpage": 1049
+},
+{
+"num": "9.16.2.1",
+"title": "Required Installation of Granular Material",
+"section": [
+"9.16",
+"Floors-on-Ground"
+],
+"subsection": [
+"9.16.2",
+"Material beneath Floors"
+],
+"line": 55530,
+"pages": [],
+"text": "1) Except as provided in Sentence (2), not less than 100 mm of coarse clean\n                 granular material containing not more than 10% of material that will pass a 4 mm sieve\n                 shall be placed beneath floors-on-ground. (See Note A-9.16.2.1.(1) and see also\n                 Subsection 9.13.4. and Note A-9.13.4.)\n                    2) Granular material need not be installed under\n                     a) slabs in garages, carports or accessory buildings, or\n                     b) buildings of industrial occupancy where the nature of the process contained\n                        therein permits or requires the use of large openings in the building envelope\n                        even during the winter.",
+"pdfpage": 1051
+},
+{
+"num": "9.16.4.3",
+"title": "Thickness",
+"section": [
+"9.16",
+"Floors-on-Ground"
+],
+"subsection": [
+"9.16.4",
+"Concrete"
+],
+"line": 55597,
+"pages": [],
+"text": "1) Concrete slabs shall not be less than 75 mm thick exclusive of concrete topping.",
+"pdfpage": 1052
+},
+{
+"num": "9.19.1.2",
+"title": "Vent Requirements",
+"section": [
+"9.19",
+"Roof Spaces"
+],
+"subsection": [
+"9.19.1",
+"Venting"
+],
+"line": 55901,
+"pages": [
+136
+],
+"text": "1) Except as provided in Sentence (2), the unobstructed vent area shall be not less\n                   than 1/300 of the insulated ceiling area.\n                       2) Where the roof slope is less than 1 in 6 or in roofs that are constructed with roof\n                   joists, the unobstructed vent area shall be not less than 1/150 of the insulated ceiling\n                   area.\n                      3) Required vents may be roof type, eave type, gable-end type or any combination\n                   thereof, and shall be distributed\n                       a) uniformly on opposite sides of the building,\n                       b) with not less than 25% of the required openings located at the top of the space,\n                           and\n                       c) with not less than 25% of the required openings located at the bottom of the\n                           space.\n                      4) Except where each joist space is separately vented, roof joist spaces shall be\n                   interconnected by installing purlins not less than 38 mm by 38 mm on the top of the\n                   roof joists.\n                      5) Vents shall comply with CAN3-A93-M, \"Natural Airflow Ventilators for\n                   Buildings.\"",
+"pdfpage": 1058
+},
+{
+"num": "9.23.3.1",
+"title": "Standards for Nails and Screws",
+"section": [
+"9.23",
+"Wood-Frame Construction"
+],
+"subsection": [
+"9.23.3",
+"Fasteners and Connectors"
+],
+"line": 57525,
+"pages": [
+166
+],
+"text": "1) Except as provided in Sentence (2) and unless otherwise indicated, nails\n                   specified in this Section shall be common steel wire nails or common spiral nails\n                   conforming to\n                       a) ASTM F1667, \"Standard Specification for Driven Fasteners: Nails, Spikes, and\n                           Staples,\" or\n                       b) CSA B111, \"Wire Nails, Spikes and Staples.\"\n                      2) Nails used to comply with Table 9.23.3.4. and 9.23.3.5.-A to 9.23.3.5.-C shall have\n                   a diameter not less than that stated in Table 9.23.3.1. (See Note A-9.23.3.1.(2).)\n\n                                                      Table 9.23.3.1.\n                                                    Diameter of Nails\n                                            Forming Part of Sentence 9.23.3.1.(2)\n                   Minimum Length of Nails, mm                              Minimum Diameter of Nails, mm\n\n                                45                                                      2.64\n                                51                                                      2.84\n                                 57                                                     2.87\n\n                                 63                                                     3.25\n\n\n\n                                                   Table 9.23.3.1. (continued)\n                 Minim\n                 Minimum\n                       um Length of Nails\n                                    Nails,, mm                                    Minim\n                                                                                  Minimum\n                                                                                        um Diamet\n                                                                                           Diameter\n                                                                                                  er of Nails\n                                                                                                        Nails,, mm\n\n                               76                                                              3.66\n\n                               82                                                              3.66\n\n                         101 or greater                                                        4.88\n\n                     3) Wood screws specified in this Section shall conform to ASME B18.6.1, \"Wood\n                 Screws (Inch Series).\" (See Note A-9.23.3.1.(3).)",
+"pdfpage": 1088
+},
+{
+"num": "9.23.3.2",
+"title": "Length of Nails",
+"section": [
+"9.23",
+"Wood-Frame Construction"
+],
+"subsection": [
+"9.23.3",
+"Fasteners and Connectors"
+],
+"line": 57570,
+"pages": [],
+"text": "1) All nails shall be long enough so that not less than half their required length\n                 penetrates into the second member.",
+"pdfpage": 1089
+},
+{
+"num": "9.23.5.1",
+"title": "Holes Drilled in Framing Members",
+"section": [
+"9.23",
+"Wood-Frame Construction"
+],
+"subsection": [
+"9.23.5",
+"Notching and Drilling"
+],
+"line": 58137,
+"pages": [
+175
+],
+"text": "1) Holes drilled in roof, floor or ceiling framing members shall be not larger than\n                 one-quarter the depth of the member and shall be located not less than 50 mm from the\n                 edges, unless the depth of the member is increased by the size of the hole.",
+"pdfpage": 1097
+},
+{
+"num": "9.23.5.2",
+"title": "Notching of Framing Members",
+"section": [
+"9.23",
+"Wood-Frame Construction"
+],
+"subsection": [
+"9.23.5",
+"Notching and Drilling"
+],
+"line": 58147,
+"pages": [],
+"text": "1) Floor, roof and ceiling framing members are permitted to be notched provided\n                   the notch is located on the top of the member within half the joist depth from the edge\n                   of bearing and is not deeper than one-third the joist depth, unless the depth of the\n                   member is increased by the size of the notch.",
+"pdfpage": 1098
+},
+{
+"num": "9.23.5.3",
+"title": "Wall Studs",
+"section": [
+"9.23",
+"Wood-Frame Construction"
+],
+"subsection": [
+"9.23.5",
+"Notching and Drilling"
+],
+"line": 58154,
+"pages": [],
+"text": "1) Wall studs shall not be notched, drilled or otherwise damaged so that the\n                   undamaged portion of the stud is less than two-thirds the depth of the stud if the stud\n                   is loadbearing or 40 mm if the stud is non-loadbearing, unless the weakened studs are\n                   suitably reinforced.",
+"pdfpage": 1098
+},
+{
+"num": "9.23.10.1",
+"title": "Stud Size and Spacing",
+"section": [
+"9.23",
+"Wood-Frame Construction"
+],
+"subsection": [
+"9.23.10",
+"Wall Studs"
+],
+"line": 58477,
+"pages": [
+182
+],
+"text": "1) The size and spacing of studs shall conform to Table 9.23.10.1.\n                                                      Table 9.23.10.1.\n                                                Size and Spacing of Studs\n                                            Forming Part of Sentence 9.23.10.1.(1)\n    Type of        Supported Loads (including dead       Minimum Stud         Maximum Stud        Maximum Unsupported\n     Wall                       loads)                      Size, mm          Spacing, mm                Height, m\n\n                                                       38 × 38                     400           2.4\n               No load\n                                                       38 × 89 flat (1)            400           3.6\n\n                                                       38 × 64                     600           3.0\n\n                                                       38 × 64 flat (1)            400           2.4\n               Attic not accessible by a stairway\n                                                       38 × 89                     600           3.6\n\n                                                       38 × 89 flat (1)            400           2.4\n\n\n               Attic accessible by a stairway plus\n               one floor\n\n               Roof load plus one floor                38 × 89                     400           3.6\n\n    Interior   Attic not accessible by stairway plus\n               2 floors\n\n                                                       38 × 64                     400           2.4\n               Roof load\n\n               Attic accessible by a stairway\n                                                       38 × 89                     600           3.6\n               Attic not accessible by a stairway\n               plus one floor\n\n                                                       38 × 89                     300           3.6\n               Attic accessible by a stairway plus 2\n                                                     64 × 89                       400           3.6\n               floors\n\n               Roof load plus 2 floors                 38 × 140                    400           4.2\n\n\n\n\n                                                   Table 9.23.10.1. (continued)\n   Type of       Supportted Loads (including dead\n                 Suppor                                    Minim\n                                                           Minimum\n                                                                 um Stud      Maxim\n                                                                              Maximum\n                                                                                    um Stud       Maxim\n                                                                                                  Maximum\n                                                                                                        um Unsuppor\n                                                                                                           Unsupportted\n     Wall                      loads)                         Siz\n                                                              Sizee, mm           Spacing\n                                                                                  Spacing,, mm          Height, m\n\n\n              Attic accessible by a stairway plus 3\n              floors                                38 × 140                          300        4.2\n\n              Roof load plus 3 floors\n\n                                                          38 × 64                     400        2.4\n              Roof with or without attic storage\n                                                          38 × 89                     600        3.0\n\n              Roof with or without attic storage plus     38 × 89                     400        3.0\n              one floor                                   38 × 140                    600        3.0\n   Exterior                                               38 × 89                     300        3.0\n              Roof with or without attic storage plus 2\n                                                          64 × 89                     400        3.0\n              floors\n                                                          38 × 140                    400        3.6\n\n              Roof with or without attic storage plus 3                               300\n                                                          38 × 140                               1.8\n              floors\n\n  Notes to Table 9.23.10.1.:\n  (1) See Article 9.23.10.3.",
+"pdfpage": 1104
+},
+{
+"num": "9.23.11.2",
+"title": "Bottom Wall Plates",
+"section": [
+"9.23",
+"Wood-Frame Construction"
+],
+"subsection": [
+"9.23.11",
+"Wall Plates"
+],
+"line": 58637,
+"pages": [
+184
+],
+"text": "1) A bottom wall plate shall be provided in all cases.\n                      2) The bottom plate in exterior walls shall not project more than one-third the plate\n                   width over the support.",
+"pdfpage": 1106
+},
+{
+"num": "9.23.11.3",
+"title": "Top Plates",
+"section": [
+"9.23",
+"Wood-Frame Construction"
+],
+"subsection": [
+"9.23.11",
+"Wall Plates"
+],
+"line": 58647,
+"pages": [],
+"text": "1) Except as permitted in Sentences (2) to (4), at least 2 top plates shall be provided\n                 in loadbearing walls.\n                    2) A single top plate is permitted to be used in a section of a loadbearing wall\n                 containing a lintel provided the top plate forms a tie across the lintel.\n                    3) A single top plate is permitted to be used in loadbearing walls where the\n                 concentrated loads from ceilings, floors and roofs are not more than 50 mm to one side\n                 of the supporting studs and in all non-loadbearing walls.\n                     4) The top plates need not be provided in a section of loadbearing wall containing a\n                 lintel provided the lintel is tied to the adjacent wall section with not less than\n                      a) 75 mm by 150 mm by 0.91 mm thick galvanized steel, or\n                      b) 19 mm by 89 mm by 300 mm wood splice nailed to each wall section with at\n                         least three 63 mm nails.",
+"pdfpage": 1107
+},
+{
+"num": "9.23.15.5",
+"title": "Subfloor Thickness or Rating",
+"section": [
+"9.23",
+"Wood-Frame Construction"
+],
+"subsection": [
+"9.23.15",
+"Subflooring"
+],
+"line": 61413,
+"pages": [
+223
+],
+"text": "1) Except as provided in Sentences (2) and (3), subfloors shall conform to either\n                 Table 9.23.15.5.-A or 9.23.15.5.-B.\n\n\n\n\n                                                    Table 9.23.15.5.-A\n                                                Thickness of Subflooring\n                                 Forming Part of Sentences 9.23.15.5.(1) and 9.23.16.7.(1)\n                                                                    Minimum Thickness, mm\n         Maximum Spacing of\n           Supports, mm             Plywood and OSB, O-2      OSB, O-1 Grade, and Waferboard,\n                                                                                                    Particleboard Lumber\n                                            Grade                         R-1 Grade\n\n   400                              15.5                     15.9                                   15.9            17.0\n\n   500                              15.5                     15.9                                   19.0            19.0\n\n   600                              18.5                     19.0                                   25.4            19.0\n\n                                                   Table 9.23.15.5.-B\n                                     Rating for Subfloor when Applying CSA O325\n                                 Forming Part of Sentences 9.23.15.5.(1) and 9.23.16.7.(1)\n                                                                                      Panel Mark\n             Maximum Spacing of Supports, mm\n                                                              Subfloor            Used with Panel-Type Underlay\n\n                              400                              1F16                             2F16\n\n                              500                              1F20                             2F20\n\n                              600                              1F24                             2F24\n\n                       2) Where the finished flooring consists of not less than 19 mm matched wood strip\n                   flooring laid at right angles to joists spaced not more than 600 mm o.c., subflooring shall\n                   be permitted to consist of not less than\n                        a) 12.5 mm thick plywood,\n                       b) 12.5 mm thick OSB conforming to O-2 grade,\n                        c) 12.7 mm thick OSB conforming to O-1 grade,\n                       d) 12.7 mm thick waferboard conforming to R-1 grade, or\n                        e) OSB conforming to 2R32/2F16 grade.\n                       3) Except where the flooring consists of ceramic tiles applied with adhesive, where\n                   a separate panel-type underlay or concrete topping is applied to a subfloor on joists\n                   spaced not more than 400 mm o.c., the subfloor is permitted to consist of not less than\n                        a) 12.5 mm thick plywood,\n                       b) 12.5 mm thick OSB conforming to O-2 grade,\n                        c) 12.7 mm thick OSB conforming to O-1 grade,\n                       d) 12.7 mm thick waferboard conforming to R-1 grade, or\n                        e) OSB conforming to 2R32/2F16 grade.",
+"pdfpage": 1145
+},
+{
+"num": "9.23.16.7",
+"title": "Thickness or Rating",
+"section": [
+"9.23",
+"Wood-Frame Construction"
+],
+"subsection": [
+"9.23.16",
+"Roof Sheathing"
+],
+"line": 61542,
+"pages": [
+226
+],
+"text": "1) The thickness or rating of roof sheathing on a flat roof used as a walking deck\n                   shall conform to either Table 9.23.15.5.-A or 9.23.15.5.-B for subfloors.\n                      2) The thickness or rating of roof sheathing on a roof not used as a walking deck\n                   shall conform to either Table 9.23.16.7.-A or 9.23.16.7.-B.\n                      3) Asphalt-coated or asphalt-impregnated fibreboard not less than 11.1 mm thick\n                   conforming to CAN/ULC-S706.1, \"Standard for Wood Fibre Insulating Boards for\n                   Buildings\" is permitted to be used as a roof sheathing over supports spaced not more\n                   than 400 mm o.c. provided the roofing consists of\n                       a) a continuous sheet of galvanized steel not less than 0.33 mm in thickness, or\n                       b) a continuous sheet of aluminum not less than 0.61 mm in thickness.\n                       4) All edges of sheathing described in Sentence (3) shall be supported by blocking\n                   or framing.\n\n                                                     Table 9.23.16.7.-A\n                                               Thickness of Roof Sheathing\n                                            Forming Part of Sentence 9.23.16.7.(2)\n                                                                    Minimum Thickness, mm\n\n                                                                           OSB, O-1 Grade, and Waferboard, R-1\n   Maximum Spacing of Supports,          Plywood, and OSB, O-2 Grade\n                                                                                           Grade\n                   mm                                                                                                Lumber\n                                           Edges            Edges\n                                                                          Edges Supported      Edges Unsupported\n                                         Supported       Unsupported\n\n                   300                      7.5               7.5                9.5                   9.5             17.0\n\n                   400                      7.5               9.5                9.5                  11.1             17.0\n\n                   600                      9.5              12.5                                     12.7             19.0\n                                                                                 11.1\n\n\n                                                    Table 9.23.16.7.-B\n                                   Rating for Roof Sheathing When Applying CSA O325\n                                           Forming Part of Sentence 9.23.16.7.(2)\n                                                                                        Panel Mark\n              Maximum Spacing of Supports, mm\n                                                                    Edges Supported                Edges Unsupported\n\n                                400                                      2R16                            1R16\n\n                                500                                      2R20                            1R20\n\n                                600                                      2R24                            1R24",
+"pdfpage": 1148
+},
+{
+"num": "9.23.17.2",
+"title": "Thickness, Rating and Material Standards",
+"section": [
+"9.23",
+"Wood-Frame Construction"
+],
+"subsection": [
+"9.23.17",
+"Wall Sheathing"
+],
+"line": 61602,
+"pages": [
+227
+],
+"text": "1) Where wall sheathing is required for the purpose of complying with this\n                 Section, it shall conform to either Table 9.23.17.2.-A or 9.23.17.2.-B. (See also Article\n                 9.25.5.1.)\n\n                                                    Table 9.23.17.2.-A\n                                       Wall Sheathing Thickness and Specifications\n                                           Forming Part of Sentence 9.23.17.2.(1)\n\n                                                                 Minimum Thickness, mm (1)\n                       Type of Sheathing                                                            Material Standards\n                                                               With Supports    With Supports\n                                                               400 mm o.c.      600 mm o.c.\n\n  Fibreboard (insulating)                                      9.5             11.1             CAN/ULC-S706.1\n\n                                                                                                ASTM C1177/C1177M\n  Gypsum sheathing                                             9.5             12.7\n                                                                                                ASTM C1396/C1396M (2)\n\n  Lumber                                                       17.0            17.0             See Table 9.3.2.1.\n\n  Mineral Fibre, Rigid Board, Type 2                           25              25               CAN/ULC-S702.1\n\n  OSB, O-2 Grade                                               6.0             7.5              CSA O437.0\n\n  OSB, O-1 Grade, and Waferboard, R-1 Grade                    6.35            7.9              CSA O437.0\n\n  Phenolic, faced                                              25              25               CAN/CGSB-51.25-M\n\n                                                                                                CSA O121\n  Plywood (exterior type)                                      6.0             7.5              CSA O151\n                                                                                                CSA O153\n\n  Polystyrene, Types 1 and 2                                   38              38               CAN/ULC-S701.1\n\n  Polystyrene, Types 3 and 4                                   25              25               CAN/ULC-S701.1\n\n  Polyurethane and Polyisocyanurate Type 1, faced              38              38               CAN/ULC-S704.1\n\n  Polyurethane and Polyisocyanurate Types 2 and 3, faced       25              25               CAN/ULC-S704.1\n\n  Notes to Table 9.23.17.2.-A:\n  (1) See also Sentences 9.27.5.1.(2) to (4).\n  (2) The flame-spread rating of gypsum board shall be determined in accordance with CAN/ULC-S102, \"Standard\n  Method of Test for Surface Burning Characteristics of Building Materials and Assemblies.\"\n                                                   Table 9.23.17.2.-B\n                                 Rating for Wall Sheathing when Applying CSA O325\n                                         Forming Part of Sentence 9.23.17.2.(1)\n                               Maximum Spacing of Supports, mm                                        Panel Mark\n\n                                             400                                                         W16\n\n\n\n                                              Table 9.23.17.2.-B (continued)\n                              Maxim\n                              Maximum\n                                    um Spacing of Suppor\n                                                  Supports\n                                                         ts,, mm                                    Panel Mar\n                                                                                                          Markk\n\n                                             500                                                        W20\n\n                                             600                                                        W24",
+"pdfpage": 1149
+},
+{
+"num": "9.26.3.1",
+"title": "Slope",
+"section": [
+"9.26",
+"Roofing"
+],
+"subsection": [
+"9.26.3",
+"Slope of Roofed Surfaces"
+],
+"line": 62409,
+"pages": [
+241
+],
+"text": "1) Except as provided in Sentences (2) and (3), the slopes on which roof coverings\n                 may be applied shall conform to Table 9.26.3.1.\n                    2) Asphalt and gravel or coal tar and gravel roofs may be constructed with lower\n                 slopes than required in Sentence (1) when effective drainage is provided by roof drains\n                 located at the lowest points on the roofs.\n                     3) Profiled metal roof cladding systems specifically designed for low-slope\n                 applications are permitted to be installed with lower slopes than required by Sentence\n                 (1), provided they are installed in conformance with the manufacturer's written\n                 recommendations.\n                    4) Except where back-slope will not adversely affect adjacent supported or\n                 supporting constructions due to water ingress, roofs and constructions that effectively\n                 serve as roofs shall be constructed with sufficient slope away from\n                     a) exterior walls, and\n                     b) guards that are connected to the roof, or to a construction that effectively serves\n                         as a roof, by more than pickets or posts.\n                 (See Notes A-9.26.1.1.(1), A-9.26.4.1. and A-9.27.3.8.(4).)\n                    5) The slope required by Sentence (4) shall be sufficient to maintain a positive slope\n\n\n                      a) after expected shrinkage of the building frame, where these surfaces are\n                         supported by exterior walls and exterior columns (see Note A-9.27.3.8.(4)), and\n                      b) once design loading is taken into consideration, where these surfaces are\n                         cantilevered from exterior walls.\n\n                                                       Table 9.26.3.1.\n                                              Roofing Types and Slope Limits\n                                             Forming Part of Sentence 9.26.3.1.(1)\n                                 Type of Roofing                             Minimum Slope            Maximum Slope\n\n   Asphalt Shingles\n\n      Low slope application                                                      1 in 6                    no limit\n\n      Normal application                                                         1 in 3                    no limit\n\n   Built-up Roofing\n\n      Asphalt base (without gravel)                                              1 in 25                   1 in 2\n\n      Asphalt base (gravelled)                                                 1 in 50 (1)                 1 in 4\n\n      Coal-tar base (gravelled)                                                1 in 50 (1)                 1 in 25\n\n      Cold process                                                               1 in 25                  1 in 1.33\n\n   Cedar Shakes                                                                  1 in 3                    no limit\n\n   Clay Tile                                                                     1 in 2                    no limit\n\n   Glass Fibre Reinforced Polyester Roofing Panels                               1 in 4                    no limit\n\n   Modified Bituminous Membranes                                                 1 in 50                   1 in 4\n\n   Profiled Metal Roofing                                                       1 in 4 (1)                 no limit\n\n   Roll Roofing\n\n      480 mm wide selvage asphalt roofing                                        1 in 6                    no limit\n\n      Cold application felt                                                      1 in 50                  1 in 1.33\n\n      Smooth and mineral surfaced                                                1 in 4                    no limit\n\n   Sheet Metal Shingles                                                         1 in 4 (1)                 no limit\n\n   Slate Shingles                                                                1 in 2                    no limit\n\n   Wood Shingles                                                                 1 in 4                    no limit\n\n  Notes to Table 9.26.3.1.:\n  (1) See Sentence 9.26.3.1.(3).",
+"pdfpage": 1163
+},
+{
+"num": "9.29.5.3",
+"title": "Maximum Spacing of Supports",
+"section": [
+"9.29",
+"Interior Wall and Ceiling Finishes"
+],
+"subsection": [
+"9.29.5",
+"Gypsum Board Finish (Taped Joints)"
+],
+"line": 64273,
+"pages": [],
+"text": "1) Maximum spacing of supports for gypsum board applied as a single layer shall\n                 conform to Table 9.29.5.3.\n\n                                                    Table 9.29.5.3.\n                                        Spacing of Supports for Gypsum Board\n                                          Forming Part of Sentence 9.29.5.3.(1)\n                                                                       Maximum Spacing of Supports, mm o.c.\n\n    Thickness, mm         Orientation of Board to Framing                                  Ceilings\n                                                              Walls\n                                                                       Painted Finish      Water-Based Texture Finish\n\n  Gypsum board conforming to Sentence 9.29.5.2.(1) (except Sections 9 and 12 of ASTM C1396/C1396M)\n\n                                       parallel                 -             -                         -\n          9.5\n                                   perpendicular               400          400                         -\n\n                                       parallel                600          400                         -\n          12.7\n                                   perpendicular               600          600                       400\n\n                                       parallel                600          400                         -\n          15.9\n                                   perpendicular               600          600                       600\n\n  Gypsum ceiling board conforming to Clause 9.29.5.2.(1)(b) (only Section 12 of ASTM C1396/C1396M)\n\n                                       parallel                600          400                         -\n          12.7\n                                   perpendicular               600          600                       600",
+"pdfpage": 1197
+}
+]
+}

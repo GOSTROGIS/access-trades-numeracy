@@ -10,6 +10,14 @@ module.exports = function (B, L) {
   const P3 = (q, a, o) => P(q, a, Object.assign({ lines: 3 }, o || {}));
   const side2 = (a, b) => '<div style="display:flex;justify-content:center;align-items:center;gap:14pt">' + a + b + '</div>';
 
+  /* BCBC 2024 wording quoted in set 9K, checked against the code text */
+  const PL = require('../engine/plates.js');
+  const pg = num => PL.article(num).page;
+  const q3 = 'in all non-loadbearing walls';
+  [['9.23.11.2', 'A bottom wall plate shall be provided in all cases.'], ['9.23.11.3', 'at least 2 top plates shall be provided in loadbearing walls'], ['9.23.11.3', q3]].forEach(([a, q]) => {
+    if (!PL.article(a).text.replace(/\s+/g, ' ').includes(q)) throw new Error('BCBC ' + a + ': quote not found')
+  });
+
   const jacket = PI * 10.75;
   const band = PI * 1850 + 150;
   const duct = PI * 355 + 25;
@@ -53,6 +61,27 @@ module.exports = function (B, L) {
     row(P('The belt is 2,400 mm long. Find the centre distance marked ?.', d2((2400 - PI * 200) / 2) + ' mm', { lines: 3, work: 'c = (L − π × D) ÷ 2', canvas: G.belt(200, (2400 - PI * 200) / 2, { askC: true, max: '2.2in' }) }),
       P('Change one value: the outside of the washer is kept, but the hole is made 10 mm bigger across. Find the new total length of both edges.', 'π × 140 + π × 80 = ' + d2(PI * 220) + ' mm (was ' + d2(PI * 210) + ' mm)', { lines: 3, canvas: G8.washer(70, 35, 'mm', { max: '1.15in' }) })),
 
+    /* Set 9K: the set letter K is kept for the Carpentry sets in every chapter */
+    (() => { B.wsN = 10; return ''; })(),
+    B.worksheet({ title: 'Carpentry and the BCBC', sub: 'Wall plates (BCBC 2024, Division B, Articles 9.23.11.2 and 9.23.11.3), rim joists, fascia and trim' }),
+    row(P('A loadbearing wall 7,320 mm long has one bottom plate and two top plates (Sentences 9.23.11.2.(1), page ' + pg('9.23.11.2') + ', and 9.23.11.3.(1), page ' + pg('9.23.11.3') + '). How much plate is in the wall?', n(3 * 7320) + ' mm', { lines: 3 }),
+      P('Sentence 9.23.11.3.(3) permits a single top plate "' + q3 + '". A non-loadbearing wall 3,050 mm long has one bottom plate and one top plate. How much plate is that?', n(2 * 3050) + ' mm', { lines: 3 })),
+    row(P('The outside walls of a house are 14,640 mm by 9,760 mm. All are loadbearing with one bottom and two top plates. Using the outside perimeter and ignoring openings, find the plate needed and the number of 4,880 mm lengths.', n(3 * 2 * (14640 + 9760)) + ' mm, ' + n(3 * 2 * (14640 + 9760) / 4880) + ' lengths', { lines: 4, work: 'P = 2 × (14,640 + 9,760) = ' + n(2 * (14640 + 9760)) + ', × 3, ÷ 4,880' }),
+      P('A floor frame is 10,980 mm by 7,930 mm. Find the total length of rim joist. How many 3,660 mm lengths are needed, ignoring joints?', n(2 * (10980 + 7930)) + ' mm, ' + Math.ceil(2 * (10980 + 7930) / 3660) + ' lengths (' + d2(2 * (10980 + 7930) / 3660) + ' rounded up)', { lines: 4 })),
+    row(P('Walls are 12,000 mm by 8,000 mm. The hip roof overhangs 600 mm on every side, with fascia on all four edges. Find the length of fascia.', n(2 * (13200 + 9200)) + ' mm', { lines: 4, work: '2 × (12,000 + 1,200 + 8,000 + 1,200)' }),
+      P('Walls are 36 ft by 24 ft. The hip roof overhangs 18 in on every side. Find the length of fascia in feet.', 2 * (39 + 27) + ' ft', { lines: 4, work: '18 in = 1.5 ft. 2 × (36 + 3 + 24 + 3)' })),
+    row(P('A room is 4,270 mm by 3,660 mm. Baseboard runs around it except across a door opening 860 mm wide and a closet opening 1,520 mm wide. How much baseboard is needed?', n(2 * (4270 + 3660) - 860 - 1520) + ' mm', { lines: 4 }),
+      P('A room is 13 ft 4 in by 10 ft 8 in with one door opening 30 in wide. How much baseboard is needed? Give feet and inches.', 2 * (160 + 128) - 30 + ' in = ' + L.ftin(2 * (160 + 128) - 30), { lines: 4 })),
+    row(P('Window casing is measured around its outside edge, 1,370 mm by 1,060 mm. How much casing goes around the window?', n(2 * (1370 + 1060)) + ' mm', { lines: 3 }),
+      P('Change one value: the house in problem 3 is made 1,220 mm longer. How much more plate is needed?', n(3 * 2 * 1220) + ' mm more (3 plates × 2 walls × 1,220 mm)', { lines: 3 })),
+    row(P('The walls are 9,000 mm by 6,000 mm and the fascia around the roof is 33,600 mm long. Find the overhang marked ?.', n((33600 / 2 - 15000) / 4) + ' mm', { lines: 4, mode: 'Practice: find the ?', work: '33,600 ÷ 2 = 16,800. 16,800 − (9,000 + 6,000) = 1,800, shared by 4 overhangs', canvas: G.roofPlan(9000, 6000, 450, { L: '9,000 mm', W: '6,000 mm', ov: '?', max: '2.4in' }) }),
+      P('Find the length of baseboard for the room. The door opening is not covered.', n(2 * (4880 + 3660) - 910) + ' mm', { lines: 4, canvas: G.roomPlan({ l: '4,880 mm', w: '3,660 mm', d: '910 mm' }, { ratio: 4880 / 3660, door: 910 / 4880, max: '2.4in' }) })),
+    B.check('3 × 2 × ( 14640 + 9760 ) ÷ 4880 =', n(3 * 2 * (14640 + 9760) / 4880)),
+    B.check('2 × ( 10980 + 7930 ) ÷ 3660 =', d2(2 * (10980 + 7930) / 3660)),
+    B.check('2 × ( 13200 + 9200 ) =', n(2 * (13200 + 9200))),
+    B.check('2 × ( 4270 + 3660 ) − 860 − 1520 =', n(2 * (4270 + 3660) - 860 - 1520)),
+    B.check('( 33600 ÷ 2 − 15000 ) ÷ 4 =', n((33600 / 2 - 15000) / 4)),
+    B.check('2 × ( 4880 + 3660 ) − 910 =', n(2 * (4880 + 3660) - 910)),
     B.check('π × 380 =', d2(PI * 380)),
     B.check('π × 190 =', d2(PI * 190)),
     B.check('1500 ÷ π =', d2(1500 / PI)),

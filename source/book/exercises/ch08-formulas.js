@@ -8,6 +8,22 @@ module.exports = function (B, L) {
   const P = (q, a, o) => B.prob(Object.assign({ q, a, lines: 2 }, o || {}));
   const row = (a, b) => B.grid2(a, b);
 
+  /* BCBC 2024 stair values, read from the code text. The build stops if the text does not hold them */
+  const PL = require('../engine/plates.js');
+  const codeNum = (num, re) => {
+    const mm = re.exec(PL.article(num).text.replace(/\s+/g, ' '));
+    if (!mm) throw new Error('BCBC ' + num + ': value not found in the code text ' + re);
+    return mm.slice(1).map(v => /^\d+$/.test(v) ? +v : v);
+  };
+  const [rPrivMax] = codeNum('9.8.4.1', /Private \(1\) (\d+) (\d+)/);
+  const [rPubMax] = codeNum('9.8.4.1', /Public \(2\) (\d+) (\d+)/);
+  const [uPrivMax, uPrivMin] = codeNum('9.8.4.2', /Private \(1\) (\d+) (\d+)/);
+  const [tolAdj] = codeNum('9.8.4.4', /a\) (\d+) mm between adjacent treads or landings/);
+  const [tolAll] = codeNum('9.8.4.4', /b\) (\d+) mm between the tallest and shortest risers in a flight/);
+  codeNum('9.8.4.4', /a\) (\d+) mm between adjacent treads, and/);
+  const [flightMax] = codeNum('9.8.3.3', /shall not exceed (\d+\.\d+) m/);
+  const pg = num => PL.article(num).page;
+
   /* worked values */
   const gasketD = 2 * Math.sqrt(12000 / PI);
   const tankH = 4 / (PI * 0.75 * 0.75);
@@ -66,6 +82,38 @@ module.exports = function (B, L) {
     row(P('Change one value: the square in problem 2 is given an area 9 times as big. Find the new side.', (3 * 56) + ' mm, three times the side', { lines: 3 }),
       P('Change one value: the circle in problem 3 is given an area 4 times as big, 32,000 mm². Find the new diameter to two decimal places. What happened to it?', d2(4 * circR) + ' mm. The diameter doubled.', { lines: 3 })),
 
+    /* Set 8K: the set letter K is kept for the Carpentry sets in every chapter */
+    (() => { B.wsN = 10; return ''; })(),
+    B.worksheet({ title: 'Carpentry and the BCBC', sub: 'Stair formulas checked against BCBC 2024, Division B, Articles 9.8.3.3, 9.8.4.1, 9.8.4.2 and 9.8.4.4' }),
+    row(P('A private stair has a total rise of 2,565 mm. The maximum rise is ' + rPrivMax + ' mm (Table 9.8.4.1, page ' + pg('9.8.4.1') + '). Find the number of risers and the unit rise to two decimal places.', Math.ceil(2565 / rPrivMax) + ' risers of ' + d2(2565 / Math.ceil(2565 / rPrivMax)) + ' mm', { lines: 4, work: '2,565 ÷ ' + rPrivMax + ' = ' + n(2565 / rPrivMax, 3) + ', round up to 13. 2,565 ÷ 13' }),
+      P('The stair in problem 1 has a unit run of 265 mm. Does the run meet Table 9.8.4.2 (page ' + pg('9.8.4.2') + ') for a private stair? Find the total run.', 'Yes, 265 mm is between ' + uPrivMin + ' mm and ' + uPrivMax + ' mm. Total run 12 × 265 = ' + n(12 * 265) + ' mm', { lines: 4 })),
+    row(P('A public stair has a total rise of 2,960 mm. The maximum rise is ' + rPubMax + ' mm (Table 9.8.4.1). Find the number of risers and the unit rise to two decimal places.', Math.ceil(2960 / rPubMax) + ' risers of ' + d2(2960 / Math.ceil(2960 / rPubMax)) + ' mm', { lines: 4, work: '2,960 ÷ ' + rPubMax + ' = ' + d2(2960 / rPubMax) + ', round up to 17' }),
+      P('For the stair in problem 3, a learner rounds down to 16 risers. Find the unit rise and explain why it does not meet Table 9.8.4.1.', '2,960 ÷ 16 = ' + n(2960 / 16) + ' mm, more than the ' + rPubMax + ' mm maximum for a public stair', { lines: 4 })),
+    row(P('A stair has 16 risers of 178 mm. Find the total rise.', n(16 * 178) + ' mm', { lines: 3, work: 'total rise = number of risers × unit rise' }),
+      P('A private stair has 13 treads and a total run of 3,315 mm. Find the unit run. Does it meet Table 9.8.4.2?', n(3315 / 13) + ' mm. Yes, it is exactly the ' + uPrivMin + ' mm minimum', { lines: 3, work: 'unit run = total run ÷ number of treads' })),
+    row(P('The risers of a flight measure 182, 185, 181, 186, 184 and 179 mm, from the bottom. Do they meet Sentence 9.8.4.4.(1) (page ' + pg('9.8.4.4') + '): ' + tolAdj + ' mm between adjacent risers and ' + tolAll + ' mm between the tallest and the shortest?', 'Yes. Adjacent differences are 3, 4, 5, 2 and 5 mm, none more than ' + tolAdj + ' mm. Tallest minus shortest is 186 − 179 = 7 mm, within ' + tolAll + ' mm', { lines: 4 }),
+      P('The rectangular treads of a flight have runs of 270, 276, 268 and 272 mm. Sentence 9.8.4.4.(3) allows ' + tolAdj + ' mm between adjacent treads. Do they meet it?', 'No. 276 − 270 = 6 mm and 276 − 268 = 8 mm are more than ' + tolAdj + ' mm', { lines: 4 })),
+    row(P('Article 9.8.3.3 (page ' + pg('9.8.3.3') + ') says the vertical height of a flight shall not exceed ' + flightMax + ' m. A private stair has a total rise of 3,900 mm. Can it be one flight? If it is split into two equal flights with a landing, find the risers and the unit rise in each flight.', 'No, 3,900 mm is more than ' + n(parseFloat(flightMax) * 1000) + ' mm. Each flight rises 1,950 mm: ' + Math.ceil(1950 / rPrivMax) + ' risers of ' + n(1950 / Math.ceil(1950 / rPrivMax)) + ' mm', { lines: 4 }),
+      P('A stair has n risers of 190 mm and a total rise of 2,660 mm. Write an equation and solve it for n.', '190 × n = 2,660, so n = ' + n(2660 / 190), { lines: 4 })),
+    row(P('A stair has 15 risers and a total run of 3,640 mm. Transpose ' + m('total run = number of treads × unit run') + ' and find the unit run.', 'unit run = total run ÷ number of treads = 3,640 ÷ 14 = ' + n(3640 / 14) + ' mm', { lines: 4 }),
+      P('The stair drawing shows 12 risers, a total rise of 2,280 mm and a unit run of 250 mm. Find the unit rise and the total run marked ?.', 'Unit rise 2,280 ÷ 12 = ' + n(2280 / 12) + ' mm. Total run 11 × 250 = ' + n(11 * 250) + ' mm', { lines: 4, canvas: G.stairFig(12, { rise: '2,280 mm', run: '?', un: '250 mm', max: '2.6in' }) })),
+    row(P('A private stair has a total rise of 2,600 mm, built as 13 risers of 200 mm. It must fit in a total run of no more than 3,400 mm. Find the largest whole-millimetre unit run that fits, and check it against Table 9.8.4.2.', '12 treads: 3,400 ÷ 12 = ' + d2(3400 / 12) + ', so ' + Math.floor(3400 / 12) + ' mm. It is between ' + uPrivMin + ' mm and ' + uPrivMax + ' mm, so it meets the table', { lines: 3 }),
+      P('Change one value: the total rise in problem 1 becomes 2,605 mm. Find the number of risers and the unit rise to two decimal places. What changed?', Math.ceil(2605 / rPrivMax) + ' risers of ' + d2(2605 / Math.ceil(2605 / rPrivMax)) + ' mm. 2,605 ÷ ' + rPrivMax + ' = ' + n(2605 / rPrivMax, 3) + ' rounds up to 14, one more riser, so each riser is lower', { lines: 3 })),
+    B.check('3400 ÷ 12 =', d2(3400 / 12)),
+    B.check('2605 ÷ ' + rPrivMax + ' =', n(2605 / rPrivMax, 3)),
+    B.check('2605 ÷ 14 =', d2(2605 / 14)),
+    B.check('2565 ÷ ' + rPrivMax + ' =', n(2565 / rPrivMax, 3)),
+    B.check('2565 ÷ 13 =', d2(2565 / 13)),
+    B.check('12 × 265 =', n(12 * 265)),
+    B.check('2960 ÷ ' + rPubMax + ' =', d2(2960 / rPubMax)),
+    B.check('2960 ÷ 17 =', d2(2960 / 17)),
+    B.check('2960 ÷ 16 =', n(2960 / 16)),
+    B.check('16 × 178 =', n(16 * 178)),
+    B.check('3315 ÷ 13 =', n(3315 / 13)),
+    B.check('1950 ÷ 10 =', n(1950 / 10)),
+    B.check('2660 ÷ 190 =', n(2660 / 190)),
+    B.check('3640 ÷ 14 =', n(3640 / 14)),
+    B.check('2280 ÷ 12 =', n(2280 / 12)),
     B.check('π × 450 =', d2(PI * 450)),
     B.check('π × 35 x² =', d2(PI * 35 * 35)),
     B.check('1.8 × 10 +⇄− + 32 =', '14'),

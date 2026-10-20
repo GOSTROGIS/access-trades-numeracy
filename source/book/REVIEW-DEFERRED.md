@@ -1,0 +1,17 @@
+# Code review items left for later (Oct 20 2026)
+
+These review items were not done in the Oct 20 clean-up. Each one would change a published figure or page, or needs a refactor across several chapter files. The rule for this pass was that the PDF builds must produce byte-identical out/textbook.html, out/exercise.html and out/answers.html. Each item below should be done on its own and checked against the built pages.
+
+| Item | Where | Why it was left |
+|---|---|---|
+| Appendix handling through a flag on B.chapter, in place of the B.worksheet wrapper and the string replacements on the module output | build.js, engine/lib.js | Changes how worksheet and set ids, the contents list and the opener wording are made for Appendices A and B. Needs a check of every appendix page and of the Answer Key. |
+| Move pruneCrop out of figs-ch08.js into plates.js | engine/figs-ch08.js, engine/plates.js, chapters/ch08-formulas.js, chapters/ch09-perimeter.js | plates.js and two chapter files call it from figs-ch08.js. Moving it touches all of them at once. |
+| The other nested-svg mechanisms (flattenNested in plates.js, the svgKeep stash in build.js) | build.js, engine/plates.js | Only the two dead svg branches were removed in this pass. Merging the mechanisms changes how plate SVG is written into the page. |
+| Merge plateFig with PL.figure | engine/figs-ch12.js, chapters/ch03-order-of-operations.js, chapters/ch12-right-triangles.js | plateFig lays out its own figure, so merging it with PL.figure changes figure boxes and can move page breaks. |
+| Merge the stud wall and stair drawing helpers | studWall in engine/figs-ch01.js and figs-ch02.js, stairProfile in figs-ch02.js, stairFig in figs-ch08.js, stairSide in figs-ch12.js | They are separate drawings with different arguments. One shared helper would change published drawings. |
+| dmsCalc through B.calc | engine/figs-ch12.js, chapters/ch12-right-triangles.js, chapters/ch13-trigonometry.js | dmsCalc checks the degrees, minutes and seconds displays itself before it builds the box. Moving that into B.calc changes shared calculator code. |
+| rulerFr and calloutFr through figs.js hooks | engine/figs-ch06.js, figs-ch07.js, figs.js | Needs new hooks in the shared figs.js, which every chapter uses. |
+| com and grp through L.num | com in engine/figs-ch01.js, grp in engine/figs-ch02.js | They do not behave like L.num on every input: com puts commas in the digits after a decimal point too, and grp adds a plus sign. Labels could change. |
+| F.dim options in place of regex post-processing of its output | engine/figs.js and the figs files that edit its output, for example circleCallout in figs-ch08.js | Needs new options in the shared figs.js and a change to every caller. |
+| A flag on B.table for the web scroll wrapper, in place of the regex in engine/web.js | engine/lib.js, engine/web.js, build.js | lib.js would need to know which edition it is building, and the web wrapper would move from a pass over the finished body into every table call. That is a wider change than this pass allowed. |
+| One dark token block in web.css, with print using the light tokens without a copy | styles/web.css | Tried on Oct 20 with light-dark() and reverted. light-dark() needs Chrome 123, Safari 17.5 or Firefox 120 and later, so older browsers (Safari before 17.5, older iPads) would lose the theme colours. That is a behaviour change this review did not allow. The dark tokens are still written for the system setting and for the toggle, and print still repeats the light tokens. |

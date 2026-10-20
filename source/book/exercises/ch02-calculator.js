@@ -73,6 +73,49 @@ module.exports = function (B, L) {
       B.prob({ q: 'This display shows GRAD. How many presses of DRG bring back DEG?', canvas: P.lcd('sharp', '0.', { ind: 'GRAD', max: '2.3in', indS: 11 }), mode: 'Read it', a: 'One press (the order is DEG, RAD, GRAD, then back to DEG).', lines: 1 }),
       B.prob({ q: 'Find the distance around the circle, π × D, to two decimal places. Then change one value: if the diameter doubles, what is the new distance around?', canvas: P.circleR(50, 'mm', { max: '1.45in' }), a: 'D = 100 mm. π × 100 = ' + r2('π × 100 =', 2) + ' mm. Doubled: π × 200 = ' + r2('π × 200 =', 2) + ' mm, twice as far.', lines: 3 })
     ),
-    B.check('π × 100 =', '314.16'), B.check('25 +⇄− + 9 =', '-16'), B.check('π × 200 =', '628.32'), B.check('37 x²', '1369')
+    B.check('π × 100 =', '314.16'), B.check('25 +⇄− + 9 =', '-16'), B.check('π × 200 =', '628.32'), B.check('37 x²', '1369'),
+
+    /* Set 2K: carpentry tape lengths and BCBC values. The set letter is K in every chapter. */
+    carpSet()
   ]);
+
+  function carpSet() {
+    const PL = require('../engine/plates.js')
+    const ftin = v => L.ftin(v, 16), inch = v => L.inch(v, 16)
+    const fi = (w, a, b) => L.mx(w, a, b)
+    const s = {
+      p1: '9 × 12 + 4 ab/c 3 ab/c 4 =', p2: '14 × 12 + 11 ab/c 5 ab/c 8 =',
+      p3: '5 × 12 + 6 ab/c 3 ab/c 16 + 3 × 12 + 10 ab/c 15 ab/c 16 =', p4: '16 × 12 − ( 7 × 12 + 9 ab/c 3 ab/c 8 ) =',
+      p5: '( 10 × 12 + 4 ab/c 1 ab/c 2 ) ÷ 3 =', p6: '8 × 12 + 1 ab/c 1 ab/c 8 = × 25.4 =',
+      p7: '2 × ( 12 × 12 + 6 ab/c 1 ab/c 2 + 9 × 12 + 11 ab/c 3 ab/c 4 ) =', p8: '15 × 7 ab/c 1 ab/c 4 =', p9: '14 × 10 ab/c 1 ab/c 2 =',
+      p10: '255 ÷ 25.4 × 16 =', p11: '3700 ÷ 25.4 × 16 =', p12: '8 × 12 + 5 ab/c 3 ab/c 8 =', p13: '8 × 12 + 6 ='
+    }
+    const v = {}
+    for (const k of Object.keys(s)) v[k] = ti(s[k])
+    const run16 = Math.round(v.p10), fl16 = Math.floor(v.p11)
+    const lcd12 = scr(s.p12, 'ti30xa')
+    B.wsN = Math.max(B.wsN, 10)
+    return [
+      B.worksheet({ title: 'Carpentry and the BCBC', sub: 'Tape lengths in feet, inches and fractions on both calculators' }),
+      B.grid2(...kp('Change 9′ ' + fi(4, 3, 4) + '″ to inches.', s.p1, inch(v.p1), { lines: 2 }),
+        ...kp('Change 14′ ' + fi(11, 5, 8) + '″ to inches.', s.p2, inch(v.p2), { lines: 2 })),
+      ...kp('Two lengths of baseboard, 5′ ' + fi(6, 3, 16) + '″ and 3′ ' + fi(10, 15, 16) + '″, are butted end to end. Find the total in feet and inches.', s.p3, ftin(v.p3) + ' (' + inch(v.p3) + ')'),
+      ...kp('A piece 7′ ' + fi(9, 3, 8) + '″ long is cut from a 16′ board. Ignore the saw cut. Find the piece left over in feet and inches. Put the length you take away in brackets.', s.p4, ftin(v.p4) + ' (' + inch(v.p4) + ')'),
+      ...kp('A 10′ ' + fi(4, 1, 2) + '″ board is cut into 3 equal shelves. Ignore the saw cuts. How long is each shelf?', s.p5, inch(v.p5) + ' (' + ftin(v.p5) + ')'),
+      B.prob({ q: 'Change 8′ ' + fi(1, 1, 8) + '″ to millimetres, to the nearest millimetre. One inch is exactly 25.4 mm.', a: n(L.round(v.p6, 0)) + ' mm', work: inch(ti('8 × 12 + 1 ab/c 1 ab/c 8 =')) + ' × 25.4 = ' + n(v.p6) + ' mm. ' + both(s.p6), lines: 3 }),
+      B.check(s.p6, n(L.round(v.p6, 0))),
+      ...kp('Two walls are 12′ ' + fi(6, 1, 2) + '″ and 9′ ' + fi(11, 3, 4) + '″ long. Each wall gets a top plate and a bottom plate. Find the total plate length in feet and inches.', s.p7, ftin(v.p7) + ' (' + inch(v.p7) + ')'),
+      B.grid2(...kp('A stair has 15 risers, each ' + fi(7, 1, 4) + '″ high. Find the total rise in feet and inches.', s.p8, ftin(v.p8) + ' (' + inch(v.p8) + ')', { lines: 2 }),
+      ...kp('A stair has 14 treads, each with a unit run of ' + fi(10, 1, 2) + '″. Find the total run in feet and inches.', s.p9, ftin(v.p9) + ' (' + inch(v.p9) + ')', { lines: 2 })),
+      B.prob({ q: 'Table 9.8.4.2 of the BC Building Code (Sentence 9.8.4.2.(1), page ' + PL.article('9.8.4.2').page + ') gives a minimum unit run of 255 mm for a private stair. Change 255 mm to inches, to the nearest ' + L.fr(1, 16) + ' in. The metric value stays the code limit.', a: inch(run16 / 16), work: '255 ÷ 25.4 × 16 = ' + n(L.round(v.p10, 2), 2) + ' sixteenths, rounds to ' + run16 + ' = ' + inch(run16 / 16) + '. Rounding up keeps the run above the minimum.', lines: 3 }),
+      B.check(s.p10, n(L.round(v.p10, 2), 2)),
+      B.prob({ q: 'Article 9.8.3.3, Sentence (1) (page ' + PL.article('9.8.3.3').page + '), limits the height of one flight of stairs to 3.7 m, which is 3,700 mm. Change 3,700 mm to feet and inches. Round down to the ' + L.fr(1, 16) + ' in below, so the inch value is not over the limit.', a: ftin(fl16 / 16) + ' (' + inch(fl16 / 16) + ')', work: '3,700 ÷ 25.4 × 16 = ' + n(L.round(v.p11, 2), 2) + ' sixteenths, round down to ' + n(fl16) + ' = ' + inch(fl16 / 16) + ' = ' + ftin(fl16 / 16) + '.', lines: 3 }),
+      B.check(s.p11, n(L.round(v.p11, 2), 2)),
+      B.grid2(
+        B.prob({ q: 'A tape length was changed to inches on the TI-30Xa. Write the length in feet and inches.', canvas: P.lcd('ti', lcd12.main, { max: '2.3in', indS: 11 }), mode: 'Read it', a: ftin(v.p12) + ' (' + inch(v.p12) + ' = 8 × 12 + ' + fi(5, 3, 8) + ')', lines: 2 }),
+        B.prob({ q: 'A learner writes 8′ 6″ as 8.6 ft. What is wrong? Find the length in inches and in decimal feet.', a: 'There are 12 inches in a foot, not 10. 8 × 12 + 6 = ' + v.p13 + ' in, and ' + v.p13 + ' ÷ 12 = ' + ti('102 ÷ 12 =') + ' ft.', lines: 2 })
+      ),
+      B.check(s.p12, String(v.p12)), B.check(s.p13, '102'), B.check('102 ÷ 12 =', '8.5')
+    ]
+  }
 };

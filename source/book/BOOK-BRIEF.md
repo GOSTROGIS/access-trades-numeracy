@@ -13,7 +13,7 @@ Adult pre-apprentices at ACCESS Trades (an urban Indigenous trades-training orga
 ## Hard rules (the instructor calls breaking these a critical failure)
 1. Never fabricate or assume. Every number, formula, key press and fact must be correct and verifiable. Math is verified by the engine (see below). A real-world claim (a standard size, a code rule, how a tool or calculator behaves) is allowed only if you checked it in a source you actually read in this workspace or on the web, and you list it in your report with the source. When in doubt, write it as problem data ("A bar is 6,000 mm long") instead of a claim about the world ("Bars come in 6 m lengths").
 2. No draft, placeholder, TODO, "coming soon" or filler wording. No meta talk about the book being written.
-3. Never state tolerance figures. Never show ten-thousandths of an inch. Micrometers read to 0.001 in and 0.01 mm, calipers to 0.001 in and 0.02 mm, rules to 1/64 in and 0.5 mm.
+3. Tolerances and plus/minus working ranges may be taught (decision of Oct 16 2026). Do not carry decimal inches to four places in working (convert to sixteenths instead). Micrometers read to 0.001 in and 0.01 mm, calipers to 0.001 in and 0.02 mm, rules to 1/64 in and 0.5 mm.
 4. Distance around a circle is pi × D (diameter). Area of a circle uses the radius (pi × r²). Never write 2pi r.
 5. BEDMAS for order of operations.
 6. Metric and imperial both, metric first. mm, m, cm, L, kg alongside in, ft, ft-in, US gal where the trades use them.

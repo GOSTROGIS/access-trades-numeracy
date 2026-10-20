@@ -116,6 +116,9 @@ figure{ margin:8pt 0 10pt; text-align:center; break-inside:avoid }
 figure svg{ max-width:100%; height:auto }
 figcaption{ font-size:8.8pt; color:var(--slate); margin-top:3pt; text-align:center }
 figcaption .n{ font-weight:700; color:var(--deep); margin-right:4pt }
+figure.plate .fgw{ border:0.6pt solid var(--line); border-radius:4pt; overflow:hidden; background:#fff }
+figure.plate svg.bcbc-plate{ display:block; width:100%; height:auto }
+figcaption .src{ display:block; font-size:8pt; color:var(--muted); margin-top:1pt }
 .figrow{ display:flex; justify-content:space-around; align-items:flex-end; gap:10pt }
 .figrow > figure{ flex:1 }
 table.t{ border-collapse:collapse; margin:6pt auto 10pt; font-size:9.4pt; break-inside:avoid }
@@ -192,6 +195,15 @@ ol.how>li::before{ content:counter(how); position:absolute; left:0; top:0.5pt; w
 .cover .foot svg{ width:2.1in; height:auto }
 .cover .foot .ed{ font-size:9pt; color:var(--slate); text-align:right }
 .howto .grid{ display:grid; grid-template-columns:1fr 1fr; gap:10pt 16pt }
+.bcbc-page h4{ font:700 11pt "Archivo",sans-serif; color:var(--deep); margin:10pt 0 3pt; break-after:avoid }
+.bcbc-page table.t{ width:100%; margin:2pt 0 4pt }
+.bcbc-sample{ width:4.2in; margin:4pt auto 6pt; break-inside:avoid }
+.bcbc-sample .fgw{ border:0.6pt solid var(--line); border-radius:4pt; overflow:hidden; background:#FFF }
+.bcbc-sample svg.bcbc-plate{ display:block; width:100%; height:auto }
+.bcbc-sample .cap{ font-size:8.4pt; color:var(--slate); margin-top:2pt; text-align:center }
+/* appendices in the contents list, and the no-calculator mark on a set */
+.toc li.c.app .cn{ width:0 }
+.nocalc{ display:inline-block; font:800 8pt "Archivo",sans-serif; text-transform:uppercase; color:#FFF; background:var(--red); border-radius:3pt; padding:1pt 5pt; margin-right:5pt }
 
 /* glossary and back matter */
 .backmatter{ break-before:right }
@@ -220,6 +232,9 @@ table.t.long tr{ break-inside:avoid }
 .ak-ch{ break-before:page }
 .akcols{ columns:2; column-gap:18pt }
 .ak-set{ break-inside:avoid-column; margin-bottom:8pt }
+/* a set of more than 30 answers (the Practice Assessment) may run on into the next column */
+.ak-set.long{ break-inside:auto }
+.ak-set.long h4{ break-after:avoid }
 .ak-set h4{ margin:0 0 3pt; color:var(--deep); border-bottom:1.2pt solid var(--gold); padding-bottom:1pt; font-size:9.6pt }
 ol.ak{ margin:0; padding-left:18pt; font-size:9pt }
 ol.ak li{ margin:1.5pt 0; break-inside:avoid }

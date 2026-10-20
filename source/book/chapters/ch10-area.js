@@ -196,6 +196,44 @@ module.exports = function (B, L) {
   const d2 = { a: 16, b: 10, len: 48 }, d2A = 2 * (d2.a + d2.b) * d2.len;
   const c100 = PI * 100 * 100, c200 = PI * 200 * 200;
 
+  /* materials takeoff numbers (10.8 and Worksheet 10D). Sheet sizes, coverage, waste percents and prices are given
+     data in each problem, not standards. Code values are quoted from BCBC 2024 Division B with Article, Sentence
+     and page. Units to buy always round up */
+  const PL = require('../engine/plates.js');
+  const up = x => Math.ceil(L.round(x, 6));
+  const money = v => '$' + n(v, 2);
+  const dw = { W: 6, H: 2.4, door: [0.9, 2.1], win: [1.5, 1.2], sheet: 1.2 * 2.4, price: 18.5 };
+  const dwNet = dw.W * dw.H - dw.door[0] * dw.door[1] - dw.win[0] * dw.win[1], dwS = dwNet / dw.sheet, dwN = up(dwS);
+  const sh = { W: 36, H: 8, nWin: 2, win: [4, 3], doorA: 3 * 80 / 12, sheet: 32, price: 24.95 };
+  const shNet = sh.W * sh.H - sh.nWin * sh.win[0] * sh.win[1] - sh.doorA, shS = shNet / sh.sheet, shN = up(shS);
+  const tl = { l: 3.6, w: 2.7, waste: 10, perBox: 12 * 0.3 * 0.3, price: 42 };
+  const tlA = tl.l * tl.w, tlW = tlA * (1 + tl.waste / 100), tlB = tlW / tl.perBox, tlN = up(L.round(tlB, 6));
+  const pt = { l: 4.2, w: 3.6, h: 2.4, door: [0.9, 2.1], win: [1.2, 1], coats: 2, can: 35, price: 54.99 };
+  const ptWall = 2 * (pt.l + pt.w) * pt.h, ptNet = ptWall - pt.door[0] * pt.door[1] - pt.win[0] * pt.win[1], ptC = ptNet * pt.coats / pt.can, ptN = up(ptC);
+  const rf = { L: 12.6, s: 4.2, waste: 5, sheet: 1.22 * 2.44, price: 32.75 };
+  const rfA = 2 * rf.L * rf.s, rfW = rfA * (1 + rf.waste / 100), rfS = rfW / rf.sheet, rfN = up(rfS);
+  /* worksheet 10D */
+  const k1 = (5.4 * 2.4 - 1.2 * 1.2) / 2.88, k2L = 5 * 2.88 / 2.4;
+  const k3A = (2400 * 3600 + 2400 * 1800) / 1e6, k3B = k3A * 1.1 / 1.08;
+  const k4A = 2 * 10 * 4.5, k4B = k4A / 3.1;
+  const k5 = (24 * 8 - 6 * 4) / 32, k6 = (4 * 2.6 - 0.9 * 2) * 2 / 9;
+
+  /* the quadrilateral family table in 10.4. It is written as plain HTML with no caption number, so the numbering of
+     Chapter 10 tables does not move (numbering is frozen, Oct 20 2026) */
+  function quadTable() {
+    const rows = [
+      ['square', 'Square', '4 equal sides, opposite sides parallel', '4 right angles', 'Equal length, cross at right angles, cut each other in half', 'A = s × s'],
+      ['rectangle', 'Rectangle', 'Opposite sides equal and parallel', '4 right angles', 'Equal length, cut each other in half', 'A = l × w'],
+      ['parallelogram', 'Parallelogram', 'Opposite sides equal and parallel', 'Opposite angles equal', 'Cut each other in half', 'A = b × h'],
+      ['rhombus', 'Rhombus', '4 equal sides, opposite sides parallel', 'Opposite angles equal', 'Cross at right angles, cut each other in half', 'A = b × h or A = d₁ × d₂ ÷ 2'],
+      ['trapezoid', 'Trapezoid', 'One pair of parallel sides, a and b', 'No fixed rule', 'No fixed rule', 'A = (a + b) ÷ 2 × h'],
+      ['kite', 'Kite', 'Two pairs of equal sides that meet at a corner', 'One pair of opposite angles equal', 'Cross at right angles, one cuts the other in half', 'A = d₁ × d₂ ÷ 2']
+    ]
+    const th = ['Shape', '', 'Sides', 'Angles', 'Diagonals', 'Area'].map(h => '<th>' + h + '</th>').join('')
+    const tb = rows.map(r => '<tr><td>' + G.quadIcon(r[0]) + '</td><td><b>' + r[1] + '</b></td><td>' + r[2] + '</td><td>' + r[3] + '</td><td>' + r[4] + '</td><td style="white-space:nowrap">' + r[5] + '</td></tr>').join('')
+    return '<table class="t"><tr>' + th + '</tr>' + tb + '</table><div class="tcap">The quadrilateral family. Tick marks show sides of equal length. h is always measured at right angles to the base, and d₁ and d₂ are the diagonals.</div>'
+  }
+
   /* an example that may break between its steps and its calculator box. The calculator box and the answer stay
      together, so an answer line never starts a page on its own */
   function exL(o) {
@@ -269,7 +307,7 @@ module.exports = function (B, L) {
     exL({
       title: 'A triangular end panel',
       q: 'The end panel of a trough is a triangle with a base of ' + mmA(endP.b) + ' and a height of ' + mmA(endP.h) + '. Its two sloping sides are each 500 mm long. Find the area in mm² and in m².',
-      fig: SH('isosceles-triangle', endP, { width: '2in' }),
+      fig: SH('isosceles-triangle', endP, { allAngles: true, derived: 'show', width: '2in' }),
       steps: ['Use the base and the height. The 500 mm sloping sides are not needed.', 'A = ' + endP.b + ' × ' + endP.h + ' ÷ 2 = ' + n(endA) + ' mm².', 'In m²: ' + n(endA) + ' ÷ 1,000,000 = ' + n(endA / 1e6) + ' m².'],
       calc: { seq: endP.b + ' × ' + endP.h + ' ÷ 2 =', expect: n(endA) },
       answer: n(endA) + ' mm² = ' + n(endA / 1e6) + ' m²'
@@ -296,6 +334,10 @@ module.exports = function (B, L) {
       calc: { seq: '( ' + trap.a + ' + ' + trap.b + ' ) ÷ 2 × ' + trap.h + ' =', expect: n(trapA), say: 'The brackets make both calculators add the parallel sides before dividing.' },
       answer: n(trapA) + ' mm² = ' + n(trapA / 1e6) + ' m²'
     }),
+    B.sub('The quadrilateral family'),
+    B.p('A ' + B.term('quadrilateral', 'Any flat shape with four straight sides, such as a square, rectangle, parallelogram, rhombus, trapezoid or kite.') + ' is any flat shape with four straight sides. The shapes in this chapter belong to one family. A square is a rectangle with four equal sides, and it is also a rhombus with four right angles. Rectangles and rhombuses are special parallelograms. The table lists what each member has, and the area formula to use.'),
+    quadTable(),
+    B.p('A rhombus and a kite can also be found from their two ' + B.term('diagonals', 'The straight lines joining opposite corners of a shape with four sides.') + ', the lines joining opposite corners. The diagonals cross at right angles, so the shape is exactly half of the rectangle that is d₁ long and d₂ wide: <b>A = d₁ × d₂ ÷ 2</b>. A kite-shaped gusset with diagonals of 600 mm and 400 mm has an area of 600 × 400 ÷ 2 = 120,000 mm².' + B.check('600 × 400 ÷ 2 =', '120,000')),
     B.tryIt([
       { q: 'Parallelogram: base 500 mm, slanted side 340 mm, height 300 mm. Area?', a: n(parA) + ' mm²' },
       { q: 'Parallelogram: base 30 in, slanted side 15 in, height 12 in. Area?', a: n(30 * 12) + ' in²' },
@@ -398,6 +440,60 @@ module.exports = function (B, L) {
       { q: 'Closed cylinder, radius 100 mm, height 400 mm. Surface area to two decimal places?', a: n2(PI * 10000 * 2 + PI * 200 * 400) + ' mm²' }
     ]),
 
+    B.section('Materials takeoff'),
+    B.p('A ' + B.term('takeoff', 'A list of the materials a job needs, worked out from the drawings: how many sheets, boxes, cans or pieces to buy, and what they cost.') + ' is the list of materials a job needs, worked out from the drawings. Area is the first step for drywall, sheathing, flooring, tile, paint and roofing. Sheets, boxes and cans are sold in whole units, so the count is always rounded up. A result of 3.1 sheets means you buy 4.',
+      'Sheet sizes, the area a box or can covers, the waste allowance and the price come from the job: the drawings, the product label and the supplier. In this section they are given in each problem.'),
+    B.how(['Find the whole area of the wall, floor, ceiling or roof.', 'Subtract the openings (doors and windows) that the material does not cover.', 'If a waste allowance is given, add it: area × (1 + waste % ÷ 100).', 'Divide by the area that one unit covers.', 'Round up to the next whole unit, then multiply by the price for the cost.']),
+    B.formula('Materials takeoff', ['Units = area ÷ coverage of one unit, rounded up', 'Area with waste = area × (1 + waste % ÷ 100)', 'Cost = units × price of one unit'], 'Coverage is the area one sheet, box or can covers. A 10% waste allowance multiplies the area by 1.10. Two coats of paint double the area.'),
+    exL({
+      title: 'Drywall for a wall with openings',
+      q: 'A wall is ' + dw.W + ' m long and ' + dw.H + ' m high. It has a door ' + dw.door[0] + ' m by ' + dw.door[1] + ' m and a window ' + dw.win[0] + ' m by ' + dw.win[1] + ' m. Drywall comes in 1.2 m by 2.4 m sheets at ' + money(dw.price) + ' each. How many sheets do you buy, and what do they cost?',
+      fig: G.wallElev(dw.W, dw.H, [{ x: 0.6, y: 0, w: dw.door[0], h: dw.door[1], name: 'door' }, { x: 3.6, y: 0.9, w: dw.win[0], h: dw.win[1], name: 'window' }], { max: '2.6in', ph: 80 }), breakable: true,
+      steps: ['Wall: ' + dw.W + ' × ' + dw.H + ' = ' + n(dw.W * dw.H, 1) + ' m².', 'Openings: ' + dw.door[0] + ' × ' + dw.door[1] + ' = ' + n(dw.door[0] * dw.door[1], 2) + ' m² and ' + dw.win[0] + ' × ' + dw.win[1] + ' = ' + n(dw.win[0] * dw.win[1], 1) + ' m².', 'Net area: ' + n(dw.W * dw.H, 1) + ' − ' + n(dw.door[0] * dw.door[1], 2) + ' − ' + n(dw.win[0] * dw.win[1], 1) + ' = ' + n(dwNet, 2) + ' m².', 'One sheet covers 1.2 × 2.4 = 2.88 m². ' + n(dwNet, 2) + ' ÷ 2.88 = ' + n2(dwS) + ', so buy ' + dwN + ' sheets.', 'Cost: ' + dwN + ' × ' + money(dw.price) + ' = ' + money(dwN * dw.price) + '.'],
+      calc: { rows: [{ label: 'Sheets', seq: '( ' + dw.W + ' × ' + dw.H + ' − ' + dw.door[0] + ' × ' + dw.door[1] + ' − ' + dw.win[0] + ' × ' + dw.win[1] + ' ) ÷ 2.88 =', expect: n2(dwS) }, { label: 'Cost', seq: dwN + ' × 18.50 =', expect: n(dwN * dw.price, 2) }] },
+      answer: dwN + ' sheets, ' + money(dwN * dw.price)
+    }),
+    B.p('The thickness of the board is a code question, not a math question. BCBC 2024 Sentence 9.29.5.3.(1) says the spacing of supports for single-layer gypsum board must conform to Table 9.29.5.3. (<span style="white-space:nowrap">page 9-275</span>). For walls, the table allows 12.7 mm board on studs up to 600 mm o.c., whether the board runs parallel or perpendicular to the studs. 9.5 mm board on walls is listed only perpendicular to the framing, with supports up to 400 mm o.c.'),
+    PL.figure(B, '9.29.5.3', { crop: [40, 150, 960, 395], width: '6.5in', caption: 'Read across a row: the board thickness, the way the board runs to the framing, then the largest spacing of supports for walls and ceilings.' }),
+    exL({
+      title: 'Wall sheathing in feet',
+      q: 'An exterior wall is ' + sh.W + ' ft long and ' + sh.H + ' ft high. The plan subtracts two windows, each ' + sh.win[0] + ' ft by ' + sh.win[1] + ' ft, and a door 3 ft by 6 ft 8 in. Sheathing comes in 4 ft by 8 ft sheets at ' + money(sh.price) + '. How many sheets, and what is the cost?',
+      fig: G.wallElev(sh.W, sh.H, [{ x: 4, y: 3.5, w: 4, h: 3, name: 'window', key: 'windows 4 ft × 3 ft' }, { x: 16, y: 0, w: 3, h: 80 / 12, name: 'door', key: 'door 3 ft × 6 ft 8 in' }, { x: 26, y: 3.5, w: 4, h: 3, name: 'window', key: '' }], { unit: 'ft', max: '2.7in', ph: 70 }), breakable: true,
+      steps: ['Wall: ' + sh.W + ' × ' + sh.H + ' = ' + n(sh.W * sh.H) + ' ft².', 'Windows: 2 × ' + sh.win[0] + ' × ' + sh.win[1] + ' = ' + n(sh.nWin * sh.win[0] * sh.win[1]) + ' ft². Door: 6 ft 8 in = 80 in, and 80 ÷ 12 = 6⅔ ft, so 3 × 6⅔ = ' + n(sh.doorA) + ' ft².', 'Net area: ' + n(sh.W * sh.H) + ' − ' + n(sh.nWin * sh.win[0] * sh.win[1]) + ' − ' + n(sh.doorA) + ' = ' + n(shNet) + ' ft².', 'One sheet covers 4 × 8 = 32 ft². ' + n(shNet) + ' ÷ 32 = ' + n(shS) + ', so buy ' + shN + ' sheets.', 'Cost: ' + shN + ' × ' + money(sh.price) + ' = ' + money(shN * sh.price) + '.'],
+      calc: { rows: [{ label: 'Net area, ft²', seq: sh.W + ' × ' + sh.H + ' − 2 × 4 × 3 − 3 × 80 ÷ 12 =', expect: n(shNet) }, { label: 'Sheets', seq: shNet + ' ÷ 32 =', expect: n(shS) }, { label: 'Cost', seq: shN + ' × ' + sh.price + ' =', expect: n(shN * sh.price, 2) }] },
+      answer: shN + ' sheets, ' + money(shN * sh.price)
+    }),
+    exL({
+      title: 'Floor tile with a waste allowance',
+      q: 'A kitchen floor is ' + tl.l + ' m by ' + tl.w + ' m. The tiles are 300 mm by 300 mm, 12 to a box, at ' + money(tl.price) + ' a box. The plan allows ' + tl.waste + '% for cuts and breakage. How many boxes, and what is the cost?',
+      steps: ['Floor: ' + tl.l + ' × ' + tl.w + ' = ' + n(tlA, 2) + ' m².', 'Add ' + tl.waste + '%: ' + n(tlA, 2) + ' × 1.10 = ' + n(L.round(tlW, 3), 3) + ' m².', 'One box covers 12 × 0.3 × 0.3 = ' + n(tl.perBox, 2) + ' m².', n(L.round(tlW, 3), 3) + ' ÷ ' + n(tl.perBox, 2) + ' = ' + n(L.round(tlB, 2), 1) + ', so buy ' + tlN + ' boxes.', 'Cost: ' + tlN + ' × ' + money(tl.price) + ' = ' + money(tlN * tl.price) + '.'],
+      calc: { seq: tl.l + ' × ' + tl.w + ' × 1.10 ÷ 1.08 =', expect: n(L.round(tlB, 1), 1) },
+      answer: tlN + ' boxes, ' + money(tlN * tl.price)
+    }),
+    B.watch('Add the waste before you round', 'Work out the area with waste first, then divide and round up once at the end. Rounding the area or the box count early can leave you a box short.'),
+    exL({
+      title: 'Paint for a room, two coats',
+      q: 'A room is ' + pt.l + ' m by ' + pt.w + ' m and the walls are ' + pt.h + ' m high. Leave out a door ' + pt.door[0] + ' m by ' + pt.door[1] + ' m and a window ' + pt.win[0] + ' m by ' + pt.win[1] + ' m. The walls get two coats. The label says one 3.78 L can covers ' + pt.can + ' m². Cans are ' + money(pt.price) + '. How many cans, and what is the cost?',
+      steps: ['The walls unfold into one long rectangle. Its length is the perimeter of the room: 2 × (' + pt.l + ' + ' + pt.w + ') = ' + n(2 * (pt.l + pt.w), 1) + ' m.', 'Wall area: ' + n(2 * (pt.l + pt.w), 1) + ' × ' + pt.h + ' = ' + n(ptWall, 2) + ' m².', 'Less the openings: ' + n(ptWall, 2) + ' − ' + n(pt.door[0] * pt.door[1], 2) + ' − ' + n(pt.win[0] * pt.win[1], 1) + ' = ' + n(ptNet, 2) + ' m².', 'Two coats: ' + n(ptNet, 2) + ' × 2 = ' + n(ptNet * 2, 1) + ' m². ' + n(ptNet * 2, 1) + ' ÷ ' + pt.can + ' = ' + n2(ptC) + ', so buy ' + ptN + ' cans.', 'Cost: ' + ptN + ' × ' + money(pt.price) + ' = ' + money(ptN * pt.price) + '.'],
+      calc: { seq: '( 2 × ( ' + pt.l + ' + ' + pt.w + ' ) × ' + pt.h + ' − ' + pt.door[0] + ' × ' + pt.door[1] + ' − ' + pt.win[0] + ' × ' + pt.win[1] + ' ) × 2 ÷ ' + pt.can + ' =', expect: n2(ptC) },
+      answer: ptN + ' cans, ' + money(ptN * pt.price)
+    }),
+    exL({
+      title: 'Sheathing a gable roof',
+      q: 'A gable roof has two equal sides. Each side measures ' + rf.L + ' m along the ridge and ' + rf.s + ' m down the slope from the ridge to the eave. Roof sheathing comes in 1.22 m by 2.44 m sheets at ' + money(rf.price) + '. Allow ' + rf.waste + '% waste. How many sheets, and what is the cost?',
+      fig: G.gableRoof(rf.L, rf.s, { max: '2.5in', ph: 88 }), breakable: true,
+      steps: ['Use the slope length, not the level width of the building: the sheathing lies on the slope.', 'Two sides: 2 × ' + rf.L + ' × ' + rf.s + ' = ' + n(rfA, 2) + ' m².', 'Add ' + rf.waste + '%: ' + n(rfA, 2) + ' × 1.05 = ' + n(L.round(rfW, 3), 3) + ' m².', 'One sheet covers 1.22 × 2.44 = ' + n(L.round(rf.sheet, 4), 4) + ' m². ' + n(L.round(rfW, 3), 3) + ' ÷ ' + n(L.round(rf.sheet, 4), 4) + ' = ' + n2(rfS) + ', so buy ' + rfN + ' sheets.', 'Cost: ' + rfN + ' × ' + money(rf.price) + ' = ' + money(rfN * rf.price) + '.', 'The thickness comes from the code. For roofs not used as a walking deck, Sentence 9.23.16.7.(2) points to Table 9.23.16.7.-A (<span style="white-space:nowrap">page 9-226</span>). With rafters at 600 mm o.c., plywood needs at least 9.5 mm with the edges supported, or 12.5 mm with the edges unsupported.'],
+      calc: { rows: [{ label: 'Sheets', seq: '2 × ' + rf.L + ' × ' + rf.s + ' × 1.05 ÷ ( 1.22 × 2.44 ) =', expect: n2(rfS) }, { label: 'Cost', seq: rfN + ' × ' + rf.price + ' =', expect: n(rfN * rf.price, 2) }] },
+      answer: rfN + ' sheets, ' + money(rfN * rf.price)
+    }),
+    B.tryIt([
+      { q: 'A wall 4.8 m by 2.4 m has one door 0.9 m by 2.1 m. How many 1.2 m by 2.4 m drywall sheets?', a: up((4.8 * 2.4 - 0.9 * 2.1) / 2.88) + ' sheets (' + n2((4.8 * 2.4 - 0.9 * 2.1) / 2.88) + ', round up)' },
+      { q: 'A subfloor is 7.2 m by 4.8 m. Sheets are 1.22 m by 2.44 m. Allow 5% waste. How many sheets?', a: up(7.2 * 4.8 * 1.05 / (1.22 * 2.44)) + ' sheets (' + n2(7.2 * 4.8 * 1.05 / (1.22 * 2.44)) + ')' },
+      { q: 'Laminate flooring for a room 5.4 m by 3.9 m, 8% waste. One box covers 2.2 m² and costs $38.50. Boxes and cost?', a: up(5.4 * 3.9 * 1.08 / 2.2) + ' boxes, ' + money(up(5.4 * 3.9 * 1.08 / 2.2) * 38.5) + ' (' + n2(5.4 * 3.9 * 1.08 / 2.2) + ' boxes before rounding)' },
+      { q: 'A ceiling 5 m by 4 m gets two coats. One can covers 35 m². How many cans?', a: up(40 / 35) + ' cans (40 ÷ 35 = ' + n2(40 / 35) + ')' },
+      { q: 'A wall 20 ft by 8 ft has a window 5 ft by 4 ft. How many 4 ft by 8 ft sheets?', a: up((160 - 20) / 32) + ' sheets (140 ÷ 32 = ' + n((160 - 20) / 32) + ')' }
+    ]),
+
     B.worksheet({ title: 'Find the area', sub: 'Practice mode: one drawing hides a dimension behind a red ?', intro: 'Show the formula, the numbers you put into it and the answer with its square unit.' }),
     B.grid2(
       B.prob({ q: 'Find the area in mm² and in m².', canvas: G.rect(w1.l, w1.w, { max: '2.1in', ph: 62 }), a: n(w1A) + ' mm² = ' + n(w1A / 1e6) + ' m²', lines: 2 }),
@@ -430,6 +526,20 @@ module.exports = function (B, L) {
     B.grid2(
       B.prob({ q: 'This is the net of a closed cylinder with radius 200 mm and height 600 mm. Find the hidden stretch-out to two decimal places, then the surface area.', canvas: G.cylNet(cy2.r, cy2.h, { circ: 'r', ask: ['S'], max: '2.9in', ph: 128 }), a: 'Stretch-out π × 400 = ' + n2(cy2S) + ' mm. SA = ' + n2(cy2SA) + ' mm²', work: 'Ends π × 200² × 2, side π × 400 × 600', lines: 3 }),
       B.prob({ q: 'The duct is 16 in by 10 in and open at both ends. Find the hidden width of its net, then the sheet area in ft² to two decimal places.', canvas: G.ductNet(16, 10, 48, { askTop: true, max: '2in' }), a: '52 in across. ' + n(d2A) + ' in² = ' + n2(d2A / 144) + ' ft²', lines: 3 })
+    ),
+
+    B.worksheet({ title: 'Materials takeoff', sub: 'Area, openings, waste, whole units and cost', intro: 'Sheet sizes, coverage, waste and prices are given in each problem. Show the net area, the units before rounding, the whole units you buy and the cost.' }),
+    B.grid2(
+      B.prob({ q: 'Drywall sheets are 1.2 m by 2.4 m. How many sheets cover the wall?', canvas: G.wallElev(5.4, 2.4, [{ x: 3.4, y: 0.9, w: 1.2, h: 1.2, name: 'window' }], { max: '2.5in', ph: 66 }), a: '11.52 ÷ 2.88 = ' + n(k1) + ' exactly, so ' + up(k1) + ' sheets', work: '5.4 × 2.4 − 1.2 × 1.2 = 11.52 m², 11.52 ÷ 2.88' + B.check('( 5.4 × 2.4 − 1.2 × 1.2 ) ÷ 2.88 =', n(k1)), lines: 3 }),
+      B.prob({ q: 'The wall has no openings and took exactly 5 sheets of 1.2 m by 2.4 m drywall. Find the hidden length.', canvas: G.wallElev(k2L, 2.4, [], { ask: ['W'], max: '2.5in', ph: 66 }), a: n(k2L) + ' m', work: '5 × 2.88 = 14.4 m², 14.4 ÷ 2.4' + B.check('5 × 2.88 ÷ 2.4 =', n(k2L)), lines: 3 })
+    ),
+    B.grid2(
+      B.prob({ q: 'Tile the L-shaped floor. Allow 10% waste. A box covers 1.08 m² and costs $42.00. How many boxes, and what is the cost?', canvas: G.lPlate(4800, 3600, 2400, 1800, { max: '2.3in', ph: 80 }), a: n(k3A, 2) + ' m², ' + n2(k3B) + ' boxes, so ' + up(k3B) + ' boxes, ' + money(up(k3B) * 42), work: '2,400 × 3,600 + 2,400 × 1,800 mm² = 12.96 m², × 1.10 ÷ 1.08' + B.check('12.96 × 1.10 ÷ 1.08 =', n2(k3B)), lines: 3 }),
+      B.prob({ q: 'Shingle both sides of the roof. One bundle covers 3.1 m² and costs $36.00. How many bundles, and what is the cost?', canvas: G.gableRoof(10, 4.5, { max: '2.4in', ph: 80 }), a: n(k4A) + ' m², ' + n2(k4B) + ' bundles, so ' + up(k4B) + ' bundles, ' + money(up(k4B) * 36), work: '2 × 10 × 4.5 = 90 m², 90 ÷ 3.1' + B.check('2 × 10 × 4.5 ÷ 3.1 =', n2(k4B)), lines: 3 })
+    ),
+    B.grid2(
+      B.prob({ q: 'Sheathing comes in 4 ft by 8 ft sheets at $27.40. How many sheets, and what is the cost?', canvas: G.wallElev(24, 8, [{ x: 9, y: 3, w: 6, h: 4, name: 'window' }], { unit: 'ft', max: '2.5in', ph: 66 }), a: n(k5) + ' sheets, so ' + up(k5) + ' sheets, ' + money(up(k5) * 27.4), work: '24 × 8 − 6 × 4 = 168 ft², 168 ÷ 32' + B.check('( 24 × 8 − 6 × 4 ) ÷ 32 =', n(k5)), lines: 3 }),
+      B.prob({ q: 'The wall gets two coats of paint. One litre covers 9 m², and paint is sold in 1 L tins. How many tins?', canvas: G.wallElev(4, 2.6, [{ x: 1.5, y: 0, w: 0.9, h: 2, name: 'door' }], { max: '2.3in', ph: 70 }), a: n2(k6) + ' L, so ' + up(k6) + ' tins', work: '4 × 2.6 − 0.9 × 2 = 8.6 m², × 2 coats = 17.2 m², ÷ 9' + B.check('( 4 × 2.6 − 0.9 × 2 ) × 2 ÷ 9 =', n2(k6)), lines: 3 })
     )
   ]);
 };

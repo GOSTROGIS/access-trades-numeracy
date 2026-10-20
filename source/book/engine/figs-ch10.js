@@ -461,7 +461,69 @@ module.exports = function (B, L) {
     h += D(P(0, len), P(W, len), o.askTop ? '?' : u(W, 'in'), -14, !!o.askTop);
     return f.out(h);
   }
+  /* ---------- materials takeoff drawings ---------- */
+  /* size text for key k, or ? when o.ask holds k */
+  const sz = (o, k, v, unit) => ask(o, k) ? '?' : u(v, unit)
+  /* wall elevation W by H (real units, y up) with openings [{x, y, w, h, name}] measured from the bottom left corner.
+     Each opening is white with its name inside. The opening sizes are written in a key line under the wall, so no
+     label sits on an edge. o.unit, o.ask: ['W'] or ['H'] hides that overall size behind a red ? */
+  function wallElev(W, H, ops, o) {
+    o = o || {}
+    ops = ops || []
+    const unit = o.unit || 'm'
+    const keyTxt = ops.map(op => op.key != null ? op.key : (op.name + ' ' + n(op.w) + ' ' + unit + ' × ' + n(op.h) + ' ' + unit)).filter(s => s).join(',  ')
+    const f = frame(W, H, { max: o.max || '2.6in', ph: o.ph || 86, pad: o.pad || [16, 30, 62, ops.length ? 34 : 14] }), P = f.P
+    let h = F.poly([P(0, 0), P(W, 0), P(W, H), P(0, H)], { fill: C.fill, w: 2 })
+    ops.forEach(op => {
+      h += F.poly([P(op.x, op.y), P(op.x + op.w, op.y), P(op.x + op.w, op.y + op.h), P(op.x, op.y + op.h)], { fill: C.white, w: 1.6 })
+      const c = P(op.x + op.w / 2, op.y + op.h / 2)
+      if (op.name.length * FS * 0.56 + 4 <= op.w * f.S) h += F.t(c[0], c[1] + 3.5, op.name, { s: FS, c: C.dim, wgt: 600 })
+    })
+    h += D(P(0, H), P(W, H), sz(o, 'W', W, unit), -16, ask(o, 'W'))
+    h += D(P(W, 0), P(W, H), sz(o, 'H', H, unit), 18, ask(o, 'H'))
+    if (ops.length) h += F.t(P(W / 2, 0)[0], P(0, 0)[1] + 20, keyTxt, { s: FS, c: C.ink, wgt: 500 })
+    return f.out(h)
+  }
+  /* gable roof in isometric view: ridge length Lr, slope length s (eave to ridge) on each side. run is the level
+     distance eave to ridge, used only to draw the pitch. o.unit, o.ask: ['L'] or ['s'] */
+  function gableRoof(Lr, s, o) {
+    o = o || {}
+    const unit = o.unit || 'm'
+    const run = o.run || s * 0.949, rise = Math.sqrt(Math.max(s * s - run * run, 0))
+    const e1a = [0, 0, 0], e1b = [Lr, 0, 0], ra = [0, run, rise], rb = [Lr, run, rise], e2a = [0, 2 * run, 0], e2b = [Lr, 2 * run, 0]
+    const f = isoFrame([e1a, e1b, ra, rb, e2a, e2b], { max: o.max || '2.5in', ph: o.ph || 90, pad: o.pad || [40, 22, 60, 36] })
+    let h = poly3(f, [{ pts: [e1a, e1b, rb, ra], fill: C.fill }, { pts: [ra, rb, e2b, e2a], fill: C.fill2 }, { pts: [e1a, ra, e2a] }, { pts: [e1b, e2b, rb] }, { pts: [e1a, e2a, e2b, e1b] }])
+    const P = f.P3, c = f.centre
+    h += Dout(P(e1a), P(e1b), sz(o, 'L', Lr, unit), 18, c, ask(o, 'L'))
+    h += Dout(P(e1b), P(rb), sz(o, 's', s, unit), 20, c, ask(o, 's'))
+    const rl = P(ra)
+    h += F.t(rl[0] - 5, rl[1] - 4, 'ridge', { s: FS, c: C.dim, wgt: 600, a: 'end' })
+    return f.out(h)
+  }
+  /* small icons for the quadrilateral family table: square, rectangle, parallelogram, rhombus, trapezoid, kite.
+     Equal sides carry the same number of tick marks. Drawn 56 by 36 px */
+  function quadIcon(kind) {
+    const pts = {
+      square: [[14, 4], [44, 4], [44, 32], [14, 32]],
+      rectangle: [[4, 7], [52, 7], [52, 30], [4, 30]],
+      parallelogram: [[14, 6], [52, 6], [42, 30], [4, 30]],
+      rhombus: [[29, 2], [50, 18], [29, 34], [8, 18]],
+      trapezoid: [[17, 6], [39, 6], [52, 30], [4, 30]],
+      kite: [[29, 2], [42, 13], [29, 34], [16, 13]]
+    }[kind]
+    let h = F.poly(pts, { fill: C.fill, w: 1.6 })
+    const tick = (a, b, k) => {
+      const m = [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2], dx = b[0] - a[0], dy = b[1] - a[1], Lg = Math.hypot(dx, dy), ux = dx / Lg, uy = dy / Lg
+      let t = ''
+      for (let i = 0; i < k; i++) { const o2 = (i - (k - 1) / 2) * 3.2, cx = m[0] + ux * o2, cy = m[1] + uy * o2; t += F.line(cx - uy * 3.5, cy + ux * 3.5, cx + uy * 3.5, cy - ux * 3.5, { c: C.dim, w: 1.1 }) }
+      return t
+    }
+    const ticks = { square: [1, 1, 1, 1], rectangle: [1, 2, 1, 2], parallelogram: [1, 2, 1, 2], rhombus: [1, 1, 1, 1], trapezoid: [0, 0, 0, 0], kite: [1, 2, 2, 1] }[kind]
+    ticks.forEach((k, i) => { if (k) h += tick(pts[i], pts[(i + 1) % 4], k) })
+    return F.svg(56, 36, h, { max: '0.6in' })
+  }
+
   return { F, C, FS, TS, xc, big, SH, NET, pair, row, frame, isoFrame, D, Dout, split, tag, hole, note, call, u,
     box, boxNet, cyl, cylNet, trough, angleEnd, capsuleSide, cone, pyramid, sphere, rect, para, circ, ring, trap,
-    lPlate, arrowPlate, lug, hopper, cubes, tPlate, uPlate, gusset, slotPlate, ductNet };
+    lPlate, arrowPlate, lug, hopper, cubes, tPlate, uPlate, gusset, slotPlate, ductNet, wallElev, gableRoof, quadIcon, poly3, ask, sz };
 };

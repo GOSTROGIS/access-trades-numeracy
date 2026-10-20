@@ -3,6 +3,10 @@
 module.exports = function (B, L) {
   const F = require('../engine/figs.js');
   const P = require('../engine/figs-ch02.js');
+  const PL = require('../engine/plates.js')
+  /* a plate figure as PL.figure makes it, with the nested logo svg taken out: the build's number-spacing pass
+     stops at the first closing svg tag, so a nested svg exposes the plate drawing to it. The logo is outside the crop. */
+  const plateFig = (num, o) => B.figure(PL.svg(num, o).replace(/<svg x="[\s\S]*?<\/svg>/g, ''), (o.caption ? o.caption + ' ' : '') + '<span class="src">Source: ' + PL.cite(num) + '</span>', { width: o.width || '6.5in', cls: 'plate' })
   const n = L.num;
   const ti = seq => L.CALC.tiValue(seq).value;
 
@@ -57,6 +61,20 @@ module.exports = function (B, L) {
   }
   /* a written calculation shown with a fraction bar */
   const bar = (top, bot) => '<span class="m">' + L.fr(top, bot) + '</span>';
+  /* perfect squares 1 to 20, each worked out on the TI-30Xa emulator and checked on the Sharp, set as an unnumbered table */
+  function sqTable() {
+    let rows = ''
+    for (let i = 1; i <= 5; i++) {
+      const cells = []
+      for (const k of [i, i + 5, i + 10, i + 15]) {
+        B.check(k + ' x²', String(ti(k + ' x²')))
+        cells.push('<td class="c">' + k + '</td>', '<td class="c"><b>' + n(ti(k + ' x²')) + '</b></td>')
+      }
+      rows += '<tr>' + cells.join('') + '</tr>'
+    }
+    const hd = [1, 2, 3, 4].map(() => '<th class="c">Number</th><th class="c">Square</th>').join('')
+    return '<table class="t" style="width:5.6in">' + '<tr>' + hd + '</tr>' + rows + '</table>'
+  }
 
 
   return L.join([
@@ -151,6 +169,8 @@ module.exports = function (B, L) {
       calc: { seq: '( 9 + 16 ) √x', expect: '5', title: '√(9 + 16)' },
       answer: '√(9 + 16) = 5 but √9 + √16 = 7. They are not the same.'
     }),
+    B.p('A ' + B.term('perfect square', 'A whole number that is the square of a whole number, such as 49 = 7².') + ' is a whole number that is the square of a whole number. The table below lists the squares of 1 to 20. Read it from left to right to square a number: 13² = 169. Read it from right to left to take a square root: 324 sits next to 18, so √324 = 18. A number that is not in a square column, such as 200, has a square root that is not a whole number. √200 is between 14 and 15, because 200 is between 196 and 225.'),
+    B.raw(sqTable()),
     B.tryIt([
       { q: '4²', a: n(ti('4 x²')) },
       { q: '2 × 3²', a: n(ti('2 × 3 x² =')) },
@@ -219,6 +239,109 @@ module.exports = function (B, L) {
       ['(100 − 5)²', 'TI-30Xa: ( 100 − 5 ) x²<br>Sharp: ( 100 − 5 ) x² =', 'The square belongs to the bracket'],
       ['3(4 + 5)', '3 × ( 4 + 5 ) =', 'Key the × that is not written']
     ], { caption: 'When the calculator needs brackets.', align: ['c', 'c', ''] }),
+
+    B.section('Positive and negative numbers'),
+    B.p('An ' + B.term('integer', 'A whole number, zero, or a whole number below zero: … −3, −2, −1, 0, 1, 2, 3 …') + ' is a whole number, zero, or a whole number below zero. Numbers above zero are positive. Numbers below zero are negative and carry a minus sign in front: −5 is read "negative five". A positive number can be written with a plus sign, +5, or with no sign at all.',
+      'Negative numbers show up wherever a job measures from a zero point: temperatures below 0 °C, elevations below a benchmark, and cuts that come out under the target length. Section 2.5 shows how to key a negative number with the change-sign key on both calculators.'),
+    B.p('A ' + B.term('number line', 'A straight line with evenly spaced numbers on it: zero in the middle, positive numbers to the right and negative numbers to the left.') + ' puts the integers in order. Zero is in the middle, positive numbers go to the right and negative numbers go to the left. A number is greater than every number to its left. So 4 is greater than −6, and −3 is greater than −8, because −3 is closer to zero. On a thermometer, −8 °C is colder than −3 °C.'),
+    B.figure(P.intLine(-10, 10, { lstep: 2, marks: [{ v: -6, lab: '−6' }, { v: 4, lab: '4' }] }), 'A number line from −10 to 10. −6 is to the left of 4, so −6 is less than 4.', { width: '5.6in' }),
+
+    B.keyidea('Adding and subtracting with signs', 'Adding a positive number moves right on the number line. Adding a negative number moves left, so it is the same as subtracting: 6 + (−9) = 6 − 9 = −3. Subtracting a negative number moves right, so it is the same as adding: 5 − (−3) = 5 + 3 = 8.'),
+    B.check('6 + 9 +⇄− =', '-3'), B.check('5 − 3 +⇄− =', '8'),
+    B.figure(P.intLine(-10, 10, { lstep: 2, hops: [{ from: -7, to: 5, lab: '+12' }, { from: 5, to: -4, lab: '−9', under: true }], marks: [{ v: -7 }, { v: 5 }, { v: -4 }] }), 'Start at −7 and move 12 to the right to reach 5. Then move 9 to the left to reach −4.', { width: '5.6in' }),
+    B.example({
+      title: 'Temperature on a job site',
+      q: 'At 6:00 the temperature on a job site is −7 °C. By noon it has risen 12 degrees. By evening it has fallen 9 degrees from the noon reading. Find the noon and evening temperatures.',
+      steps: ['Noon: −7 + 12. Start at −7 and move 12 to the right. The answer is 5 °C.', 'Evening: 5 − 9. Start at 5 and move 9 to the left. The answer is −4 °C.', 'Key the −7 with the change-sign key, not the minus key.'],
+      calc: { rows: [{ label: 'Noon', seq: '7 +⇄− + 12 =', expect: '5' }, { label: 'Evening', seq: '7 +⇄− + 12 − 9 =', expect: '-4' }] },
+      answer: '5 °C at noon and −4 °C in the evening.'
+    }),
+    B.p('On a building section, heights are often given as elevations from a benchmark, a level that is called 0. Levels above it are positive and levels below it are negative. The distance between two levels is always the higher elevation minus the lower one.'),
+    B.figure(P.elevScale([{ v: 2745, name: 'Second floor' }, { v: 0, name: 'Main floor (benchmark)' }, { v: -610, name: 'Finished grade', dash: true }, { v: -2440, name: 'Basement floor' }], { h: 300, dims: [{ top: 2745, bot: -2440, ask: true }] }), 'Elevations on a house section, measured from the main floor at 0 mm.', { width: '3.5in' }),
+    B.example({
+      title: 'Floor and grade elevations',
+      q: 'In the drawing, the second floor is at +2,745 mm, finished grade is at −610 mm and the basement floor is at −2,440 mm. Find the height from the basement floor to the second floor, and the height from the basement floor up to finished grade.',
+      steps: ['Higher minus lower: 2,745 − (−2,440). Subtracting a negative is the same as adding, so this is 2,745 + 2,440 = 5,185 mm.', 'Finished grade minus basement floor: −610 − (−2,440) = −610 + 2,440 = 1,830 mm.', 'Key each negative elevation with the change-sign key.'],
+      calc: { rows: [{ label: 'Basement floor to second floor', seq: '2745 − 2440 +⇄− =', expect: '5,185' }, { label: 'Basement floor to grade', seq: '610 +⇄− − 2440 +⇄− =', expect: '1,830' }] },
+      answer: '5,185 mm from the basement floor to the second floor, and 1,830 mm from the basement floor to finished grade.'
+    }),
+    B.example({
+      title: 'Over and under the target length',
+      q: 'Five blocks are cut to a target length of 368 mm. Each one is measured and written as over (+) or under (−) the target: +2, −3, +1, −4 and +1 mm. Find the total and the average difference from the target.',
+      steps: ['Total: 2 + (−3) + 1 + (−4) + 1. Adding a negative is subtracting: 2 − 3 + 1 − 4 + 1 = −3 mm.', 'Average: the total divided by the number of blocks. The fraction bar groups the top, so key brackets: (−3) ÷ 5 = −0.6 mm.', 'The blocks run 0.6 mm under the target on average.'],
+      calc: { seq: '( 2 + 3 +⇄− + 1 + 4 +⇄− + 1 ) ÷ 5 =', expect: '-0.6', title: 'Average difference' },
+      answer: 'A total of −3 mm, an average of −0.6 mm (0.6 mm under).'
+    }),
+    B.check('2 − 3 + 1 − 4 + 1 =', '-3'),
+    B.p('Multiplying and dividing follow two short sign rules. The table shows each case, worked on the calculator.'),
+    B.table(['Signs', 'Answer', 'Example'], [
+      ['positive × positive', 'positive', '4 × 3 = ' + n(ti('4 × 3 ='))],
+      ['negative × negative', 'positive', '(−4) × (−3) = ' + n(ti('4 +⇄− × 3 +⇄− ='))],
+      ['positive × negative', 'negative', '4 × (−3) = ' + n(ti('4 × 3 +⇄− ='))],
+      ['negative × positive', 'negative', '(−4) × 3 = ' + n(ti('4 +⇄− × 3 ='))],
+      ['negative ÷ negative', 'positive', '(−12) ÷ (−3) = ' + n(ti('12 +⇄− ÷ 3 +⇄− ='))],
+      ['negative ÷ positive', 'negative', '(−12) ÷ 3 = ' + n(ti('12 +⇄− ÷ 3 ='))]
+    ], { caption: 'Sign rules for multiplying and dividing.', align: ['', 'c', ''] }),
+    B.check('4 +⇄− × 3 +⇄− =', '12'), B.check('4 × 3 +⇄− =', '-12'), B.check('12 +⇄− ÷ 3 +⇄− =', '4'), B.check('12 +⇄− ÷ 3 =', '-4'),
+    B.keyidea('Sign rules', 'Same signs give a positive answer. Different signs give a negative answer. This holds for × and for ÷.'),
+    B.example({
+      title: 'A cooler and a cold front',
+      q: 'A walk-in cooler is at 3 °C when its door is propped open in winter. The air inside drops 4 degrees each hour for 5 hours. Find the temperature after 5 hours. On another day, the outside temperature falls from 4 °C to −14 °C over 6 hours. Find the average change per hour.',
+      steps: ['Five drops of 4 degrees are 5 × (−4) = −20. BEDMAS multiplies before it adds: 3 + 5 × (−4) = 3 + (−20) = −17 °C.', 'Change = new − old = −14 − 4 = −18 degrees. Per hour: (−18) ÷ 6 = −3. Different signs give a negative answer.', 'The fraction bar of the average needs brackets on the calculator: ( −14 − 4 ) ÷ 6.'],
+      calc: { rows: [{ label: '3 + 5 × (−4)', seq: '3 + 5 × 4 +⇄− =', expect: '-17' }, { label: '(−14 − 4) ÷ 6', seq: '( 14 +⇄− − 4 ) ÷ 6 =', expect: '-3' }] },
+      answer: '−17 °C after 5 hours, and an average change of −3 degrees per hour (3 degrees colder each hour).'
+    }),
+    B.watch('A square of a negative number', 'An exponent belongs only to what it touches. (−3)² = (−3) × (−3) = 9, because the bracket puts the minus sign under the square. In −3² the square belongs to the 3 only, so −3² = −(3 × 3) = −9. On the calculator, key (−3)² with brackets: TI-30Xa 3 +⇄− x², Sharp ( +/− 3 ) x² =.'),
+    B.check('3 +⇄− x²', '9'), B.check('3 x² +⇄−', '-9'),
+    B.tryIt([
+      { q: 'Which is colder, −12 °C or −9 °C?', a: '−12 °C (it is further left on the number line)' },
+      { q: '−9 + 14', a: n(ti('9 +⇄− + 14 =')) },
+      { q: '6 − 11', a: n(ti('6 − 11 =')) },
+      { q: '−4 − 7', a: n(ti('4 +⇄− − 7 =')) },
+      { q: '3 − (−8)', a: n(ti('3 − 8 +⇄− =')) },
+      { q: '(−6) × 7', a: n(ti('6 +⇄− × 7 =')) },
+      { q: '(−48) ÷ (−6)', a: n(ti('48 +⇄− ÷ 6 +⇄− =')) },
+      { q: '(−5)²', a: n(ti('5 +⇄− x²')) },
+      { q: 'A floor drain is at −35 mm from a benchmark and the floor around it is at −10 mm. How much higher is the floor than the drain?', a: n(ti('10 +⇄− − 35 +⇄− =')) + ' mm (−10 − (−35))' },
+      { q: 'A rod should be 1,200 mm. Four rods measure +1, −2, −2 and +3 mm from the target. Find the total difference.', a: n(ti('1 + 2 +⇄− + 2 +⇄− + 3 =')) + ' mm' }
+    ]),
+
+    B.section('Framing and stairs: BEDMAS on the job'),
+    B.p('Carpenters write a few calculations again and again. Two of them, the stud count for a wall and the total rise and total run of a stair, are good BEDMAS practice.',
+      'Studs are set a fixed distance apart, measured from the centre of one stud to the centre of the next. This distance is the spacing on centre, written o.c. When a wall is laid out from one end, the number of spaces is the wall length divided by the spacing, and there is one more stud than there are spaces.'),
+    B.formula('Studs in a wall', ['studs = length ÷ spacing + 1'], 'Divide first, then add 1. If length ÷ spacing is not a whole number, round it up before you add 1, so no space is wider than the spacing. This counts the regular studs only. Studs at corners and beside openings are counted on their own.'),
+    B.figure(P.studWall(4800, 400, { spLab: '400 o.c.' }), 'A 4,800 mm wall with studs at 400 mm on centre: 12 spaces and 13 studs.', { width: '5.4in' }),
+    B.p('The spacing comes from the plans, and it may not be more than the maximum in Table 9.23.10.1 of the BC Building Code, which Sentence 9.23.10.1.(1) points to (BCBC 2024, Division B, page ' + PL.article('9.23.10.1').page + '). For an exterior wall of 38 × 89 studs that carries a roof, with or without attic storage, the table lists a maximum stud spacing of 600 mm. For the same studs carrying a roof plus one floor, it lists 400 mm.'),
+    B.example({
+      title: 'Counting studs',
+      q: 'A wall is 4,800 mm long, with studs at 400 mm o.c. How many studs does it need? Then find the studs for a 12 ft wall at 16 in o.c.',
+      steps: ['BEDMAS divides before it adds: 4,800 ÷ 400 + 1 = 12 + 1 = 13 studs. No brackets are needed.', 'Brackets in the wrong place change the job: 4,800 ÷ (400 + 1) = 11.97, which is not a stud count.', 'Feet to inches first: 12 × 12 = 144 in. Then 144 ÷ 16 + 1 = 9 + 1 = 10 studs. × and ÷ are worked left to right, then the + comes last.'],
+      calc: { rows: [{ label: '4,800 ÷ 400 + 1', seq: '4800 ÷ 400 + 1 =', expect: '13' }, { label: 'Wrong brackets', seq: '4800 ÷ ( 400 + 1 ) =', expect: '11.97' }, { label: '12 × 12 ÷ 16 + 1', seq: '12 × 12 ÷ 16 + 1 =', expect: '10' }] },
+      answer: '13 studs for the 4,800 mm wall and 10 studs for the 12 ft wall.'
+    }),
+    B.p('A stair has risers, the vertical part of each step, and treads, the part you step on. The unit rise is the height of one step, nosing to nosing. The unit run is the depth of one step, nosing to nosing. In the stairs in this book the upper floor is the top step, so a flight has one tread fewer than it has risers.'),
+    B.formula('Stair totals', ['total rise = number of risers × unit rise', 'total run = (number of risers − 1) × unit run'], 'The brackets matter: the subtraction is worked out before the multiplication.'),
+    plateFig('9.8.3.3', { crop: [215, 170, 610, 760], width: '3.4in', caption: 'A flight of 19 risers of 190 mm. Its vertical height is 19 × 190 = 3,610 mm.' }),
+    B.check('19 × 190 =', '3610'),
+    B.p('The BC Building Code limits the height of one flight. Article 9.8.3.3, Sentence (1), says: "' + PL.article('9.8.3.3').text.replace(/^\s*1\)\s*/, '').replace(/\s+/g, ' ').trim() + '" (BCBC 2024, Division B, page ' + PL.article('9.8.3.3').page + '). The flight in the figure is 3,610 mm, which is under 3.7 m (3,700 mm). For the unit rise of a private stair, Table 9.8.4.1 in Sentence 9.8.4.1.(1) gives a maximum of 200 mm and a minimum of 125 mm (page ' + PL.article('9.8.4.1').page + '). For the unit run of rectangular treads in a private stair, Table 9.8.4.2 in Sentence 9.8.4.2.(1) gives a maximum of 355 mm and a minimum of 255 mm (page ' + PL.article('9.8.4.2').page + ').'),
+    B.figure(P.stairProfile(14, 190, 260, { fs: 18 }), 'A straight flight in side view: 14 risers of 190 mm and 13 treads with a unit run of 260 mm.', { width: '4.4in' }),
+    B.example({
+      title: 'Total rise and total run',
+      q: 'A private stair has 14 risers with a unit rise of 190 mm and treads with a unit run of 260 mm. Find the total rise and the total run. Is the total rise under the 3.7 m limit for one flight?',
+      steps: ['Total rise: 14 × 190 = 2,660 mm. That is less than 3,700 mm, so one flight is within Article 9.8.3.3.', 'Total run: brackets first, 14 − 1 = 13 treads. Then 13 × 260 = 3,380 mm.', 'Without the brackets, 14 − 1 × 260 multiplies first and gives 14 − 260 = −246, which is not a length.'],
+      calc: { rows: [{ label: 'Total rise', seq: '14 × 190 =', expect: '2,660' }, { label: 'Total run', seq: '( 14 − 1 ) × 260 =', expect: '3,380' }, { label: 'No brackets (wrong)', seq: '14 − 1 × 260 =', expect: '-246' }] },
+      answer: 'Total rise 2,660 mm, which is under 3.7 m. Total run 3,380 mm.'
+    }),
+    B.tryIt([
+      { q: 'Studs for a 3,600 mm wall at 400 mm o.c.', a: n(ti('3600 ÷ 400 + 1 =')) },
+      { q: 'Studs for a 6,000 mm wall at 600 mm o.c.', a: n(ti('6000 ÷ 600 + 1 =')) },
+      { q: 'Studs for a 16 ft wall at 16 in o.c.', a: n(ti('16 × 12 ÷ 16 + 1 =')) + ' (16 × 12 ÷ 16 + 1)' },
+      { q: 'Studs for a 4,100 mm wall at 400 mm o.c.', a: 'Round 4,100 ÷ 400 = ' + n(ti('4100 ÷ 400 =')) + ' up to ' + Math.ceil(ti('4100 ÷ 400 =')) + ' spaces, then ' + (Math.ceil(ti('4100 ÷ 400 =')) + 1) + ' studs.' },
+      { q: 'The total rise of 16 risers of 175 mm', a: n(ti('16 × 175 =')) + ' mm' },
+      { q: 'The total run of a flight with 16 risers and a unit run of 255 mm', a: n(ti('( 16 − 1 ) × 255 =')) + ' mm' },
+      { q: 'A total rise of 2,850 mm is split into 15 equal risers. Find the unit rise. Is it within the private stair limits of Table 9.8.4.1?', a: n(ti('2850 ÷ 15 =')) + ' mm. Yes, it is between 125 mm and 200 mm.' },
+      { q: 'One flight has 20 risers of 190 mm. Find its height. Is it within Article 9.8.3.3?', a: n(ti('20 × 190 =')) + ' mm. No, it is more than 3.7 m (3,700 mm).' }
+    ]),
 
     B.worksheet({ title: 'Order on the canvas', sub: 'Write the calculation, then work it out with BEDMAS', intro: 'Each drawing comes with a calculation. Work it out step by step on paper, rewriting the line after each step, then check it on your calculator.' }),
     B.grid2(

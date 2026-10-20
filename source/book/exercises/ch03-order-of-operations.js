@@ -96,6 +96,84 @@ module.exports = function (B, L) {
     B.check('6000 − ( 4 × 1200 + 4 × 3 ) =', '1188'),
     B.prob({ q: 'The ring has R = 60 mm and r = 45 mm. Its area is ' + L.m('π × (R² − r²)') + '. Find it to two decimal places. Then change one value: what is the area if r becomes 30 mm?', canvas: P.ringR(60, 45, 'mm', { max: '2.4in' }), a: 'π × (3,600 − 2,025) = ' + n(L.round(ti('( 60 x² − 45 x² ) × π ='), 2), 2) + ' mm². With r = 30 mm: π × (3,600 − 900) = ' + n(L.round(ti('( 60 x² − 30 x² ) × π ='), 2), 2) + ' mm².', lines: 3 }),
     B.prob({ q: 'Nine holes are evenly spaced on a 2,000 mm plate. The spacing is ' + L.m('(2,000 − 2 × 80) ÷ 8') + '. Find it.', canvas: holeRow(2000, 80, 9, { max: '5.2in' }), a: n(ti('( 2000 − 2 × 80 ) ÷ 8 =')) + ' mm', lines: 3 }),
-    B.check('( 60 x² − 45 x² ) × π =', '4948.01'), B.check('( 60 x² − 30 x² ) × π =', '8482.30'), B.check('( 2000 − 2 × 80 ) ÷ 8 =', '230')
+    B.check('( 60 x² − 45 x² ) × π =', '4948.01'), B.check('( 60 x² − 30 x² ) × π =', '8482.30'), B.check('( 2000 − 2 × 80 ) ÷ 8 =', '230'),
+
+    /* Set 3D: positive and negative numbers (textbook Section 3.8) */
+    intSet(),
+    /* Set 3K: carpentry and the BCBC (textbook Section 3.9). The set letter is K in every chapter. */
+    carpSet()
   ]);
+
+  function intSet() {
+    const order = [4, -7, 0, -2, 9, -11]
+    const sorted = order.slice().sort((a, b) => a - b)
+    const meas = [916, 912, 913, 911, 915, 912], target = 914
+    const dev = meas.map(m => m - target)
+    const devSeq = '( ' + dev.map((d, i) => (i ? (d < 0 ? '+ ' + Math.abs(d) + ' +⇄−' : '+ ' + d) : (d < 0 ? Math.abs(d) + ' +⇄−' : String(d)))).join(' ') + ' ) ÷ 6 ='
+    const totSeq = devSeq.replace(' ) ÷ 6 =', ' ) =')
+    const sg = d => (d > 0 ? '+' : d < 0 ? '−' : '') + Math.abs(d)
+    return [
+      B.worksheet({ title: 'Positive and negative numbers', sub: 'The number line, signs and the sign rules' }),
+      B.prob({ q: 'Put these numbers in order from least to greatest: ' + order.map(x => n(x)).join(', ') + '. Mark them on the number line first.', canvas: P.intLine(-12, 12, { lstep: 2, max: '5.4in' }), mode: 'Mark the numbers', a: sorted.map(x => n(x)).join(', '), lines: 2 }),
+      B.grid2(
+        ...s('−15 + 9', '15 +⇄− + 9 ='),
+        ...s('−6 − 9', '6 +⇄− − 9 ='),
+        ...s('12 − (−7)', '12 − 7 +⇄− ='),
+        ...s('(−9) × 6', '9 +⇄− × 6 ='),
+        ...s('(−8) × (−7)', '8 +⇄− × 7 +⇄− ='),
+        ...s('72 ÷ (−9)', '72 ÷ 9 +⇄− =')
+      ),
+      B.grid2(
+        B.prob({ q: 'Find (−4)² and −4². Why are they different?', a: n(ti('4 +⇄− x²')) + ' and ' + n(ti('4 x² +⇄−')) + '. In −4² the square belongs to the 4 only.', lines: 2 }),
+        B.prob({ q: 'At 7:00 it is −11 °C. By 14:00 the temperature has risen 15 degrees. By 20:00 it has fallen 8 degrees from the 14:00 reading. Find both temperatures.', a: n(ti('11 +⇄− + 15 =')) + ' °C at 14:00 and ' + n(ti('11 +⇄− + 15 − 8 =')) + ' °C at 20:00', lines: 2 })
+      ),
+      B.check('4 +⇄− x²', '16'), B.check('4 x² +⇄−', '-16'), B.check('11 +⇄− + 15 =', '4'), B.check('11 +⇄− + 15 − 8 =', '-4'),
+      B.prob({ q: 'On a site drawing the benchmark is the main floor, 0 mm. Finished grade is at −450 mm and the top of the footing is at −1,850 mm. How far is it from the top of the footing up to finished grade?', canvas: P.elevScale([{ v: 0, name: 'Main floor (benchmark)' }, { v: -450, name: 'Finished grade', dash: true }, { v: -1850, name: 'Top of footing' }], { h: 260, dims: [{ top: -450, bot: -1850, ask: true }], max: '3.3in' }), a: n(ti('450 +⇄− − 1850 +⇄− =')) + ' mm', work: '−450 − (−1,850) = −450 + 1,850', lines: 2 }),
+      B.check('450 +⇄− − 1850 +⇄− =', '1400'),
+      B.prob({ q: 'Six blocks should each be ' + target + ' mm long. They measure ' + meas.join(', ') + ' mm. Write each one as over (+) or under (−) the target. Find the total difference and the average difference, to one decimal place.', a: 'Differences ' + dev.map(sg).join(', ') + '. Total ' + n(ti(totSeq)) + ' mm. Average ' + n(L.round(ti(devSeq), 1), 1) + ' mm.', work: 'Average: (' + dev.map(sg).join(' ') + ') ÷ 6', lines: 3 }),
+      B.check(totSeq, String(ti(totSeq))), B.check(devSeq, n(L.round(ti(devSeq), 1), 1)),
+      B.grid2(
+        B.prob({ q: 'The temperature falls from 6 °C to −12 °C over 9 hours. Find the average change per hour.', a: n(ti('( 12 +⇄− − 6 ) ÷ 9 =')) + ' degrees per hour', work: '(−12 − 6) ÷ 9 = (−18) ÷ 9', lines: 2 }),
+        B.prob({ q: 'A cooler at 2 °C drops 3 degrees each hour for 4 hours. Find its temperature with ' + L.m('2 + 4 × (−3)') + '.', a: n(ti('2 + 4 × 3 +⇄− =')) + ' °C', lines: 2 })
+      ),
+      B.check('( 12 +⇄− − 6 ) ÷ 9 =', '-2'), B.check('2 + 4 × 3 +⇄− =', '-10')
+    ]
+  }
+
+  function carpSet() {
+    const PL = require('../engine/plates.js')
+    const studs = (len, sp) => Math.ceil(len / sp - 1e-9) + 1
+    const pg = a => PL.article(a).page
+    B.wsN = Math.max(B.wsN, 10)
+    const r11a = ti('2960 ÷ 14 ='), r11b = ti('2960 ÷ 15 =')
+    return [
+      B.worksheet({ title: 'Carpentry and the BCBC', sub: 'Stud counts and stair totals with BEDMAS' }),
+      B.grid2(
+        B.prob({ q: 'Studs for a 7,200 mm wall at 400 mm o.c.', a: n(ti('7200 ÷ 400 + 1 =')), work: '7,200 ÷ 400 + 1', lines: 2 }),
+        B.prob({ q: 'Studs for a 3,000 mm wall at 600 mm o.c.', a: n(ti('3000 ÷ 600 + 1 =')), work: '3,000 ÷ 600 + 1', lines: 2 }),
+        B.prob({ q: 'Studs for a 20 ft wall at 16 in o.c.', a: n(ti('20 × 12 ÷ 16 + 1 =')), work: '20 × 12 ÷ 16 + 1', lines: 2 }),
+        B.prob({ q: 'Studs for a 5,300 mm wall at 400 mm o.c.', a: n(studs(5300, 400)), work: '5,300 ÷ 400 = ' + n(ti('5300 ÷ 400 =')) + ', round up to ' + Math.ceil(ti('5300 ÷ 400 =')) + ' spaces, then + 1', lines: 2 })
+      ),
+      B.check('7200 ÷ 400 + 1 =', '19'), B.check('3000 ÷ 600 + 1 =', '6'), B.check('20 × 12 ÷ 16 + 1 =', '16'), B.check('5300 ÷ 400 =', '13.25'),
+      B.prob({ q: 'A wall is 14′ 6″ long with studs at 24 in o.c. Write one calculation for the number of spaces, then find the number of studs.', a: n(studs(174, 24)) + ' studs', work: '(14 × 12 + 6) ÷ 24 = ' + n(ti('( 14 × 12 + 6 ) ÷ 24 =')) + ', round up to ' + Math.ceil(ti('( 14 × 12 + 6 ) ÷ 24 =')) + ' spaces, + 1', lines: 3 }),
+      B.check('( 14 × 12 + 6 ) ÷ 24 =', '7.25'),
+      B.prob({ q: 'An exterior wall of 38 × 89 studs carries a roof plus one floor. The plans show the studs at 600 mm o.c. Table 9.23.10.1 of the BC Building Code (Sentence 9.23.10.1.(1), page ' + pg('9.23.10.1') + ') lists a maximum spacing of 400 mm for this wall. Is 600 mm allowed? How many studs does a 4,800 mm wall need at 400 mm o.c.?', a: 'No, 600 mm is more than 400 mm. At 400 mm o.c.: ' + n(ti('4800 ÷ 400 + 1 =')) + ' studs.', lines: 3 }),
+      B.check('4800 ÷ 400 + 1 =', '13'),
+      B.prob({ q: 'For a 6,000 mm wall at 400 mm o.c., a learner keys 6,000 ÷ (400 + 1) instead of 6,000 ÷ 400 + 1. Find both answers to two decimal places and say which is the stud count.', a: '6,000 ÷ 400 + 1 = ' + n(ti('6000 ÷ 400 + 1 =')) + ' studs. 6,000 ÷ (400 + 1) = ' + n(L.round(ti('6000 ÷ ( 400 + 1 ) ='), 2), 2) + ' is not a stud count.', lines: 3 }),
+      B.check('6000 ÷ 400 + 1 =', '16'), B.check('6000 ÷ ( 400 + 1 ) =', n(L.round(ti('6000 ÷ ( 400 + 1 ) ='), 2), 2)),
+      B.grid2(
+        B.prob({ q: 'Count the studs in the drawing. The spacing is 400 mm o.c. Find the wall length with ' + L.m('(studs − 1) × spacing') + '.', canvas: P.studWall(4000, 400, { spLab: '400 o.c.', askLen: true, max: '3.2in' }), a: n(ti('( 11 − 1 ) × 400 =')) + ' mm (11 studs)', lines: 2 }),
+        B.prob({ q: 'Find the total run of this stair with ' + L.m('(risers − 1) × unit run') + '. It has 13 risers of 185 mm and a unit run of 270 mm.', canvas: P.stairProfile(13, 185, 270, { ask: 'run', fs: 20, max: '3.2in' }), a: n(ti('( 13 − 1 ) × 270 =')) + ' mm', lines: 2 })
+      ),
+      B.check('( 11 − 1 ) × 400 =', '4000'), B.check('( 13 − 1 ) × 270 =', '3240'),
+      B.prob({ q: 'Check the total rise in the stair drawing above: 13 risers of 185 mm.', a: n(ti('13 × 185 =')) + ' mm', lines: 2 }),
+      B.check('13 × 185 =', '2405'),
+      B.prob({ q: 'A total rise of 2,604 mm is split into 14 equal risers. Find the unit rise. Table 9.8.4.1 (Sentence 9.8.4.1.(1), page ' + pg('9.8.4.1') + ') allows a rise of 125 mm to 200 mm on a private stair. Is it allowed?', a: n(ti('2604 ÷ 14 =')) + ' mm. Yes, it is between 125 mm and 200 mm.', lines: 3 }),
+      B.check('2604 ÷ 14 =', '186'),
+      B.prob({ q: 'A private stair has a total rise of 2,960 mm. Find the unit rise with 14 risers and with 15 risers, to two decimal places. Which one meets the 200 mm maximum of Table 9.8.4.1?', a: '14 risers: ' + n(L.round(r11a, 2), 2) + ' mm, over 200 mm. 15 risers: ' + n(L.round(r11b, 2), 2) + ' mm, within the limit. Use 15 risers.', lines: 3 }),
+      B.check('2960 ÷ 14 =', n(L.round(r11a, 2), 2)), B.check('2960 ÷ 15 =', n(L.round(r11b, 2), 2)),
+      B.prob({ q: 'One flight has 20 risers of 188 mm. Find its height. Article 9.8.3.3, Sentence (1) (page ' + pg('9.8.3.3') + '), says the vertical height of any flight shall not exceed 3.7 m. Does this flight meet it?', a: n(ti('20 × 188 =')) + ' mm. No, it is more than 3,700 mm.', lines: 3 }),
+      B.check('20 × 188 =', '3760')
+    ]
+  }
 };

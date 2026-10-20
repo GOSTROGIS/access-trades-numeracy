@@ -131,6 +131,7 @@ module.exports = function (B, L) {
       { q: '−20 − 12', a: n(ti('20 +⇄− − 12 =')) },
       { q: '(−36) ÷ 9', a: n(ti('36 +⇄− ÷ 9 =')) }
     ]),
+    B.p('Section 3.8 in Chapter 3 covers positive and negative numbers in full: the number line, adding and subtracting with signs, and the sign rules for × and ÷.'),
 
     B.section('Brackets, powers and π'),
     B.p(B.term('Brackets', null) + ' tell the calculator which part to work out first. Both calculators have ( and ) keys and take them in the order written: for (12 + 8) × 3, key ( 12 + 8 ) × 3 = and both show 60. Chapter 3 explains when you need them.'),
@@ -170,6 +171,7 @@ module.exports = function (B, L) {
       { q: '¾ × 120', a: String(ti('3 ab/c 4 × 120 =')) }
     ]),
     B.check('1 ab/c 1 ab/c 2 + 2 ab/c 3 ab/c 4 =', '4.25'),
+    B.p('Section 2.12 shows how to key a tape length in feet, inches and fractions of an inch.'),
 
     B.section('Percent'),
     B.p('The percent key (%) is a second function on both calculators: 2nd % on the TI-30Xa and 2ndF % on the Sharp, where % is printed above the 1 key. On the TI-30Xa you finish with =. On the Sharp, 2ndF % works out the line itself, so you do not press = after it.'),
@@ -221,6 +223,37 @@ module.exports = function (B, L) {
     B.how(['Estimate first. Round the numbers and work it out in your head, as in Chapter 1. The calculator answer should be close.', 'Work it backwards. If √144 = 12, then 12² should give 144. If 6,000 − 1,625 = 4,375, then 4,375 + 1,625 should give 6,000.', 'Read the Sharp top line. It shows the calculation you keyed, so you can spot a wrong number before you press =.', 'Key it again. If the second answer differs from the first, key it a third time slowly.']),
     B.p('An answer with more than 10 digits does not fit on the display. The calculator then shows it with a small number at the right, called an exponent of 10. For 123,456,789 × 1,000, both calculators show 1.23456789 with a small 11, which means 1.23456789 × 10¹¹, or 123,456,789,000.'),
     B.shop('Write the answer with its unit', 'The display shows a number, not a size. Write the unit next to every answer you copy down: 4,375 mm, not 4375. A number without a unit is a guess on the shop floor.'),
+
+    B.section('Tape lengths in feet, inches and fractions'),
+    B.p('A carpenter’s tape reads feet, inches and fractions of an inch, such as 8′ ' + L.mx(5, 3, 8) + '″ (8 feet ' + L.mx(5, 3, 8) + ' inches). To work with a length like this on either calculator, change it to inches first. One foot is 12 inches, so the length in inches is feet × 12 + inches. The fraction key carries the fraction of an inch.',
+      'BEDMAS works the × 12 before the +, so no brackets are needed: key 8 × 12 + 5 a b/c 3 a b/c 8 =. Both calculators show the answer as a mixed number of inches, the same way they show any fraction answer (Section 2.7).'),
+    B.example({
+      title: 'Keying a tape length',
+      q: 'A stud is cut to 8′ ' + L.mx(5, 3, 8) + '″. Find its length in inches. Then find it in millimetres, to the nearest millimetre. One inch is exactly 25.4 mm.',
+      steps: ['Inches: 8 × 12 + ' + L.mx(5, 3, 8) + ' = 96 + ' + L.mx(5, 3, 8) + ' = ' + L.mx(101, 3, 8) + ' in. The TI-30Xa shows 101⌟3⌟8 and the Sharp shows 101┌3┌8.', 'Millimetres: carry on from the answer with × 25.4 =. ' + L.mx(101, 3, 8) + ' × 25.4 = ' + n(ti('8 × 12 + 5 ab/c 3 ab/c 8 = × 25.4 =')) + ', which rounds to ' + n(L.round(ti('8 × 12 + 5 ab/c 3 ab/c 8 = × 25.4 ='), 0)) + ' mm.', 'On the Sharp, the second row puts the inches in brackets, because it keys the whole line in written order.'],
+      calc: { rows: [{ label: 'Feet and inches to inches', seq: '8 × 12 + 5 ab/c 3 ab/c 8 =', expect: '101.375' }, { label: 'Inches to mm', seq: '8 × 12 + 5 ab/c 3 ab/c 8 = × 25.4 =', expect: n(L.round(ti('8 × 12 + 5 ab/c 3 ab/c 8 = × 25.4 ='), 0)) }] },
+      answer: L.mx(101, 3, 8) + ' in, or about ' + n(L.round(ti('8 × 12 + 5 ab/c 3 ab/c 8 = × 25.4 ='), 0)) + ' mm.'
+    }),
+    B.example({
+      title: 'Adding tape lengths',
+      q: 'Two pieces of trim, 7′ ' + L.mx(4, 5, 8) + '″ and 3′ ' + L.mx(9, 3, 4) + '″, are butted end to end. Find the total length in feet and inches.',
+      steps: ['Change both to inches in one line: 7 × 12 + ' + L.mx(4, 5, 8) + ' + 3 × 12 + ' + L.mx(9, 3, 4) + ' = ' + L.mx(134, 3, 8) + ' in. BEDMAS does both × 12 before the additions.', 'Whole feet: ' + L.mx(134, 3, 8) + ' ÷ 12. The display shows 11 and a fraction. The whole number at the front, 11, is the number of whole feet.', 'Inches left over: ' + L.mx(134, 3, 8) + ' − 11 × 12 = ' + L.mx(134, 3, 8) + ' − 132 = ' + L.mx(2, 3, 8) + ' in.'],
+      calc: { rows: [{ label: 'Total in inches', seq: '7 × 12 + 4 ab/c 5 ab/c 8 + 3 × 12 + 9 ab/c 3 ab/c 4 =', expect: '134.375' }, { label: 'Whole feet', seq: '134 ab/c 3 ab/c 8 ÷ 12 =', expect: n(L.round(ti('134 ab/c 3 ab/c 8 ÷ 12 ='), 2), 2) }, { label: 'Inches left over', seq: '134 ab/c 3 ab/c 8 − 11 × 12 =', expect: '2.375' }] },
+      answer: L.ftin(ti('7 × 12 + 4 ab/c 5 ab/c 8 + 3 × 12 + 9 ab/c 3 ab/c 4 ='), 16) + ' (' + L.mx(134, 3, 8) + ' in)'
+    }),
+    B.watch('Feet and inches are not decimals', '8′ 6″ is not 8.6 ft. There are 12 inches in a foot, not 10. Key 8 × 12 + 6 = to get 102 in, and 102 ÷ 12 = 8.5 ft.'),
+    B.check('8 × 12 + 6 =', '102'), B.check('102 ÷ 12 =', '8.5'),
+    B.tryIt([
+      { q: '6′ ' + L.mx(3, 1, 2) + '″ in inches', a: L.inch(ti('6 × 12 + 3 ab/c 1 ab/c 2 ='), 16) },
+      { q: '10′ ' + L.mx(7, 3, 4) + '″ in inches', a: L.inch(ti('10 × 12 + 7 ab/c 3 ab/c 4 ='), 16) },
+      { q: '2′ ' + L.mx(9, 1, 16) + '″ in inches', a: L.inch(ti('2 × 12 + 9 ab/c 1 ab/c 16 ='), 16) },
+      { q: '4′ ' + L.mx(2, 5, 8) + '″ + 5′ ' + L.mx(11, 1, 8) + '″, in feet and inches', a: L.ftin(ti('4 × 12 + 2 ab/c 5 ab/c 8 + 5 × 12 + 11 ab/c 1 ab/c 8 ='), 16) + ' (' + L.inch(ti('4 × 12 + 2 ab/c 5 ab/c 8 + 5 × 12 + 11 ab/c 1 ab/c 8 ='), 16) + ')' },
+      { q: '12′ minus 3′ ' + L.mx(8, 1, 4) + '″, in feet and inches. Put the length you take away in brackets.', a: L.ftin(ti('12 × 12 − ( 3 × 12 + 8 ab/c 1 ab/c 4 ) ='), 16) + ' (12 × 12 − (3 × 12 + ' + L.mx(8, 1, 4) + ') = ' + L.inch(ti('12 × 12 − ( 3 × 12 + 8 ab/c 1 ab/c 4 ) ='), 16) + ')' },
+      { q: L.mx(92, 5, 8) + '″ in millimetres, to the nearest millimetre', a: n(L.round(ti('92 ab/c 5 ab/c 8 × 25.4 ='), 0)) + ' mm' }
+    ]),
+    B.check('12 × 12 − ( 3 × 12 + 8 ab/c 1 ab/c 4 ) =', String(ti('12 × 12 − ( 3 × 12 + 8 ab/c 1 ab/c 4 ) ='))),
+    B.check('4 × 12 + 2 ab/c 5 ab/c 8 + 5 × 12 + 11 ab/c 1 ab/c 8 =', String(ti('4 × 12 + 2 ab/c 5 ab/c 8 + 5 × 12 + 11 ab/c 1 ab/c 8 ='))),
+    B.check('92 ab/c 5 ab/c 8 × 25.4 =', String(ti('92 ab/c 5 ab/c 8 × 25.4 ='))),
 
     B.worksheet({ title: 'Key it in', sub: 'Write the keys for both calculators, then the answer', intro: 'For each problem, write the key sequence for the TI-30Xa and for the Sharp EL-531XT. Then work it out on your own calculator. Start each one with ON/C ON/C and DEG on the display.' }),
     B.grid2(...wsA.slice(0, 4).map(w => B.prob({ q: w.q, a: n(ti(w.seq)) + '. ' + both(w.seq), lines: 3 }))),

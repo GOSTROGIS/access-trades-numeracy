@@ -51,6 +51,31 @@ module.exports = function (B, L) {
   const k3a = PI * Math.pow(0.025, 2) * 20 * 1000, k3b = PI * Math.pow(0.05, 2) * 20 * 1000;
   const nt = { r: 150, h: 400 }, ntV = xc('cylinder', nt, 'V', PI * nt.r * nt.r * nt.h);
 
+  /* ---------- 11.8 to 11.10 (Oct 2026). New sections go after 11.7 so earlier numbers do not move ----------
+     Cubic yard: 1 yd = 0.9144 m exactly (Weights and Measures Act, hub units module), so 1 yd³ = 0.9144³ m³.
+     Code values: BCBC 2024 Division B, quoted from the code text with Article, Sentence and page.
+     Densities: concrete 2,240 to 2,400 kg/m³ from FHWA, Portland Cement Concrete Materials (fhwa.dot.gov/pavement/
+     pubs/013683.pdf), steel 7,850 kg/m³ from The Engineering ToolBox, Metals and Alloys - Densities, the source the
+     hub units module uses. Board foot: Briggs, Forest Products Measurements and Conversion Factors, ch. 2 (University
+     of Washington), and lumber sizes from the Canadian Wood Council, cwc.ca/articles/lumber */
+  const PL = require('../engine/plates.js');
+  const G11 = require('../engine/figs-ch11.js')(B, L);
+  const YD3 = Math.pow(0.9144, 3), CONC_LO = 2240, CONC_HI = 2400, STEEL = 7850;
+  if (Math.abs(YD3 - 0.764554857984) > 1e-15) throw new Error('cubic yard check');
+  const money = v => '$' + n(v, 2);
+  const pg = s => '<span style="white-space:nowrap">page ' + s + '</span>';
+  const gs = { l: 7.2, w: 6, t: 0.1 }, gsV = gs.l * gs.w * gs.t, gsY = gsV / YD3;
+  const ft1 = { fw: 250, ft: 100, ww: 200, len: 38 }, ft1P = (ft1.fw - ft1.ww) / 2, ft1V = ft1.fw / 1000 * ft1.ft / 1000 * ft1.len, ft1Y = ft1V / YD3;
+  const ft2 = { fw: 350, ft: 100, ww: 200, wh: 2.4, len: 40 }, ft2P = (ft2.fw - ft2.ww) / 2, ft2F = 0.35 * 0.1 * ft2.len, ft2W = 0.2 * ft2.wh * ft2.len, ft2Y = (ft2F + ft2W) / YD3;
+  const pr = { r: 0.15, h: 1.2, k: 8 }, prV = xc('cylinder', { r: 150, h: 1200 }, 'V', PI * 150 * 150 * 1200) / 1e9 * pr.k, prY = prV / YD3;
+  const sl = { l: 9.6, w: 7.2, t: 0.075, g: 0.1 }, slC = sl.l * sl.w * sl.t, slG = sl.l * sl.w * sl.g;
+  const bf = { len: 40, w: 0.6, d: 0.5, fw: 0.35, ft: 0.1, ww: 0.2 }, bfX = bf.len * bf.w * bf.d, bfF = bf.fw * bf.ft * bf.len, bfW = bf.ww * (bf.d - bf.ft) * bf.len, bfB = bfX - bfF - bfW;
+  const stp = { l: 2.44, w: 1.22, t: 0.01 }, stV = stp.l * stp.w * stp.t, stM = stV * STEEL;
+  const b1 = { t: 2, w: 6, L: 12, k: 24, mbf: 1150 }, b1E = b1.t * b1.w * b1.L / 12, b1T = b1E * b1.k, b1C = b1T / 1000 * b1.mbf;
+  const b2N = 2 * 4 * 8 / 12, b2A = 1.5 * 3.5 * 8 / 12;
+  const tk1 = { l: 1500, w: 1000, h: 800 }, tk1L = xc('rectangular-prism', tk1, 'V', tk1.l * tk1.w * tk1.h) / 1e6;
+  const tk2 = { r: 600, h: 2500 }, tk2L = xc('cylinder', tk2, 'V', PI * tk2.r * tk2.r * tk2.h) / 1e6;
+
   /* an example that may break between its steps and its calculator box. The calculator box and the answer stay
      together, so an answer line never starts a page on its own */
   function exL(o) {
@@ -148,6 +173,7 @@ module.exports = function (B, L) {
       answer: n2(tiGal) + ' US gal = ' + n2(tiL) + ' L'
     }),
     B.watch('Two different gallons', 'The US gallon is defined as 231 in³, which is 3.785411784 L (NIST SP 1038). The imperial gallon is defined as 4.54609 L (Weights and Measures Act). Check which gallon a label means. This book uses US gallons.'),
+    B.p('Section 11.10 works out tank capacities in litres, US gallons and imperial gallons side by side.'),
     B.tryIt([
       { q: 'Write 2.5 m³ in litres.', a: n(2500) + ' L' },
       { q: 'A tank is 1,000 mm by 500 mm by 400 mm inside. Litres?', a: n(1000 * 500 * 400 / 1e6) + ' L' },
@@ -246,6 +272,146 @@ module.exports = function (B, L) {
       { q: 'A cylinder 400 mm across and 500 mm high sits on a cone 300 mm high with the same radius. Litres to two decimal places?', a: n2((PI * 40000 * 500 + PI * 40000 * 300 / 3) / 1e6) + ' L' },
       { q: 'A rectangular tank 1,200 mm by 600 mm is filled to a depth of 350 mm. Litres?', a: n(1200 * 600 * 350 / 1e6) + ' L' },
       { q: 'A cylinder holds 20 L. The radius is doubled and the height kept. How many litres now?', a: '80 L (4 times)' }
+    ]),
+
+    B.section('Concrete and steel'),
+    B.p('Concrete is ordered by volume. In Canada it is ordered in cubic metres, and some plans and suppliers still use cubic yards. Slabs, footings and walls are prisms, and round piers are cylinders, so the formulas in this chapter give the volume. Change every size to metres first.',
+      'A ' + B.term('cubic yard', 'A cube 1 yard (3 ft) on each edge. 1 yd³ = 27 ft³ = 0.9144³ m³, about 0.765 m³.') + ' is a cube 1 yard on each edge. A yard is exactly 0.9144 m (Weights and Measures Act), so 1 yd³ = 0.9144 × 0.9144 × 0.9144 = 0.764554857984 m³. A yard is also 3 ft, so 1 yd³ = 3 × 3 × 3 = 27 ft³.'),
+    B.formula('Concrete volumes', ['m³ = length × width × thickness, all in metres', 'yd³ = m³ ÷ 0.9144³', 'yd³ = ft³ ÷ 27'], 'On the calculator, key ÷ 0.9144 x³ to change m³ into cubic yards.'),
+    exL({
+      title: 'A garage slab',
+      q: 'A garage slab is ' + gs.l + ' m by ' + gs.w + ' m and 100 mm thick. How much concrete is that in m³ and in cubic yards, to two decimal places?',
+      steps: ['Thickness in metres: 100 mm = 0.1 m.', 'V = ' + gs.l + ' × ' + gs.w + ' × 0.1 = ' + n(gsV, 2) + ' m³.', 'Cubic yards: ' + n(gsV, 2) + ' ÷ 0.9144³ = ' + n2(gsY) + ' yd³.'],
+      calc: { rows: [{ label: 'm³', seq: gs.l + ' × ' + gs.w + ' × 0.1 =', expect: n(gsV, 2) }, { label: 'yd³', seq: n(gsV, 2) + ' ÷ 0.9144 x³ =', expect: n2(gsY) }] },
+      answer: n(gsV, 2) + ' m³ = ' + n2(gsY) + ' yd³'
+    }),
+    B.p('The BC Building Code sets the smallest footing a house may have. Sentence 9.15.3.4.(1) says the minimum footing width or area must comply with Table 9.15.3.4. (' + pg('9-120') + '). For strip footings under exterior walls the table gives 250 mm for 1 floor supported, 350 mm for 2 floors and 450 mm for 3 floors. Under interior walls it gives 200 mm, 350 mm and 500 mm. Column footings, for columns spaced 3 m o.c., need 0.4 m², 0.75 m² and 1.0 m². The table applies unless Sentence (2) (supported joist spans over 4.9 m), Sentence (3) (gravel, sand or silt with a high water table) or Articles 9.15.3.5. to 9.15.3.7. change it.',
+      'Sentence 9.15.3.8.(1) (' + pg('9-121') + ') sets the thickness: not less than the greater of 100 mm or the width of the projection of the footing beyond the wall it supports. For a footing centred under a wall, the projection is (footing width − wall thickness) ÷ 2.'),
+    PL.figure(B, '9.15.3.4', { crop: 'draw', width: '6.5in', caption: 'Strip footings under exterior and interior walls, and a column footing, with Table 9.15.3.4. The plate shows the sizes. The code text is quoted above.' }),
+    exL({
+      title: 'Footings at the code minimum',
+      q: 'A one-storey house with wood-frame floors has 200 mm concrete foundation walls. The strip footings under the exterior walls are centred under the walls, at the minimum width and thickness the code allows. They run ' + ft1.len + ' m in all. Find the footing size and the concrete in m³ and yd³.',
+      fig: G11.footingSec(ft1.fw, ft1.ft, ft1.ww, { max: '2.3in', ph: 110 }), breakable: true,
+      steps: ['Width: 1 floor supported, exterior walls, Table 9.15.3.4.: ' + ft1.fw + ' mm.', 'Projection: (' + ft1.fw + ' − ' + ft1.ww + ') ÷ 2 = ' + ft1P + ' mm.', 'Thickness, Sentence 9.15.3.8.(1): the greater of 100 mm and ' + ft1P + ' mm, so ' + ft1.ft + ' mm.', 'Volume: 0.25 × 0.1 × ' + ft1.len + ' = ' + n(ft1V, 2) + ' m³.', 'Cubic yards: ' + n(ft1V, 2) + ' ÷ 0.9144³ = ' + n2(ft1Y) + ' yd³.'],
+      calc: { rows: [{ label: 'm³', seq: '0.25 × 0.1 × ' + ft1.len + ' =', expect: n(ft1V, 2) }, { label: 'yd³', seq: n(ft1V, 2) + ' ÷ 0.9144 x³ =', expect: n2(ft1Y) }] },
+      answer: ft1.fw + ' mm by ' + ft1.ft + ' mm, ' + n(ft1V, 2) + ' m³ = ' + n2(ft1Y) + ' yd³'
+    }),
+    B.tip('Minimum is not the design', 'The code sizes are the smallest a footing may be. The drawings for a job may call for larger footings. Take the sizes from the drawings, and use the code to check that they are not below the minimum.'),
+    PL.figure(B, '9.15.3.8', { crop: [40, 150, 960, 385], width: '6.5in', caption: 'Panel A: the projection p is under 100 mm, so the footing is at least 100 mm thick.' }),
+    exL({
+      title: 'Footing and foundation wall',
+      q: 'A two-storey house has exterior footings at the Table 9.15.3.4. minimum width, centred under 200 mm walls. The walls are ' + ft2.wh + ' m high and the footing and the wall each run ' + ft2.len + ' m. Find the footing thickness, then the total concrete in m³ and yd³.',
+      steps: ['Width: 2 floors supported, exterior walls: ' + ft2.fw + ' mm. Projection: (' + ft2.fw + ' − ' + ft2.ww + ') ÷ 2 = ' + ft2P + ' mm, so the thickness is the greater of 100 mm and ' + ft2P + ' mm: 100 mm.', 'Footing: 0.35 × 0.1 × ' + ft2.len + ' = ' + n(ft2F, 2) + ' m³.', 'Wall: 0.2 × ' + ft2.wh + ' × ' + ft2.len + ' = ' + n(ft2W, 2) + ' m³.', 'Total: ' + n(ft2F, 2) + ' + ' + n(ft2W, 2) + ' = ' + n(ft2F + ft2W, 2) + ' m³ = ' + n2(ft2Y) + ' yd³.', 'Sentence 9.15.4.6.(1) (' + pg('9-127') + ') also says exterior foundation walls must extend not less than 150 mm above finished ground level. Check on the drawings that the top of the wall is at least that high.'],
+      calc: { rows: [{ label: 'm³', seq: '0.35 × 0.1 × ' + ft2.len + ' + 0.2 × ' + ft2.wh + ' × ' + ft2.len + ' =', expect: n(ft2F + ft2W, 2) }, { label: 'yd³', seq: n(ft2F + ft2W, 2) + ' ÷ 0.9144 x³ =', expect: n2(ft2Y) }] },
+      answer: n(ft2F + ft2W, 2) + ' m³ = ' + n2(ft2Y) + ' yd³'
+    }),
+    exL({
+      title: 'Round piers',
+      q: 'A deck sits on ' + pr.k + ' round concrete piers. Each pier is 300 mm across and 1.2 m deep. How much concrete, in m³ and yd³, to two decimal places?',
+      fig: G.cyl(150, 1200, { lab: 'D', max: '1.2in', ph: 110 }), breakable: true,
+      steps: ['Radius: 300 ÷ 2 = 150 mm = 0.15 m.', 'One pier: π × 0.15² × 1.2 = ' + n(L.round(prV / pr.k, 4), 4) + ' m³.', 'Eight piers: × 8 = ' + n2(prV) + ' m³.', 'Cubic yards: ÷ 0.9144³ = ' + n2(prY) + ' yd³.'],
+      calc: { rows: [{ label: 'm³', seq: 'π × 0.15 x² × 1.2 × 8 =', expect: n2(prV) }, { label: 'yd³', seq: 'π × 0.15 x² × 1.2 × 8 ÷ 0.9144 x³ =', expect: n2(prY) }] },
+      answer: n2(prV) + ' m³ = ' + n2(prY) + ' yd³'
+    }),
+    B.p('A concrete floor on the ground sits on a layer of crushed stone or gravel. Sentence 9.16.4.3.(1) (' + pg('9-130') + ') says concrete slabs shall not be less than 75 mm thick, not counting any topping. Sentence 9.16.2.1.(1) (' + pg('9-129') + ') says not less than 100 mm of coarse clean granular material, with not more than 10% passing a 4 mm sieve, shall be placed beneath floors-on-ground. Sentence (2) lists the exceptions, such as slabs in garages, carports and accessory buildings.'),
+    PL.figure(B, '9.16.2.1', { crop: [40, 150, 960, 385], width: '6.5in', caption: 'Panel A: the granular layer under a floor-on-ground, at least 100 mm deep.' }),
+    exL({
+      title: 'Slab and granular base',
+      q: 'A basement floor is ' + sl.l + ' m by ' + sl.w + ' m. The slab and the granular layer under it are at the code minimum thicknesses. How much concrete and how much granular material, in m³?',
+      fig: G11.slabSec(75, 100, { max: '2.5in', ph: 80 }), breakable: true,
+      steps: ['Slab: 75 mm = 0.075 m. ' + sl.l + ' × ' + sl.w + ' × 0.075 = ' + n(L.round(slC, 3), 3) + ' m³.', 'Granular layer: 100 mm = 0.1 m. ' + sl.l + ' × ' + sl.w + ' × 0.1 = ' + n(L.round(slG, 3), 3) + ' m³.'],
+      calc: { rows: [{ label: 'Concrete', seq: sl.l + ' × ' + sl.w + ' × 0.075 =', expect: n(L.round(slC, 3), 3) }, { label: 'Granular', seq: sl.l + ' × ' + sl.w + ' × 0.1 =', expect: n(L.round(slG, 3), 3) }] },
+      answer: n(L.round(slC, 3), 3) + ' m³ of concrete, ' + n(L.round(slG, 3), 3) + ' m³ of granular material'
+    }),
+    exL({
+      title: 'Backfill around a footing',
+      q: 'A trench ' + bf.len + ' m long, ' + bf.w + ' m wide and ' + bf.d + ' m deep is dug for a footing. The footing is 350 mm wide and 100 mm thick, and the 200 mm wall on it rises from the top of the footing to the top of the trench and beyond. How much backfill is needed to fill the trench back to the top?',
+      steps: ['Trench: ' + bf.len + ' × ' + bf.w + ' × ' + bf.d + ' = ' + n(bfX) + ' m³.', 'Footing: 0.35 × 0.1 × ' + bf.len + ' = ' + n(bfF, 1) + ' m³.', 'Wall inside the trench: 0.2 × (' + bf.d + ' − 0.1) × ' + bf.len + ' = ' + n(bfW, 1) + ' m³.', 'Backfill: ' + n(bfX) + ' − ' + n(bfF, 1) + ' − ' + n(bfW, 1) + ' = ' + n(bfB, 1) + ' m³.'],
+      calc: { seq: bf.len + ' × ' + bf.w + ' × ' + bf.d + ' − 0.35 × 0.1 × ' + bf.len + ' − 0.2 × 0.4 × ' + bf.len + ' =', expect: n(bfB, 1) },
+      answer: n(bfB, 1) + ' m³ of backfill'
+    }),
+    B.p('Concrete and steel are heavy. A load on a truck, a lift with a crane or a load on a beam starts from the mass, and the mass is the volume times the ' + B.term('density', 'The mass of one cubic unit of a material, such as kilograms per cubic metre (kg/m³).') + '. Density is the mass of one cubic metre of the material, in kg/m³.'),
+    B.formula('Mass from volume', ['mass (kg) = volume (m³) × density (kg/m³)', '1 t (tonne) = 1,000 kg'], 'Use the density the supplier or the drawings give. The values in Table 11.3 are for practice.'),
+    B.table(['Material', 'Density', 'Source'], [
+      ['Concrete, normal weight', '2,240 to 2,400 kg/m³', 'FHWA, Portland Cement Concrete Materials (fhwa.dot.gov/pavement/pubs/013683.pdf), read Oct 20 2026'],
+      ['Steel', '7,850 kg/m³', 'The Engineering ToolBox, Metals and Alloys: Densities (engineeringtoolbox.com), read Oct 20 2026, the source of the hub units module']
+    ], { caption: 'Densities used in this chapter. Concrete varies with its stone, air and water, so the source gives a range.', align: ['', 'r', ''] }),
+    exL({
+      title: 'Mass of the garage slab',
+      q: 'Find the mass of the ' + n(gsV, 2) + ' m³ garage slab from Example 11.12, at the low and the high end of the concrete range in Table 11.3.',
+      steps: ['Low end: ' + n(gsV, 2) + ' × 2,240 = ' + n(gsV * CONC_LO, 1) + ' kg.', 'High end: ' + n(gsV, 2) + ' × 2,400 = ' + n(gsV * CONC_HI) + ' kg.', 'In tonnes: about ' + n(L.round(gsV * CONC_LO / 1000, 2), 2) + ' t to ' + n(L.round(gsV * CONC_HI / 1000, 2), 2) + ' t.'],
+      calc: { rows: [{ label: 'Low', seq: n(gsV, 2) + ' × 2240 =', expect: n(gsV * CONC_LO, 1) }, { label: 'High', seq: n(gsV, 2) + ' × 2400 =', expect: n(gsV * CONC_HI) }] },
+      answer: n(L.round(gsV * CONC_LO / 1000, 2), 2) + ' t to ' + n(L.round(gsV * CONC_HI / 1000, 2), 2) + ' t'
+    }),
+    exL({
+      title: 'Mass of a steel plate',
+      q: 'A steel plate is 2,440 mm by 1,220 mm and 10 mm thick. Find its mass to two decimal places, using 7,850 kg/m³.',
+      steps: ['In metres: 2.44 × 1.22 × 0.01 = ' + n(L.round(stV, 6), 6) + ' m³.', 'Mass: ' + n(L.round(stV, 6), 6) + ' × 7,850 = ' + n2(stM) + ' kg.'],
+      calc: { seq: '2.44 × 1.22 × 0.01 × 7850 =', expect: n2(stM) },
+      answer: n2(stM) + ' kg'
+    }),
+    B.tryIt([
+      { q: 'A sidewalk is 12 m long, 1.2 m wide and 100 mm thick. Concrete in m³ and yd³, to two decimal places?', a: n(1.44, 2) + ' m³ = ' + n2(1.44 / YD3) + ' yd³' },
+      { q: 'A pour is 300 ft³. How many cubic yards, to two decimal places?', a: n2(300 / 27) + ' yd³' },
+      { q: 'Six round piers, each 250 mm across and 1.5 m deep. Concrete in m³, to two decimal places?', a: n2(PI * 0.125 * 0.125 * 1.5 * 6) + ' m³' },
+      { q: 'A strip footing under an interior wall of a one-storey house, at the Table 9.15.3.4. minimum width, is 100 mm thick and 12 m long. Concrete in m³?', a: '200 mm wide, ' + n(0.2 * 0.1 * 12, 2) + ' m³' },
+      { q: 'A steel round bar is 25 mm across and 6 m long. Mass at 7,850 kg/m³, to two decimal places?', a: n2(PI * 0.0125 * 0.0125 * 6 * STEEL) + ' kg' }
+    ]),
+
+    B.section('Board feet'),
+    B.p('Softwood and hardwood lumber is often priced by the ' + B.term('board foot', 'A volume of lumber 1 in thick, 12 in wide and 1 ft long: 144 in³, or 1/12 of a cubic foot.') + '. One board foot is a piece 1 in thick, 12 in wide and 1 ft long, which is 144 in³, or 1/12 of a cubic foot. Prices are often given per thousand board feet, written MBF.',
+      'Lumber is named by its nominal size, such as 2 × 4. The Canadian Wood Council lists the actual surfaced dry (S-Dry) size of a 2 × 4 as 38 mm × 89 mm, or 1½ in × 3½ in. Board feet are tallied on the nominal size: a 1 × 12 that is 16 ft long is sold as 16 board feet, even though the dressed piece is smaller (Briggs, Forest Products Measurements and Conversion Factors, University of Washington).'),
+    B.formula('Board feet', ['BF = thickness (in) × width (in) × length (ft) ÷ 12'], 'Thickness and width are the nominal sizes in inches. Length is in feet. MBF = 1,000 board feet.'),
+    B.table(['Nominal size, in', 'S-Dry size, mm', 'S-Dry size, in'], [
+      ['2 × 4', '38 × 89', '1½ × 3½'], ['2 × 6', '38 × 140', '1½ × 5½'], ['2 × 8', '38 × 184', '1½ × 7¼'],
+      ['2 × 10', '38 × 235', '1½ × 9¼'], ['2 × 12', '38 × 286', '1½ × 11¼'], ['4 × 4', '89 × 89', '3½ × 3½']
+    ], { caption: 'Nominal and actual surfaced dry lumber sizes, from the Canadian Wood Council table of dimension lumber sizes (cwc.ca/articles/lumber), read Oct 20 2026.', align: ['', 'r', 'r'] }),
+    exL({
+      title: 'A lumber order',
+      q: 'An order is for ' + b1.k + ' pieces of 2 × 6, each ' + b1.L + ' ft long. The yard charges ' + money(b1.mbf) + ' per MBF. How many board feet, and what is the cost?',
+      steps: ['One piece: 2 × 6 × ' + b1.L + ' ÷ 12 = ' + n(b1E) + ' BF.', b1.k + ' pieces: ' + n(b1E) + ' × ' + b1.k + ' = ' + n(b1T) + ' BF.', 'Cost: ' + n(b1T) + ' ÷ 1,000 × ' + money(b1.mbf) + ' = ' + money(b1C) + '.'],
+      calc: { rows: [{ label: 'Board feet', seq: '2 × 6 × ' + b1.L + ' ÷ 12 × ' + b1.k + ' =', expect: n(b1T) }, { label: 'Cost', seq: b1T + ' ÷ 1000 × ' + b1.mbf + ' =', expect: n(b1C, 2) }] },
+      answer: n(b1T) + ' BF, ' + money(b1C)
+    }),
+    exL({
+      title: 'Nominal and actual',
+      q: 'Find the board feet in one 2 × 4 that is 8 ft long. Then find how many board feet of wood the dressed piece holds, using its S-Dry size of 1½ in by 3½ in.',
+      steps: ['Nominal: 2 × 4 × 8 ÷ 12 = ' + n2(b2N) + ' BF.', 'Actual: 1.5 × 3.5 × 8 ÷ 12 = ' + n(b2A) + ' BF.', 'The piece is sold as ' + n2(b2N) + ' BF but holds ' + n(b2A) + ' BF of wood.'],
+      calc: { rows: [{ label: 'Nominal', seq: '2 × 4 × 8 ÷ 12 =', expect: n2(b2N) }, { label: 'Actual', seq: '1.5 × 3.5 × 8 ÷ 12 =', expect: n(b2A) }] },
+      answer: n2(b2N) + ' BF sold, ' + n(b2A) + ' BF of wood'
+    }),
+    B.tryIt([
+      { q: 'Ten pieces of 2 × 10, each 16 ft long. Board feet, to two decimal places?', a: n2(2 * 10 * 16 / 12 * 10) + ' BF' },
+      { q: 'One 1 × 8 board, 10 ft long. Board feet, to two decimal places?', a: n2(1 * 8 * 10 / 12) + ' BF' },
+      { q: 'One 4 × 4 post, 8 ft long. Board feet, to two decimal places?', a: n2(4 * 4 * 8 / 12) + ' BF' },
+      { q: 'Forty pieces of 2 × 4, each 8 ft long, at $1,200 per MBF. Board feet and cost?', a: n2(2 * 4 * 8 / 12 * 40) + ' BF, ' + money(2 * 4 * 8 / 12 * 40 / 1000 * 1200) }
+    ]),
+
+    B.section('Tank capacity in litres and gallons'),
+    B.p('A tank may be rated in litres, in US gallons or in imperial gallons. Find the inside volume, change it to litres, and then divide by the size of the gallon you need. The US gallon is 3.785411784 L (231 in³, NIST SP 1038). The imperial gallon is 4.54609 L (Weights and Measures Act). Both factors are exact.'),
+    B.formula('Capacity in three units', ['L = mm³ ÷ 1,000,000 = m³ × 1,000', 'US gal = L ÷ 3.785411784', 'imperial gal = L ÷ 4.54609'], 'Use the inside sizes of the tank. Keep the full litre value in the calculator before dividing.'),
+    exL({
+      title: 'A rectangular tank',
+      q: 'A tank is ' + n(tk1.l) + ' mm by ' + n(tk1.w) + ' mm by ' + tk1.h + ' mm inside. Find its capacity in litres, US gallons and imperial gallons, to two decimal places.',
+      fig: G.box(tk1.l, tk1.w, tk1.h, { max: '2.2in', ph: 90 }), breakable: true,
+      steps: ['Volume: ' + n(tk1.l) + ' × ' + n(tk1.w) + ' × ' + tk1.h + ' = ' + n(tk1L * 1e6) + ' mm³ = ' + n(tk1L) + ' L.', 'US gallons: ' + n(tk1L) + ' ÷ 3.785411784 = ' + n2(tk1L / USGAL_L) + ' US gal.', 'Imperial gallons: ' + n(tk1L) + ' ÷ 4.54609 = ' + n2(tk1L / IMPGAL_L) + ' imperial gal.'],
+      calc: { rows: [{ label: 'US gal', seq: tk1L + ' ÷ 3.785411784 =', expect: n2(tk1L / USGAL_L) }, { label: 'Imperial gal', seq: tk1L + ' ÷ 4.54609 =', expect: n2(tk1L / IMPGAL_L) }] },
+      answer: n(tk1L) + ' L = ' + n2(tk1L / USGAL_L) + ' US gal = ' + n2(tk1L / IMPGAL_L) + ' imperial gal'
+    }),
+    exL({
+      title: 'A round tank',
+      q: 'A vertical tank is ' + n(2 * tk2.r) + ' mm across and ' + n(tk2.h) + ' mm high inside. Find its capacity in litres, US gallons and imperial gallons, to two decimal places.',
+      fig: G.cyl(tk2.r, tk2.h, { lab: 'D', max: '1.4in', ph: 110 }), breakable: true,
+      steps: ['Radius: ' + n(2 * tk2.r) + ' ÷ 2 = ' + tk2.r + ' mm = 0.6 m. Height 2.5 m.', 'Volume: π × 0.6² × 2.5 = ' + n(L.round(tk2L / 1000, 5), 5) + ' m³ = ' + n2(tk2L) + ' L.', 'US gallons: ÷ 3.785411784 = ' + n2(tk2L / USGAL_L) + ' US gal.', 'Imperial gallons: ÷ 4.54609 = ' + n2(tk2L / IMPGAL_L) + ' imperial gal.'],
+      calc: { rows: [{ label: 'Litres', seq: 'π × 0.6 x² × 2.5 × 1000 =', expect: n2(tk2L) }, { label: 'US gal', seq: 'π × 0.6 x² × 2.5 × 1000 ÷ 3.785411784 =', expect: n2(tk2L / USGAL_L) }, { label: 'Imperial gal', seq: 'π × 0.6 x² × 2.5 × 1000 ÷ 4.54609 =', expect: n2(tk2L / IMPGAL_L) }] },
+      answer: n2(tk2L) + ' L = ' + n2(tk2L / USGAL_L) + ' US gal = ' + n2(tk2L / IMPGAL_L) + ' imperial gal'
+    }),
+    B.watch('The imperial gallon is bigger', 'One imperial gallon is 4.54609 ÷ 3.785411784 = ' + n(L.round(IMPGAL_L / USGAL_L, 3), 3) + ' US gallons, so the same tank holds fewer imperial gallons than US gallons.' + B.check('4.54609 ÷ 3.785411784 =', n(L.round(IMPGAL_L / USGAL_L, 3), 3))),
+    B.tryIt([
+      { q: 'A tank holds 2,000 L. US gallons and imperial gallons, to two decimal places?', a: n2(2000 / USGAL_L) + ' US gal, ' + n2(2000 / IMPGAL_L) + ' imperial gal' },
+      { q: 'A tank is 48 in by 24 in by 30 in inside. US gallons, litres and imperial gallons, to two decimal places?', a: n2(48 * 24 * 30 / 231) + ' US gal = ' + n2(48 * 24 * 30 / 231 * USGAL_L) + ' L = ' + n2(48 * 24 * 30 / 231 * USGAL_L / IMPGAL_L) + ' imperial gal' },
+      { q: 'A tank is 900 mm across and 1,500 mm high inside. Litres, US gallons and imperial gallons, to two decimal places?', a: n2(PI * 0.45 * 0.45 * 1.5 * 1000) + ' L = ' + n2(PI * 0.45 * 0.45 * 1.5 * 1000 / USGAL_L) + ' US gal = ' + n2(PI * 0.45 * 0.45 * 1.5 * 1000 / IMPGAL_L) + ' imperial gal' },
+      { q: 'A boiler manual says 100 imperial gal. How many US gallons, to two decimal places?', a: n2(100 * IMPGAL_L / USGAL_L) + ' US gal' }
     ]),
 
     B.worksheet({ title: 'Find the volume', sub: 'Practice mode: one drawing hides a dimension behind a red ?', intro: 'Write the formula and the numbers. Round to two decimal places where π is used.' }),

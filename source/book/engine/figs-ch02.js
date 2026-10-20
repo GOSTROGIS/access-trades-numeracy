@@ -196,4 +196,101 @@ function rectLW(l, w, unit, o) {
   h += F.dim(x0 + L, y0 + Wd, x0 + L, y0, lab('w', w), tw / 2 + 22, { s: fs, ask: o.ask === 'w' });
   return F.svg(x0 + L + tw + 50, y0 + Wd + 60, h, { max: o.max || '2.6in' });
 }
-module.exports = { plate, lcd, tiPlate, sharpPlate, pair, bigLabels, circleR, ringR, rectLW };
+/* comma groups for whole numbers, with a true minus and an optional plus sign */
+function grp(v, plus) {
+  const s = String(Math.abs(v)).replace(/\B(?=(\d{3})+(?!\d))/g, ',')
+  return (v < 0 ? '−' : (plus && v > 0 ? '+' : '')) + s
+}
+/* integer number line from a to b. o.lstep: label every lstep. o.hops: [{ from, to, lab }] drawn as red arrows
+   above the line. o.marks: [{ v, lab }] dots on the line with a label under the numbers */
+function intLine(a, b, o) {
+  o = o || {}
+  const W = o.w || 640, x0 = 34, x1 = W - 34, hopH = (o.hops && o.hops.length) ? 70 : 10, y = 30 + hopH
+  const fs = o.fs || 16, X = v => x0 + (v - a) / (b - a) * (x1 - x0), ls = o.lstep || 1
+  let h = F.line(x0 - 16, y, x1 + 16, y, { c: F.C.ink, w: 1.8 })
+  h += '<path d="M' + f(x1 + 26) + ' ' + y + 'l-11 -5v10z" fill="' + F.C.ink + '"/><path d="M' + f(x0 - 26) + ' ' + y + 'l11 -5v10z" fill="' + F.C.ink + '"/>'
+  for (let v = a; v <= b; v++) {
+    const big = (v - a) % ls === 0
+    h += F.line(X(v), y - (big ? 9 : 6), X(v), y + (big ? 9 : 6), { c: v === 0 ? F.C.red : F.C.ink, w: big ? 1.8 : 1.2 })
+    if (big) h += F.t(X(v), y + 30, grp(v), { s: fs, wgt: 600, c: v === 0 ? F.C.red : F.C.ink })
+  }
+  let under = false
+  for (const hp of o.hops || []) {
+    const xa = X(hp.from), xb = X(hp.to), xm = (xa + xb) / 2, d = 18 + Math.min(52, Math.abs(xb - xa) * 0.35)
+    const dir = xb > xa ? 1 : -1, sg = hp.under ? 1 : -1, yb = hp.under ? y + 40 : y - 6, top = yb + sg * d
+    if (hp.under) under = true
+    h += '<path d="M' + f(xa) + ' ' + yb + 'Q' + f(xm) + ' ' + f(2 * top - yb) + ' ' + f(xb) + ' ' + yb + '" fill="none" stroke="' + F.C.red + '" stroke-width="2"/>'
+    h += '<path d="M' + f(xb) + ' ' + (yb + sg) + 'l' + f(-dir * 4) + ' ' + (sg * 11) + 'l' + f(dir * 8) + ' ' + (-sg * 2) + 'z" fill="' + F.C.red + '"/>'
+    if (hp.lab) h += F.label(xm, top + (hp.under ? 18 : -4), hp.lab, { s: fs - 1, c: F.C.red })
+  }
+  for (const mk of o.marks || []) {
+    h += '<circle cx="' + f(X(mk.v)) + '" cy="' + y + '" r="6.5" fill="' + F.C.deep + '"/>'
+    if (mk.lab) h += F.t(X(mk.v), y + 56, mk.lab, { s: fs, b: true, c: F.C.deep })
+  }
+  const hasLab = (o.marks || []).some(m => m.lab)
+  return F.svg(W, y + (under ? 128 : hasLab ? 66 : 42), h, { max: o.max || '6in' })
+}
+/* elevations on a vertical scale. levels: [{ v (mm), name, ask, lab }]. The 0 level (benchmark) is red.
+   o.dims: [{ top, bot, lab, ask }] vertical dimension lines to the right */
+function elevScale(levels, o) {
+  o = o || {}
+  const vs = levels.map(l => l.v), top = Math.max(...vs), bot = Math.min(...vs)
+  const H = o.h || 380, y0 = 40, S = (H - y0 - 20) / (top - bot), Y = v => y0 + (top - v) * S
+  const xl = 20, xr = o.xr || 330, fs = o.fs || 17
+  let h = ''
+  for (const l of levels) {
+    const yy = Y(l.v), z = l.v === 0
+    h += F.line(xl, yy, xr, yy, { c: z ? F.C.red : F.C.edge, w: z ? 2.6 : 2.2, dash: l.dash ? '8 6' : null })
+    h += F.t(xl, yy - 8, l.name, { s: fs, b: true, a: 'start', c: z ? F.C.red : F.C.ink })
+    h += l.ask ? F.label(xr - 16, yy - 9, '?', { ask: true, s: fs }) : F.t(xr, yy - 8, l.lab || grp(l.v, true) + ' mm', { s: fs, wgt: 600, a: 'end', c: z ? F.C.red : F.C.ink })
+  }
+  let k = 0
+  for (const d of o.dims || []) {
+    const off = -(56 + k * 120)
+    h += F.dim(xr, Y(d.top), xr, Y(d.bot), d.ask ? '?' : d.lab, off, { s: fs - 1, ask: d.ask })
+    k++
+  }
+  return F.svg(xr + 70 + k * 120, H, h, { max: o.max || '4in' })
+}
+/* a wall in elevation: plates top and bottom, studs from one end at the spacing, and a last stud at the far end.
+   o.lenLab, o.spLab label the length and the first spacing. o.askLen puts the ? on the length */
+function studWall(len, sp, o) {
+  o = o || {}
+  const W = o.w || 620, x0 = 24, x1 = W - 24, S = (x1 - x0) / len, X = v => x0 + v * S
+  const yt = 30, ht = 150, pl = 12, sw = 9, fs = o.fs || 17
+  let h = F.rect(x0, yt, x1 - x0, pl) + F.rect(x0, yt + ht - pl, x1 - x0, pl)
+  const pos = []
+  for (let p = 0; p < len - 1e-9; p += sp) pos.push(p)
+  pos.push(len)
+  for (const p of pos) {
+    const xc = Math.min(Math.max(X(p), x0 + sw / 2), x1 - sw / 2)
+    h += F.rect(xc - sw / 2, yt + pl, sw, ht - 2 * pl, { fill: F.C.fill2, w: 1.6 })
+  }
+  const c0 = x0 + sw / 2, c1 = X(sp)
+  h += F.dim(c0, yt, c1, yt, o.spLab || String(sp), -18, { s: fs - 2 })
+  h += F.dim(x0, yt + ht, x1, yt + ht, o.askLen ? '?' : (o.lenLab || grp(len) + ' mm'), 30, { s: fs, ask: o.askLen })
+  return F.svg(W, yt + ht + 70, h, { max: o.max || '5.4in', vb: [0, -16, W, yt + ht + 70] })
+}
+/* a straight stair in side view: n risers of rise, n − 1 treads of run, the upper floor is the top step.
+   o.ask: 'rise' or 'run' puts the ? on that total. o.unit labels (default mm). o.riseLab, o.runLab label one step */
+function stairProfile(n, rise, run, o) {
+  o = o || {}
+  const tr = (n - 1) * run, R = n * rise, S = Math.min(400 / tr, 250 / R), x0 = 120, yb = 290, fs = o.fs || 16
+  const X = v => x0 + v * S, Y = v => yb - v * S, u = o.unit || 'mm'
+  const pts = [[X(0), Y(0)]]
+  for (let i = 0; i < n; i++) {
+    pts.push([X(i * run), Y((i + 1) * rise)])
+    if (i < n - 1) pts.push([X((i + 1) * run), Y((i + 1) * rise)])
+  }
+  pts.push([X(tr), Y(0)])
+  let h = F.line(x0 - 70, yb, X(tr) + 40, yb, { c: F.C.ink, w: 2 }) + F.line(X(tr), Y(R), X(tr) + 110, Y(R), { c: F.C.ink, w: 2.4 })
+  h += F.poly(pts)
+  h += F.t(x0 - 12, yb + 22, 'lower floor', { s: fs - 2, a: 'end', c: F.C.dim }) + F.t(X(tr) + 110, Y(R) - 10, 'upper floor', { s: fs - 2, a: 'end', c: F.C.dim })
+  const tl = o.ask === 'run' ? '?' : (o.runTot || grp(tr) + ' ' + u), rl = o.ask === 'rise' ? '?' : (o.riseTot || grp(R) + ' ' + u)
+  h += F.dim(X(0), yb, X(tr), yb, tl, 40, { s: fs, ask: o.ask === 'run' })
+  h += F.dim(X(tr), yb, X(tr), Y(R), rl, 70, { s: fs, ask: o.ask === 'rise' })
+  if (o.riseLab) h += F.t(X(0) - 10, Y(rise / 2) + 6, o.riseLab, { s: fs - 2, b: true, a: 'end', c: F.C.deep })
+  if (o.runLab) h += F.t(X(run / 2), Y(rise) - 10, o.runLab, { s: fs - 2, b: true, c: F.C.deep })
+  return F.svg(X(tr) + 200, yb + 80, h, { max: o.max || '4.6in', vb: [0, Y(R) - 40, X(tr) + 200, yb + 80 - Y(R) + 40] })
+}
+module.exports = { plate, lcd, tiPlate, sharpPlate, pair, bigLabels, circleR, ringR, rectLW, intLine, elevScale, studWall, stairProfile, grp };

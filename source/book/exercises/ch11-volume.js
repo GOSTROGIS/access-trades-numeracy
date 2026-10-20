@@ -38,6 +38,21 @@ module.exports = function (B, L) {
   const c8a = 4 / 3 * PI * 1e6, c8b = 4 / 3 * PI * 8e6;
   const ai = { a: 80, b: 60, t: 8, L: 400 }, aiA = ai.t * (ai.a + ai.b - ai.t), aiV = xc('angle-iron', ai, 'V', aiA * ai.L);
 
+  /* Set D, concrete, steel and lumber, and Set K, carpentry and the BCBC (Oct 2026). New sets go after Set C so
+     Sets A to C keep their numbers. 1 yd = 0.9144 m exactly, so 1 yd³ = 0.9144³ m³. Densities: concrete 2,240 to
+     2,400 kg/m³ (FHWA, Portland Cement Concrete Materials), steel 7,850 kg/m³ (The Engineering ToolBox, Metals and
+     Alloys - Densities). Lumber sizes: Canadian Wood Council. Imperial gallon 4.54609 L (Weights and Measures Act).
+     Code values: BCBC 2024 Division B with Article, Sentence and page */
+  const G11 = require('../engine/figs-ch11.js')(B, L);
+  const YD3 = Math.pow(0.9144, 3), IMP = 4.54609;
+  const money = v => '$' + n(v, 2);
+  const pg = s => '<span style="white-space:nowrap">page ' + s + '</span>';
+  const e1 = 4.8 * 3.6 * 0.1, e4 = PI * 0.01 * 1 * 10, e6 = 1.5 * 0.6 * 0.012 * 7850, e7 = PI * 0.0004 * 3 * 7850;
+  const e8 = 2 * 8 * 14 / 12 * 16, e9N = 2 * 4 * 10 / 12, e9A = 1.5 * 3.5 * 10 / 12;
+  const e11 = xc('cylinder', { r: 750, h: 2000 }, 'V', PI * 750 * 750 * 2000) / 1e6, e12 = 500 * IMP;
+  const k5 = 0.35 * 0.1 * 44, k6 = Math.ceil(Math.sqrt(0.75) * 1000), k7 = 4 * Math.pow(k6 / 1000, 2) * 0.2;
+  const k8 = 10.8 * 8.4 * 0.075, k9 = 10.8 * 8.4 * 0.1, k11 = 0.2 * 1.95 * 36, k12 = 36 * 0.8 * 2 - 0.45 * 0.15 * 36 - 0.2 * 1.85 * 36;
+
   return L.join([
     B.exChapter({ num: 11, id: 'volume', title: 'Volume and Capacity', intro: 'Practice with cubic units, the volume of prisms, cylinders, cones, pyramids and spheres, composite solids, and capacity in litres and US gallons (1 US gal = 231 in³ = 3.785411784 L).' }),
 
@@ -132,6 +147,59 @@ module.exports = function (B, L) {
       B.prob({ q: 'Break down the L-shaped end of the angle bar into two rectangles. Find the end area and the volume in cm³.', canvas: G.angleEnd(ai.a, ai.b, ai.t, { max: '2.5in', ph: 80 }), a: 'End area ' + n(aiA) + ' mm², volume ' + ck('1056 × 400 ÷ 1000 =', aiV / 1000, 1) + ' cm³', work: '80 × 8 + 52 × 8 = 640 + 416', lines: 2 }),
       B.prob({ q: 'Change one value: a spherical float with a radius of 100 mm has its radius doubled. Find both capacities in litres, to two decimal places. How many times bigger is the new one?', canvas: G.row(G.sphere(100, { rBelow: true, max: '1.5in', ph: 34, pad: [22, 8, 22, 26] }), G.sphere(200, { rBelow: true, max: '1.5in', ph: 68 })), a: ck('4 ÷ 3 × π × 100 x³ ÷ 1000000 =', c8a / 1e6, 2) + ' L and ' + ck('4 ÷ 3 × π × 200 x³ ÷ 1000000 =', c8b / 1e6, 2) + ' L, 8 times bigger (2 × 2 × 2)', lines: 2 })
     ),
-    B.prob({ q: 'Change one value: a cone has a radius of 300 mm and a height of 300 mm. The height is doubled. Find both capacities in litres, to two decimal places.', canvas: G.row(G.cone(300, 300, { max: '2in', ph: 35 }), G.cone(300, 600, { max: '2in', ph: 60 })), a: ck('π × 300 x² × 300 ÷ 3 ÷ 1000000 =', c7a / 1e6, 2) + ' L and ' + ck('π × 300 x² × 600 ÷ 3 ÷ 1000000 =', c7b / 1e6, 2) + ' L, 2 times bigger', lines: 2 })
+    B.prob({ q: 'Change one value: a cone has a radius of 300 mm and a height of 300 mm. The height is doubled. Find both capacities in litres, to two decimal places.', canvas: G.row(G.cone(300, 300, { max: '2in', ph: 35 }), G.cone(300, 600, { max: '2in', ph: 60 })), a: ck('π × 300 x² × 300 ÷ 3 ÷ 1000000 =', c7a / 1e6, 2) + ' L and ' + ck('π × 300 x² × 600 ÷ 3 ÷ 1000000 =', c7b / 1e6, 2) + ' L, 2 times bigger', lines: 2 }),
+
+    B.worksheet({ title: 'Concrete, steel and lumber', sub: 'Cubic metres and yards, mass, board feet and tank capacity' }),
+    B.grid2(
+      B.prob({ q: 'A patio slab is 4.8 m by 3.6 m and 100 mm thick. Concrete in m³ and in cubic yards, to two decimal places?', a: ck('4.8 × 3.6 × 0.1 =', e1, 2) + ' m³ = ' + ck('4.8 × 3.6 × 0.1 ÷ 0.9144 x³ =', e1 / YD3, 2) + ' yd³', lines: 4 }),
+      B.prob({ q: 'A driveway is 30 ft by 12 ft and 4 in thick. How many cubic yards, to two decimal places?', a: ck('30 × 12 × 4 ÷ 12 ÷ 27 =', 120 / 27, 2) + ' yd³', work: '4 in = 4 ÷ 12 ft, 120 ft³ ÷ 27', lines: 4 })
+    ),
+    B.grid2(
+      B.prob({ q: 'A strip footing is 450 mm wide, 150 mm thick and 32 m long. Concrete in m³?', a: ck('0.45 × 0.15 × 32 =', 2.16, 2) + ' m³', lines: 4 }),
+      B.prob({ q: 'Ten round piers are each 200 mm across and 1.0 m deep. Concrete in m³, to two decimal places?', a: ck('π × 0.1 x² × 1 × 10 =', e4, 2) + ' m³', lines: 4 })
+    ),
+    B.grid2(
+      B.prob({ q: 'Find the mass of the 2.16 m³ footing from question 3 at 2,240 kg/m³ and at 2,400 kg/m³, the range FHWA gives for normal concrete.', a: ck('2.16 × 2240 =', 2.16 * 2240, 1) + ' kg to ' + ck('2.16 × 2400 =', 2.16 * 2400, 0) + ' kg', lines: 4 }),
+      B.prob({ q: 'A steel plate is 1,500 mm by 600 mm and 12 mm thick. Mass at 7,850 kg/m³, to two decimal places?', a: ck('1.5 × 0.6 × 0.012 × 7850 =', e6, 2) + ' kg', lines: 4 })
+    ),
+    B.grid2(
+      B.prob({ q: 'A steel round bar is 40 mm across and 3 m long. Mass at 7,850 kg/m³, to two decimal places?', a: ck('π × 0.02 x² × 3 × 7850 =', e7, 2) + ' kg', lines: 4 }),
+      B.prob({ q: 'An order is 16 pieces of 2 × 8, each 14 ft long, at $1,250 per MBF. Board feet and cost, to two decimal places?', a: ck('2 × 8 × 14 ÷ 12 × 16 =', e8, 2) + ' BF, ' + money(L.round(e8 / 1000 * 1250, 2)) + B.check('2 × 8 × 14 ÷ 12 × 16 ÷ 1000 × 1250 =', n(L.round(e8 / 1000 * 1250, 2), 2)), lines: 4 })
+    ),
+    B.grid2(
+      B.prob({ q: 'A 2 × 4 is 10 ft long. Find its board feet from the nominal size. Then find the board feet of wood in the dressed piece, 1½ in by 3½ in (Canadian Wood Council S-Dry size). Two decimal places.', a: ck('2 × 4 × 10 ÷ 12 =', e9N, 2) + ' BF sold, ' + ck('1.5 × 3.5 × 10 ÷ 12 =', e9A, 2) + ' BF of wood', lines: 4 }),
+      B.prob({ q: 'A tank is 2,000 mm by 1,200 mm by 1,000 mm inside. Capacity in litres, US gallons and imperial gallons, to two decimal places?', a: ck('2000 × 1200 × 1000 ÷ 1000000 =', 2400, 0) + ' L = ' + ck('2400 ÷ 3.785411784 =', 2400 / GAL, 2) + ' US gal = ' + ck('2400 ÷ 4.54609 =', 2400 / IMP, 2) + ' imperial gal', lines: 4 })
+    ),
+    B.grid2(
+      B.prob({ q: 'A vertical tank is 1,500 mm across and 2,000 mm high inside. Capacity in litres, US gallons and imperial gallons, to two decimal places?', a: ck('π × 0.75 x² × 2 × 1000 =', e11, 2) + ' L = ' + ck('π × 0.75 x² × 2 × 1000 ÷ 3.785411784 =', e11 / GAL, 2) + ' US gal = ' + ck('π × 0.75 x² × 2 × 1000 ÷ 4.54609 =', e11 / IMP, 2) + ' imperial gal', lines: 4 }),
+      B.prob({ q: 'An old tank is stamped 500 imperial gal. How many litres, and how many US gallons, to two decimal places?', a: ck('500 × 4.54609 =', e12, 2) + ' L = ' + ck('500 × 4.54609 ÷ 3.785411784 =', e12 / GAL, 2) + ' US gal', lines: 4 })
+    ),
+
+    (B.wsN = 10, ''),
+    B.worksheet({ title: 'Carpentry and the BCBC', sub: 'Footings, foundation walls, slabs, granular base and backfill, with BCBC 2024 Sections 9.15 and 9.16' }),
+    B.grid2(
+      B.prob({ q: 'Table 9.15.3.4. (Sentence 9.15.3.4.(1), ' + pg('9-120') + ') gives minimum strip footing widths. What are they under exterior walls for 1, 2 and 3 floors supported?', a: '250 mm, 350 mm and 450 mm', lines: 4 }),
+      B.prob({ q: 'Use the same table for interior walls, 1, 2 and 3 floors supported. For how many floors are the exterior and interior widths the same?', a: '200 mm, 350 mm and 500 mm. They are the same, 350 mm, for 2 floors', lines: 4 })
+    ),
+    B.grid2(
+      B.prob({ q: 'A two-storey house has exterior strip footings at the minimum width, centred under 200 mm walls. Find the projection, then the minimum thickness from Sentence 9.15.3.8.(1) (' + pg('9-121') + ').', a: 'Projection (350 − 200) ÷ 2 = 75 mm. Thickness is the greater of 100 mm and 75 mm: 100 mm', lines: 4 }),
+      B.prob({ q: 'The drawings show a 600 mm footing centred under a 200 mm wall. Use Sentence 9.15.3.8.(1) to find the minimum thickness.', canvas: G11.footingSec(600, 200, 200, { ask: ['ft'], max: '2.3in', ph: 100 }), a: 'Projection (600 − 200) ÷ 2 = 200 mm, so at least 200 mm thick', lines: 3 })
+    ),
+    B.grid2(
+      B.prob({ q: 'The footing from question 3 (350 mm by 100 mm) runs 44 m. Concrete in m³ and cubic yards, to two decimal places?', a: ck('0.35 × 0.1 × 44 =', k5, 2) + ' m³ = ' + ck('0.35 × 0.1 × 44 ÷ 0.9144 x³ =', k5 / YD3, 2) + ' yd³', lines: 4 }),
+      B.prob({ q: 'Table 9.15.3.4. gives 0.75 m² as the minimum column footing area for 2 floors supported (columns 3 m o.c.). A square pad must have at least that area. What is its smallest side, rounded up to the next whole mm?', a: ck('0.75 √x', Math.sqrt(0.75), 4) + ' m, so ' + n(k6) + ' mm', work: 'side = √0.75', lines: 4 })
+    ),
+    B.grid2(
+      B.prob({ q: 'Four square pads are ' + n(k6) + ' mm by ' + n(k6) + ' mm and 200 mm thick. Concrete in m³, to two decimal places?', a: ck('4 × 0.867 x² × 0.2 =', k7, 2) + ' m³', lines: 4 }),
+      B.prob({ q: 'A basement slab is 10.8 m by 8.4 m at the minimum thickness of Sentence 9.16.4.3.(1) (' + pg('9-130') + '). Find the thickness, then the concrete in m³ and cubic yards, to two decimal places.', canvas: G11.slabSec(75, 100, { ask: ['t'], max: '2.4in', ph: 70 }), a: '75 mm. ' + ck('10.8 × 8.4 × 0.075 =', k8, 2) + ' m³ = ' + ck('10.8 × 8.4 × 0.075 ÷ 0.9144 x³ =', k8 / YD3, 2) + ' yd³', lines: 3 })
+    ),
+    B.grid2(
+      B.prob({ q: 'Under the same slab, Sentence 9.16.2.1.(1) (' + pg('9-129') + ') sets the least depth of coarse clean granular material. What is it, and how many m³ are needed?', a: '100 mm. ' + ck('10.8 × 8.4 × 0.1 =', k9, 3) + ' m³', lines: 4 }),
+      B.prob({ q: 'Must granular material be placed under the slab of a detached garage? Use Sentence 9.16.2.1.(2) (' + pg('9-129') + ').', a: 'No. Clause (2)(a) says granular material need not be installed under slabs in garages, carports or accessory buildings', lines: 4 })
+    ),
+    B.grid2(
+      B.prob({ q: 'The top of a footing is 1.8 m below finished ground. Sentence 9.15.4.6.(1) (' + pg('9-127') + ') says exterior foundation walls extend not less than 150 mm above finished ground. What is the least wall height? Find the concrete for a 200 mm wall of that height, 36 m long.', a: '1.8 + 0.15 = 1.95 m. ' + ck('0.2 × 1.95 × 36 =', k11, 2) + ' m³', lines: 4 }),
+      B.prob({ q: 'A trench 36 m long, 0.8 m wide and 2.0 m deep holds a 450 mm by 150 mm footing and a 200 mm wall that rises from the footing past the top of the trench. How much backfill fills the trench?', a: ck('36 × 0.8 × 2 − 0.45 × 0.15 × 36 − 0.2 × 1.85 × 36 =', k12, 2) + ' m³', work: 'Trench 57.6 m³, footing 2.43 m³, wall in the trench 13.32 m³', lines: 4 })
+    )
   ]);
 };

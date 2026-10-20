@@ -17,15 +17,18 @@ function unitGrid(nn, g, side, note1, note2, sideL) {
   const W = x0 + nn * g + 150
   return F.svg(W, y0 + nn * g + 52, h, { max: fit(W, fs) })
 }
-/* a flat plate with a hole and three callouts */
+/* a flat plate with a hole and three callouts. Each note is a string or a parts list for stacked fractions.
+   The width note points at the vertical edge of the front face, the thickness note at the end face. */
 function platCallouts(c1, c2, c3) {
-  const fs = 16
-  let h = F.rect(60, 70, 300, 70) + F.circle(250, 105, 16, { fill: '#FFFFFF', w: 1.8 })
-  h += '<path d="M360 70l14 -10v70l-14 10z" fill="' + C.fill2 + '" stroke="' + C.edge + '" stroke-width="1.8"/>' + '<path d="M60 70l14 -10h300l-14 10z" fill="' + C.fill2 + '" stroke="' + C.edge + '" stroke-width="1.8"/>'
-  h += F.callout(250, 105, 300, 172, c1, { s: fs })
-  h += F.callout(110, 66, 110, 22, c2, { s: fs })
-  h += F.callout(367, 100, 330, 22, c3, { s: fs })
-  return F.svg(430, 192, h, { max: fit(430, fs) })
+  const fs = 21, dx = 60
+  const parts = c => Array.isArray(c) ? c : [c]
+  let h = F.rect(60 + dx, 70, 300, 70) + F.circle(250 + dx, 105, 16, { fill: C.white, w: 1.8 })
+  h += '<path d="M' + (360 + dx) + ' 70l14 -10v70l-14 10z" fill="' + C.fill2 + '" stroke="' + C.edge + '" stroke-width="1.8"/>' + '<path d="M' + (60 + dx) + ' 70l14 -10h300l-14 10z" fill="' + C.fill2 + '" stroke="' + C.edge + '" stroke-width="1.8"/>'
+  h += G6.calloutFr(250 + dx, 105, 300 + dx, 176, parts(c1), { s: fs })
+  h += G6.calloutFr(60 + dx, 112, 62, 176, parts(c2), { s: fs })
+  h += G6.calloutFr(367 + dx, 100, 330 + dx, 22, parts(c3), { s: fs })
+  const W = 500
+  return F.svg(W, 200, h, { max: fit(W, fs * G6.FR_K) })
 }
 /* Celsius and Fahrenheit scales. marks [{c, askF, askC}] */
 function thermo(marks) {

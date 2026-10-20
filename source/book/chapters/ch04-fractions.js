@@ -68,6 +68,25 @@ module.exports = function (B, L) {
   const fl = sub(sub(sub(M(144), mul(M(2), M(36, 3, 8))), mul(M(2), M(24, 5, 8))), mul(M(4), nr(1, 8)))
   const fifth = dv(M(72), M(5)), fifth16 = Math.round((val(fifth) - Math.floor(val(fifth))) * 16)
   const pcs = Math.floor(val(dv(M(30), add(M(2, 1, 4), nr(1, 8))))), pcsOff = sub(M(30), mul(M(pcs), add(M(2, 1, 4), nr(1, 8))))
+  /* Section 4.8 and Worksheet 4C: numbers and helpers */
+  const PL = require('../engine/plates.js')
+  function KS(a) {
+    const w = Math.floor(a[0] / a[1]), r = a[0] - w * a[1]
+    if (!r) return String(w)
+    if (!w) return r + ' ab/c ' + a[1]
+    return w + ' ab/c ' + r + ' ab/c ' + a[1]
+  }
+  /* each code phrase used in the text is checked against the code text */
+  const phrases = [['9.23.5.1', 'one-quarter the depth of the member'], ['9.23.5.1', 'not less than 50 mm from the'], ['9.23.5.2', 'within half the joist depth from the edge of bearing'], ['9.23.5.2', 'not deeper than one-third the joist depth'], ['9.23.5.3', 'two-thirds the depth of the stud'], ['9.23.3.2', 'not less than half their required length']]
+  phrases.forEach(c => {
+    if (!PL.article(c[0]).text.replace(/\s+/g, ' ').includes(c[1])) throw new Error('phrase not in ' + c[0] + ': ' + c[1])
+  })
+  const crTape = [46 + 7 / 16, 47.75, 48.625]
+  const crCut = [M(22, 3, 8), M(31, 1, 2), M(18, 5, 8)], crOff = sub(sub(M(96), add(...crCut)), nr(3, 8))
+  const crPer = add(M(14, 1, 2), nr(1, 8)), crN = Math.floor(val(dv(M(96), crPer))), crBOff = sub(M(96), mul(M(crN), crPer))
+  const crW = [46 + 5 / 16, 47 + 7 / 8, 48 + 3 / 16]
+  const crW2 = [M(28, 5, 8), M(33, 1, 4), M(19, 7, 16)], crW2Off = sub(sub(M(96), add(...crW2)), nr(3, 8))
+  const crW3N = Math.floor(val(dv(M(120), crPer))), crW3Off = sub(M(120), mul(M(crW3N), crPer))
 
   return L.join([
     B.chapter({
@@ -122,6 +141,7 @@ module.exports = function (B, L) {
       steps: ['C: the last eighth line before C is the ' + fr(3, 8) + ' line, and ' + fr(3, 8) + ' = ' + fr(12, 32) + '. C is 1 small space past it: 12 + 1 = 13. C reads ' + fr(13, 32) + ' in.', 'D: the last eighth line before D is also the ' + fr(3, 8) + ' line, and ' + fr(3, 8) + ' = ' + fr(24, 64) + '. D is 3 small spaces past it: 24 + 3 = 27. D reads ' + fr(27, 64) + ' in.', '13 and 27 are odd, so both readings are in lowest terms.'],
       answer: 'C is ' + fr(13, 32) + ' in and D is ' + fr(27, 64) + ' in.'
     }),
+    B.shop('Measuring hardware', 'Bolt, drill and wrench sizes in inches are written as fractions, and they are read the same way as a tape. A drill bit marked ' + fr(3, 8) + ' cuts a hole ' + fr(3, 8) + ' in across. A bolt is sized by its diameter, measured across the threads, and its length is measured from under the head to the end. A wrench or socket fits the head across the flats, from one flat face to the opposite flat face, not corner to corner. The bolt in the drawing has these sizes as an example: diameter ' + fr(1, 2) + ' in, length ' + mx(2, 1, 4) + ' in, head ' + fr(3, 4) + ' in across the flats.', '<div style="margin:4pt auto 2pt;max-width:5.2in">' + G.hexBolt({ dia: 0.5, len: 2.25, af: 0.75, max: '5.2in' }) + '</div>', 'In a set marked in sixteenths, sizes step by ' + fr(1, 16) + ' in. To find the size after ' + fr(1, 2) + ' in, write it as ' + fr(8, 16) + ' and add one sixteenth: ' + fr(9, 16) + ' in. To compare a ' + fr(5, 8) + ' socket with a ' + fr(9, 16) + ' socket, write ' + fr(5, 8) + ' as ' + fr(10, 16) + ': the ' + fr(5, 8) + ' is bigger by ' + fr(1, 16) + ' in.'),
     B.p('Read each mark on the rule below for Try it 4.2. Give each reading to the nearest ' + fr(1, 16) + ' in, in lowest terms.'),
     B.figure(G.rule({ from: 0, to: 4, den: 16, ppi: 150, marks: tryRule.map((v, i) => ({ v, name: 'ABCDEF'[i] })), max: '6.4in' }), 'Marks A to F for Try it 4.2.'),
     B.tryIt(tryRule.map((v, i) => ({ q: 'Mark ' + 'ABCDEF'[i], a: RD(v, 16) }))),
@@ -238,7 +258,7 @@ module.exports = function (B, L) {
     B.example({
       title: 'What is left of the bar?',
       q: 'A piece ' + mx(29, 5, 8) + ' in long is cut from a 48 in bar. Ignore the saw cut. How long is the offcut?',
-      fig: G.cutBar([{ len: 29.625 }], { total: 48, askRest: true, w: 420, s: 15 }),
+      fig: G.cutBar([{ len: 29.625 }], { total: 48, askRest: true, w: 420, s: 16 }),
       steps: ['There is no fraction in 48 to take ' + fr(5, 8) + ' from, so borrow 1: 48 = 47 ' + fr(8, 8) + '.', 'Fractions: ' + fr(8, 8) + ' − ' + fr(5, 8) + ' = ' + fr(3, 8) + '.', 'Whole numbers: 47 − 29 = 18.'],
       calc: { seq: '48 − 29 ab/c 5 ab/c 8 =', expect: String(val(off1)), say: shows('48 − 29 ab/c 5 ab/c 8 =', off1) },
       answer: IN(off1)
@@ -290,6 +310,55 @@ module.exports = function (B, L) {
       { q: 'A ' + mx(29, 1, 4) + ' in bar is cut into 3 equal pieces. Ignore the saw cuts. How long is each piece?', a: IN(dv(M(29, 1, 4), M(3))) }
     ]),
 
+    B.section('Carpentry: tape, cut lengths and kerf'),
+    B.p('Carpenters read the tape on long boards, so the whole number of inches is often large. The method from Section 4.2 does not change: find the last whole inch, then count the sixteenths past it. A cut list then adds and subtracts those readings, and every saw cut takes a kerf.'),
+    B.figure(G.rule({ from: 46, to: 49, den: 16, ppi: 190, marks: crTape.map((v, i) => ({ v, name: 'ABC'[i] })), max: '6.2in' }), 'Part of a tape on a board, from 46 in to 49 in, marked in sixteenths.'),
+    B.example({
+      title: 'Reading the tape on a board',
+      q: 'Read marks A, B and C in Figure 4.' + B.fig + '.',
+      steps: ['A: past the 46 line by 7 sixteenths. A reads ' + RD(crTape[0], 16) + '.', 'B: past the 47 line by 12 sixteenths, and ' + fr(12, 16) + ' = ' + fr(3, 4) + '. B reads ' + RD(crTape[1], 16) + '.', 'C: past the 48 line by 10 sixteenths, and ' + fr(10, 16) + ' = ' + fr(5, 8) + '. C reads ' + RD(crTape[2], 16) + '.'],
+      answer: crTape.map((v, i) => 'ABC'[i] + ' = ' + RD(v, 16)).join(', ')
+    }),
+    B.example({
+      title: 'A cut list from one board',
+      q: 'Three pieces, ' + crCut.map(IN).join(', ') + ', are cut from a 96 in board. You make 3 cuts and the kerf is ' + fr(1, 8) + ' in. How long is the offcut?',
+      fig: G.cutBar(crCut.map(a => ({ len: val(a) })), { total: 96, askRest: true, kerf: 0.125, w: 460, s: 18 }),
+      steps: ['Add the pieces: ' + crCut.map(H).join(' + ') + ' = ' + H(add(...crCut)) + ' in.', 'Saw cuts: 3 × ' + fr(1, 8) + ' = ' + fr(3, 8) + ' in.', 'Offcut: 96 − ' + H(add(...crCut)) + ' − ' + fr(3, 8) + ' = ' + H(crOff) + ' in.'],
+      calc: { seq: '96 − ' + crCut.map(KS).join(' − ') + ' − 3 × 1 ab/c 8 =', expect: String(val(crOff)), say: shows('96 − ' + crCut.map(KS).join(' − ') + ' − 3 × 1 ab/c 8 =', crOff) },
+      answer: IN(crOff)
+    }),
+    B.example({
+      title: 'How many blocks from a board?',
+      q: 'Blocking pieces ' + mx(14, 1, 2) + ' in long are cut from a 96 in board. You make one cut for each block and the kerf is ' + fr(1, 8) + ' in. How many blocks do you get, and how long is the offcut?',
+      steps: ['Each block uses its length plus one cut: ' + mx(14, 1, 2) + ' + ' + fr(1, 8) + ' = ' + H(crPer) + ' in.', '96 ÷ ' + H(crPer) + ' = ' + fr(96, 1) + ' × ' + fr(crPer[1], crPer[0]) + ' = ' + H(dv(M(96), crPer)) + '. Only whole blocks count: ' + crN + ' blocks.', crN + ' × ' + H(crPer) + ' = ' + H(mul(M(crN), crPer)) + ' in. The offcut is 96 − ' + H(mul(M(crN), crPer)) + ' = ' + H(crBOff) + ' in.'],
+      calc: { rows: [{ label: 'Blocks', seq: '96 ÷ ' + KS(crPer) + ' =', expect: L.round(val(dv(M(96), crPer)), 2).toFixed(2) }, { label: 'Offcut', seq: '96 − ' + crN + ' × ' + KS(crPer) + ' =', expect: String(val(crBOff)) }] },
+      answer: crN + ' blocks, with an offcut of ' + IN(crBOff) + '.'
+    }),
+    B.sub('Fractions in the building code'),
+    B.p('The BC Building Code limits holes and notches in framing as a fraction of the member’s depth. Article 9.23.5.1, Sentence (1) says holes drilled in roof, floor or ceiling framing members shall be not larger than one-quarter the depth of the member and shall be located not less than 50 mm from the edges, unless the depth of the member is increased by the size of the hole (page ' + PL.article('9.23.5.1').page + '). The code works in millimetres, so these answers are in millimetres.'),
+    PL.figure(B, '9.23.5.1', { crop: [40, 150, 470, 425], width: '4.5in', caption: 'A hole in a joist: not more than one-quarter of the depth, and 50 mm or more from the edges.' }),
+    B.example({
+      title: 'The largest hole in a joist',
+      q: 'A floor joist is 38 mm by 235 mm, so its depth is 235 mm. What is the largest hole Article 9.23.5.1 allows in it?',
+      steps: ['One-quarter of the depth: ' + fr(1, 4) + ' × 235 = ' + fr(235, 4) + '.', fr(235, 4) + ' = ' + H(nr(235, 4)) + ' mm, which is ' + L.num(235 / 4) + ' mm.'],
+      calc: { seq: '235 ÷ 4 =', expect: L.num(235 / 4) },
+      answer: H(nr(235, 4)) + ' mm (' + L.num(235 / 4) + ' mm), placed 50 mm or more from the top and bottom edges.'
+    }),
+    B.example({
+      title: 'Notches and studs',
+      q: 'Article 9.23.5.2, Sentence (1) allows a notch on the top of a floor, roof or ceiling member within half the joist depth from the edge of bearing, not deeper than one-third the joist depth (page ' + PL.article('9.23.5.2').page + '). Article 9.23.5.3, Sentence (1) says the undamaged part of a loadbearing stud shall not be less than two-thirds the depth of the stud (page ' + PL.article('9.23.5.3').page + '). Find (a) the deepest notch and the farthest it may sit from the bearing edge in a 286 mm deep joist, and (b) the deepest hole or notch in a loadbearing stud 89 mm deep.',
+      steps: ['(a) Depth: ' + fr(1, 3) + ' × 286 = ' + fr(286, 3) + ' = ' + H(nr(286, 3)) + ' mm. Distance: ' + fr(1, 2) + ' × 286 = 143 mm.', '(b) Two-thirds must stay: ' + fr(2, 3) + ' × 89 = ' + fr(178, 3) + ' = ' + H(nr(178, 3)) + ' mm.', 'The rest may be removed: 89 − ' + H(nr(178, 3)) + ' = ' + H(sub(M(89), nr(178, 3))) + ' mm, which is ' + fr(1, 3) + ' of 89.'],
+      calc: { rows: [{ label: '(a) notch', seq: '286 ÷ 3 =', expect: L.round(286 / 3, 2).toFixed(2) }, { label: '(b) removed', seq: '89 − 2 ab/c 3 × 89 =', expect: L.round(89 / 3, 2).toFixed(2) }] },
+      answer: '(a) ' + H(nr(286, 3)) + ' mm deep, within 143 mm of the bearing edge. (b) ' + H(sub(M(89), nr(178, 3))) + ' mm.'
+    }),
+    B.tryIt([
+      { q: 'A 96 in board has pieces of ' + mx(30, 3, 8) + ' in and ' + mx(41, 11, 16) + ' in cut off with 2 cuts. The kerf is ' + fr(1, 8) + ' in. How long is the offcut?', a: IN(sub(sub(M(96), add(M(30, 3, 8), M(41, 11, 16))), nr(1, 4))) },
+      { q: 'How many ' + mx(22, 1, 2) + ' in pieces come from a 120 in board with a ' + fr(1, 8) + ' in kerf for each piece?', a: String(Math.floor(120 / 22.625)) + ' pieces' },
+      { q: 'Find the centre of a ' + mx(92, 5, 8) + ' in stud.', a: IN(dv(M(92, 5, 8), M(2))) + ' from either end' },
+      { q: 'What is the largest hole Article 9.23.5.1 allows in a joist 184 mm deep?', a: L.num(184 / 4) + ' mm' },
+      { q: 'Article 9.23.3.2, Sentence (1) says nails shall be long enough that not less than half their required length penetrates into the second member. A nail of required length 76 mm goes how far into the second member, at least?', a: '38 mm' }
+    ]),
+
     B.worksheet({ title: 'Read the rule', sub: 'Read each red pointer, then find the hidden lengths', intro: 'Give every reading in lowest terms. Ignore saw cuts unless the problem gives a kerf. Check your answers with the fraction key.' }),
     B.prob({ q: 'Read marks A, B and C to the nearest ' + fr(1, 16) + ' in.', canvas: G.rule({ from: 0, to: 3, den: 16, ppi: 195, marks: wsA.map((v, i) => ({ v, name: 'ABC'[i] })), max: '5.6in' }), a: wsA.map((v, i) => 'ABC'[i] + ': ' + RD(v, 16)).join(', '), lines: 1 }),
     B.prob({ q: 'This half inch of a rule is marked in 32nds. Read marks D and E.', canvas: G.rule({ from: 0, to: 0.5, den: 32, ppi: 1150, zero: true, marks: [{ v: 5 / 32, name: 'D' }, { v: 11 / 32, name: 'E' }], max: '5in' }), a: 'D: ' + fr(5, 32) + ' in, E: ' + fr(11, 32) + ' in', lines: 1 }),
@@ -311,6 +380,20 @@ module.exports = function (B, L) {
       B.prob({ q: 'You cut ' + mx(2, 1, 4) + ' in pieces from a 30 in bar. You make one cut for each piece and the kerf is ' + fr(1, 8) + ' in. How many pieces do you get, and how long is the offcut?', a: pcs + ' pieces, offcut ' + IN(pcsOff), work: 'Each piece uses ' + mx(2, 1, 4) + ' + ' + fr(1, 8) + ' = ' + mx(2, 3, 8) + ' in. 30 ÷ ' + mx(2, 3, 8) + ' = ' + H(dv(M(30), M(2, 3, 8))) + ', so ' + pcs + ' pieces. Offcut 30 − ' + pcs + ' × ' + mx(2, 3, 8) + ' = ' + H(pcsOff), lines: 5 })),
     B.prob({ q: 'The shaft is ' + mx(10, 1, 2) + ' in long overall. Find the length of the middle step.', canvas: G.shaft([{ len: 3.375, dia: 1.5 }, { len: val(hid), dia: 1, ask: true }, { len: 4.75, dia: 1.25 }], { w: 560, hmax: 50, max: '4.6in' }), a: IN(hid), work: mx(10, 1, 2) + ' − ' + mx(3, 3, 8) + ' − ' + mx(4, 3, 4) + ' = ' + H(hid), lines: 2 }),
     B.prob({ q: 'Find the overall length of the shaft.', canvas: G.shaft(sh4.map((a, i) => ({ len: val(a), dia: [1.25, 1.75, 1.5, 1][i] })), { askTotal: true, w: 600, hmax: 50, max: '4.8in' }), a: IN(add(...sh4)), lines: 2 }),
-    B.prob({ q: 'Seven holes are evenly spaced along a 36 in plate. The end holes are ' + mx(2, 1, 4) + ' in from the ends. Find the spacing.', canvas: G.holePlate(36, 2.25, 7, { ask: 'space', h: 50, ls: 16, max: '5in' }), a: IN(holeSp), work: '(36 − 2 × ' + mx(2, 1, 4) + ') ÷ 6 = ' + fr(63, 2) + ' ÷ 6 = ' + H(holeSp), lines: 2 })
+    B.prob({ q: 'Seven holes are evenly spaced along a 36 in plate. The end holes are ' + mx(2, 1, 4) + ' in from the ends. Find the spacing.', canvas: G.holePlate(36, 2.25, 7, { ask: 'space', h: 50, ls: 16, max: '5in' }), a: IN(holeSp), work: '(36 − 2 × ' + mx(2, 1, 4) + ') ÷ 6 = ' + fr(63, 2) + ' ÷ 6 = ' + H(holeSp), lines: 2 }),
+
+    B.worksheet({ title: 'Carpentry: tape, cuts and code fractions', sub: 'Read the tape on a board, work out cut lists and find code limits', intro: 'Give tape readings in lowest terms. The kerf is ' + fr(1, 8) + ' in for every cut. Code limits come from the Articles in Section 4.8.' }),
+    B.prob({ q: 'Read marks D, E and F on the tape.', canvas: G.rule({ from: 46, to: 49, den: 16, ppi: 190, marks: crW.map((v, i) => ({ v, name: 'DEF'[i] })), max: '5.8in' }), a: crW.map((v, i) => 'DEF'[i] + ' = ' + RD(v, 16)).join(', '), lines: 1 }),
+    B.prob({ q: 'Three pieces are cut from a 96 in board with 3 cuts. How long is the offcut?', canvas: G.cutBar(crW2.map(a => ({ len: val(a) })), { total: 96, askRest: true, kerf: 0.125, kerfLab: 'kerf ' + '1/8″', s: 15, max: '5.6in' }), a: IN(crW2Off), work: '96 − (' + crW2.map(H).join(' + ') + ') − 3 × ' + fr(1, 8) + ' = ' + H(crW2Off), lines: 2 }),
+    B.grid2(
+      B.prob({ q: 'How many ' + mx(14, 1, 2) + ' in blocks come from a 120 in board, with one cut for each block? How long is the offcut?', a: crW3N + ' blocks, offcut ' + IN(crW3Off), work: 'Each block uses ' + H(crPer) + ' in. 120 ÷ ' + H(crPer) + ' = ' + H(dv(M(120), crPer)), lines: 3 }),
+      B.prob({ q: 'Find the centre of a board ' + mx(78, 3, 8) + ' in long.', a: IN(dv(M(78, 3, 8), M(2))), lines: 3 })),
+    B.grid2(
+      B.prob({ q: 'Article 9.23.5.1: what is the largest hole allowed in a joist 286 mm deep?', a: H(nr(286, 4)) + ' mm (' + L.num(286 / 4) + ' mm)', lines: 2 }),
+      B.prob({ q: 'Article 9.23.5.2: how deep may a notch be in a joist 184 mm deep, and how far from the bearing edge may it sit?', a: H(nr(184, 3)) + ' mm deep, within 92 mm of the bearing edge', lines: 2 })),
+    B.grid2(
+      B.prob({ q: 'Article 9.23.5.3: a loadbearing stud is 140 mm deep. How much of its depth must stay undamaged, and what is the deepest notch?', a: H(nr(280, 3)) + ' mm must stay, notch up to ' + H(sub(M(140), nr(280, 3))) + ' mm', lines: 3 }),
+      B.prob({ q: 'Article 9.23.3.2: a nail has a required length of 82 mm. How far must it go into the second member, at least?', a: '41 mm', lines: 3 })),
+    B.check('286 ÷ 4 =', '71.5'), B.check('184 ÷ 3 =', '61.33'), B.check('140 − 2 ab/c 3 × 140 =', '46.67')
   ])
 }

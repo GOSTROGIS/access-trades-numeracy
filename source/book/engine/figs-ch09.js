@@ -89,4 +89,32 @@ function sectorFig(r, t, unit, o) {
   h += F.label(lx, ly + 5, o.askL ? '?' : (o.L || ''), { ask: o.askL, s: 13 });
   return readable(F.svg(P[0] + R + 70, P[1] + 44, h, { max: o.max || '1.8in' }), parseFloat(o.max || '1.8'), 13);
 }
-module.exports = { rectSemi, roundedPlate, belt, ftinRect, tri, sectorFig, dot };
+/* roof plan: the walls (solid) inside the roof edge (dashed), with an overhang o on every side.
+   Labels: o.L, o.W (walls), o.ov (overhang). A label of '?' draws the red ? chip */
+function roofPlan(Lw, Ww, ov, o) {
+  o = o || {};
+  const S = 300 / (Lw + 2 * ov), x0 = 80, y0 = 46, oL = (Lw + 2 * ov) * S, oW = (Ww + 2 * ov) * S, e = ov * S;
+  const ask = s => s === '?';
+  let h = F.rect(x0, y0, oL, oW, { fill: C.fill2, c: C.edge, w: 2.2, dash: '9 5' });
+  h += F.rect(x0 + e, y0 + e, oL - 2 * e, oW - 2 * e, { fill: C.fill, c: C.edge, w: 2.4 });
+  const ts = Math.max(15, printSize(x0 + oL + 150, parseFloat(o.max || '3.2')));
+  h += F.t(x0 + oL / 2, y0 + oW / 2 + 5, 'walls', { s: ts, c: C.dim });
+  h += F.t(x0 + oL, y0 - 10, 'roof edge (fascia)', { s: ts, a: 'end', c: C.edge });
+  h += F.dim(x0 + e, y0 + oW - e, x0 + oL - e, y0 + oW - e, o.L, e + 30, { ask: ask(o.L), s: 15 });
+  h += F.dim(x0 + e, y0 + oW - e, x0 + e, y0 + e, o.W, -(e + 34), { ask: ask(o.W), s: 15 });
+  if (o.ov) h += F.callout(x0 + oL - e / 2, y0 + oW * 0.35, x0 + oL + 70, y0 + oW * 0.35 + 46, o.ov === '?' ? 'overhang ?' : 'overhang ' + o.ov, { s: 15 });
+  return readable(F.svg(x0 + oL + 150, y0 + oW + 70, h, { max: o.max || '3.2in' }), parseFloat(o.max || '3.2'), 13);
+}
+/* room plan with a door opening on the bottom wall: walls l by w, door width d (all labels as text) */
+function roomPlan(lab, o) {
+  o = o || {};
+  const ratio = o.ratio || 1.3, w = 280, hh = w / ratio, x0 = 80, y0 = 40, dw = (o.door || 0.18) * w, dx = x0 + w * 0.62;
+  let h = F.rect(x0, y0, w, hh, { fill: C.fill2, w: 1.4, c: C.dim });
+  h += '<path d="M' + F.f(dx) + ' ' + F.f(y0 + hh) + 'L' + x0 + ' ' + F.f(y0 + hh) + 'L' + x0 + ' ' + y0 + 'L' + (x0 + w) + ' ' + y0 + 'L' + (x0 + w) + ' ' + F.f(y0 + hh) + 'L' + F.f(dx + dw) + ' ' + F.f(y0 + hh) + '" fill="none" stroke="' + C.red + '" stroke-width="4"/>';
+  h += '<path d="M' + F.f(dx) + ' ' + F.f(y0 + hh) + 'A' + F.f(dw) + ' ' + F.f(dw) + ' 0 0 1 ' + F.f(dx + dw) + ' ' + F.f(y0 + hh - dw) + '" fill="none" stroke="' + C.dim + '" stroke-width="1.2" stroke-dasharray="4 3"/>' + F.line(dx + dw, y0 + hh, dx + dw, y0 + hh - dw, { c: C.dim, w: 1.6 });
+  h += F.dim(x0, y0, x0 + w, y0, lab.l, -22, { s: 13 }) + F.dim(x0, y0 + hh, x0, y0, lab.w, -30, { s: 13 });
+  h += F.dim(dx, y0 + hh, dx + dw, y0 + hh, lab.d, 26, { s: 12 });
+  h += F.callout(x0 + w * 0.25, y0 + hh - 2, x0 + w * 0.3, y0 + hh * 0.5, 'baseboard', { s: 12 });
+  return readable(F.svg(x0 + w + 40, y0 + hh + 60, h, { max: o.max || '3in' }), parseFloat(o.max || '3'), 13);
+}
+module.exports = { rectSemi, roundedPlate, belt, ftinRect, tri, sectorFig, dot, roofPlan, roomPlan };

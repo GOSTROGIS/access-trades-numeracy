@@ -9,6 +9,46 @@ module.exports = function (B, L) {
     return (p.n ? (p.w ? mx(p.w, p.n, p.d) : fr(p.n, p.d)) : String(p.w)) + ' in'
   }
   const cnt = (v, den) => Math.round((v - Math.floor(v)) * den)
+  /* Exercise 5D (by hand) and 5K (carpentry) */
+  const H = require('../engine/figs-ch01.js')
+  const PL = require('../engine/plates.js')
+  const art = num => PL.article(num)
+  const flat = num => art(num).text.replace(/\s+/g, ' ')
+  const codeChecks = [['9.23.3.1', '57 2.87'], ['9.23.3.1', '101 or greater 4.88'], ['9.23.10.1', '38 × 64 400 2.4 Roof with or without attic storage 38 × 89 600 3.0']]
+  codeChecks.forEach(c => { if (!flat(c[0]).includes(c[1])) throw new Error('code text check failed: ' + c[0] + ' ' + c[1]) })
+  const kSet = () => {
+    B.wsN = 10
+    return ''
+  }
+  /* decimal feet to feet and inches, inches to the nearest 1/16 */
+  const ftIn = ft => {
+    const tot = Math.round(ft * 12 * 16), f = Math.floor(tot / 192), r = tot - f * 192, w = Math.floor(r / 16), p = r - w * 16
+    const g = L.gcd(p, 16)
+    return f + ' ft ' + (p ? mx(w, p / g, 16 / g) : String(w)) + ' in'
+  }
+  const dv5 = (num, d, k) => {
+    const st = H.divSteps(num, d, k + 1)
+    return { q: st.q, w: st.steps.join(' ') + ' To ' + (k === 2 ? 'two' : 'three') + ' places: ' + n(R(+num / d, k), k) + '.' }
+  }
+  const d5 = [
+    { q: '12.07 + 3.5 + 0.875', a: n(R(12.07 + 3.5 + 0.875, 3)), w: '12.070 + 3.500 + 0.875' },
+    { q: '20 − 7.384', a: n(R(20 - 7.384, 3)), w: '20.000 − 7.384' },
+    { q: '3.6 × 0.25', a: n(R(3.6 * 0.25, 3)), w: '36 × 25 = 900, three decimal places: 0.900' },
+    { q: '14.75 × 2.4', a: n(R(14.75 * 2.4, 3)), w: '1,475 × 24 = 35,400, three decimal places: 35.400' },
+    { q: '9.6 ÷ 0.4', a: n(R(9.6 / 0.4, 3)), w: 'Move both points one place: 96 ÷ 4' },
+    { q: '19.5 ÷ 6', a: n(R(19.5 / 6, 3)), w: H.divSteps('19.5', 6, 2).steps.join(' ') },
+    { q: '5 ÷ 8', a: n(5 / 8), w: H.divSteps('5', 8, 3).steps.join(' ') },
+    { q: '7 ÷ 3, to three decimal places', a: n(R(7 / 3, 3), 3), w: dv5('7', 3, 3).w },
+    { q: '2 ÷ 9, to two and to three decimal places', a: n(R(2 / 9, 2), 2) + ' and ' + n(R(2 / 9, 3), 3), w: H.divSteps('2', 9, 4).steps.join(' ') },
+    { q: 'Change ' + fr(3, 7) + ' to a decimal, to three decimal places.', a: n(R(3 / 7, 3), 3), w: dv5('3', 7, 3).w }
+  ]
+  /* metric rule with the cm unit moved onto the row of numbers, clear of the ticks and marks.
+     side 'left' puts it after the first number, 'right' before the last number */
+  const cmRule = (a, b, marks, o, side) => {
+    const ppm = o.ppm || 8, x0 = 20, y = 16 + 46
+    const lab = side === 'left' ? F.t(x0 + 9, y, 'cm', { s: 13, b: true, a: 'start', c: F.C.dim }) : F.t(x0 + (b - a) * ppm - 9, y, 'cm', { s: 13, b: true, a: 'end', c: F.C.dim })
+    return F.mmRuler(a, b, marks, o).replace(/<text [^>]*>cm<\/text>/, lab)
+  }
 
   /* pipe cross-section with outside diameter asked */
   function tube(OD, wall, o) {
@@ -44,7 +84,7 @@ module.exports = function (B, L) {
     B.grid2(
       B.prob({ q: 'What is the 4 worth in 30.249? Write 0.075 in words.', a: '4 hundredths (0.04). Seventy-five thousandths.', lines: 2 }),
       B.prob({ q: 'Write ' + fr(3, 100) + ' and ' + fr(48, '1,000') + ' as decimals.', a: '0.03 and 0.048', lines: 2 })),
-    B.prob({ q: 'Read marks A, B, C and D to the nearest 0.5 mm.', canvas: F.mmRuler(0, 60, rmm.map((v, i) => ({ v, lab: 'ABCD'[i] })), { ppm: 10, max: '5.6in' }).replace(/font-size="10"([^>]*>cm<)/, 'font-size="13"$1'), a: rmm.map((v, i) => 'ABCD'[i] + ' = ' + n(v) + ' mm').join(', '), lines: 1 }),
+    B.prob({ q: 'The rule is numbered in centimetres. Read marks A, B, C and D in millimetres, to the nearest 0.5 mm.', canvas: cmRule(0, 60, rmm.map((v, i) => ({ v, lab: 'ABCD'[i] })), { ppm: 10, max: '5.6in' }, 'left'), a: rmm.map((v, i) => 'ABCD'[i] + ' = ' + n(v) + ' mm').join(', '), lines: 1 }),
     B.grid2(
       B.prob({ q: 'Put in order from smallest: 0.4, 0.375, 0.41.', a: '0.375, 0.4, 0.41', lines: 2 }),
       B.prob({ q: 'Which is longer, 2.5 mm or 2.45 mm? By how much?', a: '2.5 mm, by 0.05 mm', lines: 2 })),
@@ -77,28 +117,28 @@ module.exports = function (B, L) {
     B.check('1.25 × 25.4 =', '31.75'),
 
     B.worksheet({ title: 'Shop problems', sub: 'Decimals in fabrication, pipe trades and millwright work' }),
-    B.prob({ q: 'Pieces of ' + cut.map(v => mm(v)).join(', ') + ' are cut from a 1,500 mm bar. There are 3 cuts and the kerf is 2.5 mm. How long is the offcut?', a: mm(cutOff), work: '1,500 − (412.5 + 287.25 + 650) − 3 × 2.5 = 1,500 − 1,349.75 − 7.5', lines: 4 }),
+    B.prob({ q: 'Pieces of ' + cut.map(v => mm(v)).join(', ') + ' are cut from a 1,500 mm bar. There are 3 cuts and the kerf is 2.5 mm. How long is the offcut?', a: mm(cutOff), work: '1,500 − (412.5 + 287.25 + 650) − 3 × 2.5 = 1,500 − 1,349.75 − 7.5', lines: 6 }),
     B.check('1500 − 412.5 − 287.25 − 650 − 3 × 2.5 =', n(cutOff)),
     B.grid2(
-      B.prob({ q: 'A pipe fitter needs 3 lengths of pipe, each 1.85 m. The pipe costs $14.60 per metre. What does the pipe cost?', a: '$' + n(pipeCost, 2), work: '3 × 1.85 = 5.55 m. 5.55 × 14.60', lines: 4 }),
-      B.prob({ q: 'A millwright stacks shims that are each 0.25 mm thick. How many shims make a stack 1.75 mm thick?', a: String(R(1.75 / 0.25, 2)) + ' shims', work: '1.75 ÷ 0.25 = 175 ÷ 25', lines: 4 })),
+      B.prob({ q: 'A pipe fitter needs 3 lengths of pipe, each 1.85 m. The pipe costs $14.60 per metre. What does the pipe cost?', a: '$' + n(pipeCost, 2), work: '3 × 1.85 = 5.55 m. 5.55 × 14.60', lines: 6 }),
+      B.prob({ q: 'A millwright stacks shims that are each 0.25 mm thick. How many shims make a stack 1.75 mm thick?', a: String(R(1.75 / 0.25, 2)) + ' shims', work: '1.75 ÷ 0.25 = 175 ÷ 25', lines: 6 })),
     B.check('3 × 1.85 × 14.6 =', n(pipeCost, 2)),
     B.check('1.75 ÷ 0.25 =', '7'),
     B.grid2(
-      B.prob({ q: 'An order has 25 bolts at $0.46 each and 25 nuts at $0.12 each. What is the total?', a: '$' + n(bolts, 2), lines: 3 }),
-      B.prob({ q: 'Flat bar on a job weighs 2.36 kg per metre. What do 4.5 m weigh?', a: n(wt) + ' kg', lines: 3 })),
+      B.prob({ q: 'An order has 25 bolts at $0.46 each and 25 nuts at $0.12 each. What is the total?', a: '$' + n(bolts, 2), lines: 6 }),
+      B.prob({ q: 'Flat bar on a job weighs 2.36 kg per metre. What do 4.5 m weigh?', a: n(wt) + ' kg', lines: 6 })),
     B.check('25 × 0.46 + 25 × 0.12 =', n(bolts, 2)),
     B.check('4.5 × 2.36 =', n(wt)),
-    B.prob({ q: 'Eight holes are evenly spaced along a 900 mm plate. The end holes are 37.5 mm from the ends. Find the spacing to two decimal places.', a: mm(hs, 2), work: '(900 − 2 × 37.5) ÷ 7 = 825 ÷ 7', lines: 3 }),
+    B.prob({ q: 'Eight holes are evenly spaced along a 900 mm plate. The end holes are 37.5 mm from the ends. Find the spacing to two decimal places.', a: mm(hs, 2), work: '(900 − 2 × 37.5) ÷ 7 = 825 ÷ 7', lines: 9 }),
     B.check('( 900 − 2 × 37.5 ) ÷ 7 =', n(hs, 2)),
     B.grid2(
-      B.prob({ q: 'A drawing gives a length of 3.38 in. What do you mark on the tape, to the nearest ' + fr(1, 16) + ' in?', a: tape(3.38, 16), work: '0.38 × 16 = 6.08, rounds to 6. ' + fr(6, 16) + ' = ' + fr(3, 8), lines: 3 }),
-      B.prob({ q: 'A metric part is 120 mm long. What is that to the nearest ' + fr(1, 16) + ' in?', a: tape(p120, 16), work: '120 ÷ 25.4 × 16 = ' + n(R(p120 * 16, 2), 2) + ', rounds to ' + Math.round(p120 * 16) + '. ' + fr(Math.round(p120 * 16), 16) + ' = ' + tape(p120, 16).replace(' in', ''), lines: 3 })),
+      B.prob({ q: 'A drawing gives a length of 3.38 in. What do you mark on the tape, to the nearest ' + fr(1, 16) + ' in?', a: tape(3.38, 16), work: '0.38 × 16 = 6.08, rounds to 6. ' + fr(6, 16) + ' = ' + fr(3, 8), lines: 9 }),
+      B.prob({ q: 'A metric part is 120 mm long. What is that to the nearest ' + fr(1, 16) + ' in?', a: tape(p120, 16), work: '120 ÷ 25.4 × 16 = ' + n(R(p120 * 16, 2), 2) + ', rounds to ' + Math.round(p120 * 16) + '. ' + fr(Math.round(p120 * 16), 16) + ' = ' + tape(p120, 16).replace(' in', ''), lines: 9 })),
     B.check('0.38 × 16 =', '6.08'),
     B.check('120 ÷ 25.4 × 16 =', n(R(p120 * 16, 2), 2)),
     B.grid2(
-      B.prob({ q: 'A pre-apprentice works 37.5 hours at $21.40 an hour. What is the pay before deductions?', a: '$' + n(pay, 2), lines: 3 }),
-      B.prob({ q: 'A ' + fr(5, 8) + ' in bolt hole is drilled in a metric part. What is the hole size in millimetres?', a: mm(0.625 * 25.4), work: '0.625 × 25.4', lines: 3 })),
+      B.prob({ q: 'A pre-apprentice works 37.5 hours at $21.40 an hour. What is the pay before deductions?', a: '$' + n(pay, 2), lines: 9 }),
+      B.prob({ q: 'A ' + fr(5, 8) + ' in bolt hole is drilled in a metric part. What is the hole size in millimetres?', a: mm(0.625 * 25.4), work: '0.625 × 25.4', lines: 9 })),
     B.check('37.5 × 21.4 =', n(pay, 2)),
     B.check('5 ÷ 8 × 25.4 =', n(R(0.625 * 25.4, 4))),
 
@@ -113,6 +153,25 @@ module.exports = function (B, L) {
     B.prob({ q: 'Change one value: five pieces of 228.6 mm make up the bar. Find the overall length. If each piece is cut 1.5 mm shorter, what is the new overall length?', canvas: F.cutBar([1, 2, 3, 4, 5].map(() => ({ len: five })), { askTotal: true, fmt: v => n(v), max: '5.6in' }), a: mm(fiveTot) + ', then ' + mm(fiveNew), work: '5 × 228.6. 5 × 1.5 = 7.5 mm less.', lines: 2 }),
     B.grid2(
       B.prob({ q: 'Write each size as a fraction in lowest terms.', canvas: G.plate(decPl[0], decPl[1], { fmt: v => n(v) + '″', size: 240, max: '3in' }), a: '5.875 in = ' + tape(5.875, 16) + ', 3.25 in = ' + tape(3.25, 16), lines: 2 }),
-      B.prob({ q: 'Read marks A and B. How far apart are they?', canvas: F.mmRuler(20, 50, [{ v: 23.5, lab: 'A' }, { v: 41, lab: 'B' }], { ppm: 10, max: '3in' }).replace(/font-size="10"([^>]*>cm<)/, 'font-size="13"$1'), a: 'A = 23.5 mm, B = 41 mm, ' + mm(41 - 23.5) + ' apart', lines: 2 }))
+      B.prob({ q: 'Read marks A and B to the nearest 0.5 mm. How far apart are they?', canvas: cmRule(20, 50, [{ v: 23.5, lab: 'A' }, { v: 41, lab: 'B' }], { ppm: 10, max: '3in' }, 'right'), a: 'A = 23.5 mm, B = 41 mm, ' + mm(41 - 23.5) + ' apart', lines: 2 })),
+
+    B.worksheet({ title: 'By hand', sub: 'Decimal operations and rounding to hundredths and thousandths. No calculator.', intro: 'Line up the points to add or subtract. Count decimal places to multiply. To divide, keep going past the last digit by writing zeros, one place past where you round.' }),
+    B.grid2(...d5.map(d => B.prob({ q: d.q, a: d.a, work: d.w || null, lines: 4 }))),
+
+    kSet(),
+    B.worksheet({ title: 'Carpentry and the BCBC', sub: 'Decimal feet, lumber and sheet prices, and decimal code values', intro: 'A foot has 12 inches. Give tape readings to the nearest 1/16 in and money to the nearest cent. Prices are given in each problem. Code values are from BC Building Code 2024, Division B.' }),
+    B.grid2(
+      B.prob({ q: 'Change 9.75 ft to feet and inches.', a: '9 ft 9 in', work: '0.75 × 12 = 9', lines: 5 }),
+      B.prob({ q: 'Change 12 ft 4 in to decimal feet, to three decimal places.', a: n(R(12 + 4 / 12, 3), 3) + ' ft', work: '4 ÷ 12 = 0.3333…', lines: 5 })),
+    B.grid2(
+      B.prob({ q: 'A plan gives 7.85 ft. What is that in feet and inches, to the nearest ' + fr(1, 16) + ' in?', a: ftIn(7.85), work: '0.85 × 12 = 10.2 in. 0.2 × 16 = 3.2, rounds to 3.', lines: 5 }),
+      B.prob({ q: 'A 25 ft board is cut into 7 equal pieces. Ignore the saw cuts. How long is each piece in decimal feet, to three decimal places, and in feet and inches, to the nearest ' + fr(1, 16) + ' in?', a: n(R(25 / 7, 3), 3) + ' ft, ' + ftIn(25 / 7), work: '25 ÷ 7 = 3.5714… 0.5714… × 12 = 6.857 in. 0.857 × 16 = 13.7, rounds to 14 sixteenths.', lines: 5 })),
+    B.prob({ q: 'Table 9.23.3.1 (Article 9.23.3.1, Sentence (2), page ' + art('9.23.3.1').page + ') gives minimum nail diameters: 2.87 mm for a 57 mm nail and 4.88 mm for a nail 101 mm or longer. How much bigger is the larger diameter?', a: n(R(4.88 - 2.87, 2), 2) + ' mm', lines: 4 }),
+    B.prob({ q: 'An order has 18 pieces of 38 × 89 lumber, each 3.05 m long, at $2.65 per metre. Find the metres of lumber and the cost, to the nearest cent.', a: n(R(18 * 3.05, 2)) + ' m, $' + n(R(18 * 3.05 * 2.65, 2), 2), work: '18 × 3.05 = 54.9. 54.9 × 2.65 = 145.485, rounds to 145.49.', lines: 5 }),
+    B.grid2(
+      B.prob({ q: '14 sheets at $48.75 each and 3 boxes of nails at $27.99 each. Total before tax?', a: '$' + n(R(14 * 48.75 + 3 * 27.99, 2), 2), work: '682.50 + 83.97', lines: 5 }),
+      B.prob({ q: 'Trim runs around a room 4.27 m by 3.35 m. Ignore the door. Trim costs $2.19 per metre. What does it cost?', a: '$' + n(R(2 * (4.27 + 3.35) * 2.19, 2), 2), work: '2 × (4.27 + 3.35) = 15.24 m. 15.24 × 2.19 = 33.3756', lines: 5 })),
+    B.prob({ q: 'Table 9.23.10.1 (Article 9.23.10.1, Sentence (1), page ' + art('9.23.10.1').page + ') gives a maximum unsupported height of 3.0 m for 38 × 89 studs in an exterior wall that supports a roof only. A wall is 2.743 m tall. How far under the limit is it, in metres and in millimetres?', a: n(R(3 - 2.743, 3), 3) + ' m = ' + n(R((3 - 2.743) * 1000, 0)) + ' mm', lines: 4 }),
+    B.check('12 + 4 ÷ 12 =', n(R(12 + 4 / 12, 3), 3)), B.check('25 ÷ 7 =', n(R(25 / 7, 3), 3)), B.check('18 × 3.05 × 2.65 =', n(R(18 * 3.05 * 2.65, 2), 2)), B.check('14 × 48.75 + 3 × 27.99 =', n(R(14 * 48.75 + 3 * 27.99, 2), 2)), B.check('2 × ( 4.27 + 3.35 ) × 2.19 =', n(R(2 * (4.27 + 3.35) * 2.19, 2), 2))
   ])
 }

@@ -275,4 +275,29 @@ function plate(l, w, o) {
   h += dim(x0, y0 + w * S, x0, y0, ask.includes('w') ? { ask: true } : fmt(w), -36, { s: 12.5 })
   return F.svg(x0 + l * S + 30, y0 + w * S + 20, h, { max: o.max || '3.6in' })
 }
-module.exports = { gcd, parts, stacked, lab, labW, dim, rule, bar, bars, circles, cutBar, holePlate, shaft, lPlate, plate, tickLen }
+/* hex bolt, side view and end view. o: { dia, len, af (across flats) } in inches, o.ask: list of 'dia' 'len' 'af'.
+   The side view dimensions the length from under the head to the end and the diameter across the threads.
+   The end view dimensions the hex across the flats, with the corner-to-corner line dashed and marked "not this" */
+function hexBolt(o) {
+  o = o || {}
+  const ask = o.ask || [], S = o.S || 110, ls = o.ls || 15
+  const spec = (k, v) => ask.includes(k) ? { ask: true } : { inch: v, den: 16 }
+  const hx = 40, hy = 60, hw = 0.4 * S, hh = o.af * 2 / Math.sqrt(3) * S
+  const sy = hy + hh / 2 - o.dia * S / 2
+  let h = F.rect(hx, hy, hw, hh, { fill: C.fill2 }) + F.line(hx, hy + hh / 4, hx + hw, hy + hh / 4, { c: C.edge, w: 1.2 }) + F.line(hx, hy + hh * 3 / 4, hx + hw, hy + hh * 3 / 4, { c: C.edge, w: 1.2 })
+  const x0 = hx + hw, x1 = x0 + o.len * S
+  h += F.rect(x0, sy, o.len * S, o.dia * S, { fill: C.fill })
+  for (let x = x0 + o.len * S * 0.35; x < x1 - 4; x += 7) h += F.line(x, sy + 2, x + 4, sy + o.dia * S - 2, { c: C.edge, w: 1 })
+  h += dim(x0, sy + o.dia * S, x1, sy + o.dia * S, spec('len', o.len), (hy + hh) - (sy + o.dia * S) + 34, { s: ls })
+  h += dim(x1, sy + o.dia * S, x1, sy, spec('dia', o.dia), 34, { s: ls })
+  /* end view */
+  const cx = x1 + 190, cy = hy + hh / 2, R = o.af / Math.sqrt(3) * S
+  const pts = []
+  for (let k = 0; k < 6; k++) pts.push([cx + R * Math.cos(k * Math.PI / 3), cy + R * Math.sin(k * Math.PI / 3)])
+  h += F.poly(pts, { fill: C.fill2 }) + '<circle cx="' + ff(cx) + '" cy="' + ff(cy) + '" r="' + ff(R * 0.62) + '" fill="none" stroke="' + C.edge + '" stroke-width="1.2"/>'
+  h += dim(cx - R * 0.866 * 0 + R / 2, cy - R * 0.866, cx + R / 2, cy + R * 0.866, spec('af', o.af), -(R * 0.5 + 40), { s: ls })
+  h += F.line(cx - R, cy, cx + R, cy, { c: C.red, w: 1.4, dash: '5 4' }) + F.t(cx, cy + R + 26, 'corner to corner: not this', { s: 13.5, wgt: 600, c: C.red })
+  h += F.t(cx, hy - 26, 'across the flats', { s: 13, wgt: 700, c: C.dim })
+  return F.svg(cx + R + 110, hy + hh + 70, h, { max: o.max || '5.6in' })
+}
+module.exports = { hexBolt, gcd, parts, stacked, lab, labW, dim, rule, bar, bars, circles, cutBar, holePlate, shaft, lPlate, plate, tickLen }

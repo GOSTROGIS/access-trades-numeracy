@@ -24,6 +24,16 @@ module.exports = function (B, L) {
   const G8 = require('../engine/figs-ch08.js');
   const G = require('../engine/figs-ch09.js');
   const { SH } = G8.shapers(B);
+  const PL = require('../engine/plates.js');
+  /* a cropped plate figure kept whole on one page, with the parts outside the crop left out */
+  const plate = (num, o) => {
+    const c = o.crop, hIn = parseFloat(o.width) * c[3] / c[2];
+    return '<div style="break-inside:avoid">' + G8.pruneCrop(PL.figure(B, num, o), c).replace('class="bcbc-plate"', 'class="bcbc-plate" style="height:' + hIn.toFixed(2) + 'in"') + '</div>';
+  };
+  /* the code wording quoted in section 9.7, checked against the code text */
+  [['9.23.11.2', 'A bottom wall plate shall be provided in all cases.'], ['9.23.11.3', 'at least 2 top plates shall be provided in loadbearing walls']].forEach(([a, q]) => {
+    if (!PL.article(a).text.replace(/\s+/g, ' ').includes(q)) throw new Error('BCBC ' + a + ': quote not found')
+  });
 
   /* ---------- drawings ---------- */
   /* a circle rolled through one turn along the floor */
@@ -79,14 +89,15 @@ module.exports = function (B, L) {
       q: 'A guard frame is 1,500 mm long and 750 mm wide. How much flat bar goes around it?',
       fig: SH('rectangle', { l: 1500, w: 750 }, { width: '1.6in' }),
       steps: ['Two lengths and two widths: ' + m('P = 2 × (l + w)') + '.', m('P = 2 × (1,500 + 750) = 2 × 2,250 = 4,500')],
+      calc: { seq: '2 × ( 1500 + 750 ) =', expect: '4,500' },
       answer: '4,500 mm, which is 4.5 m.'
     }),
     B.check('2 × ( 1500 + 750 ) =', '4,500'),
     EX({
       title: 'A frame in fractions of an inch',
       q: 'A picture-style frame is 24' + L.fr(3, 8) + ' in by 18' + L.fr(1, 2) + ' in. Find the perimeter.',
-      steps: ['Add a length and a width: 24' + L.fr(3, 8) + ' + 18' + L.fr(1, 2) + ' = 24' + L.fr(3, 8) + ' + 18' + L.fr(4, 8) + ' = 42' + L.fr(7, 8) + ' in.', 'Double it: 2 × 42' + L.fr(7, 8) + ' = 84' + L.fr(14, 8) + ' = 85' + L.fr(6, 8) + ' = 85' + L.fr(3, 4) + ' in. Both calculators below show this as a mixed number, 85 and 3/4.'],
-      calc: { seq: '2 × ( 24 ab/c 3 ab/c 8 + 18 ab/c 1 ab/c 2 ) =', expect: '85.75' },
+      steps: ['Add a length and a width: 24' + L.fr(3, 8) + ' + 18' + L.fr(1, 2) + ' = 24' + L.fr(3, 8) + ' + 18' + L.fr(4, 8) + ' = 42' + L.fr(7, 8) + ' in.', 'Double it: 2 × 42' + L.fr(7, 8) + ' = 84' + L.fr(14, 8) + ' = 85' + L.fr(6, 8) + ' = 85' + L.fr(3, 4) + ' in.'],
+      calc: { seq: '2 × ( 24 ab/c 3 ab/c 8 + 18 ab/c 1 ab/c 2 ) =', expect: '85.75', say: 'Both calculators show the answer as a mixed number: 85 and 3/4.' },
       answer: '85' + L.fr(3, 4) + ' in, which is ' + L.ftin(85.75, 16) + '.'
     }),
     EX({
@@ -126,7 +137,7 @@ module.exports = function (B, L) {
     ]),
 
     B.section('Circumference'),
-    B.formula('Circumference', [m('C = π × D')], 'If you know the radius, double it first to get D. Double D and C doubles: C and D always keep the same ratio, π.'),
+    B.formula('Circumference', [m('C = π × D')], 'If you know the radius, double it first to get D.'),
     EX({
       title: 'From a diameter and from a radius',
       q: 'Find the circumference of a disc 450 mm in diameter, and of a ring with a radius of 125 mm. Round to two decimal places.',
@@ -149,6 +160,7 @@ module.exports = function (B, L) {
       calc: { rows: [{ label: 'Distance', seq: '25 × π × 600 =', expect: d2(25 * PI * 600) }, { label: 'Turns', seq: '50000 ÷ ( π × 600 ) =', expect: d2(50000 / (PI * 600)) }] },
       answer: d2(25 * PI * 600) + ' mm (' + d2(25 * PI * 600 / 1000) + ' m) and ' + d2(50000 / (PI * 600)) + ' turns.'
     }),
+    B.keyidea('Key idea', 'Double the diameter and the circumference doubles. Halve it and the circumference halves. C and D always keep the same ratio, π.'),
     B.tryIt([
       { q: 'D = 200 mm. Find C to two decimal places.', a: d2(PI * 200) + ' mm' },
       { q: 'r = 60 mm. Find C to two decimal places.', a: d2(PI * 120) + ' mm' },
@@ -166,14 +178,14 @@ module.exports = function (B, L) {
     EX({
       title: 'Sheet for a round duct',
       q: 'A round duct is 300 mm in diameter and 1,200 mm long. The drawing adds 25 mm to the stretch-out for a lap seam. What size sheet is cut? Give the sheet length to the nearest millimetre.',
-      steps: ['Stretch-out: ' + m('π × 300 = ' + d2(PI * 300)) + ' mm. Add the 25 mm seam allowance from the drawing: ' + d2(PI * 300) + ' + 25 = ' + d2(PI * 300 + 25) + ' mm.'],
+      steps: ['Stretch-out: ' + m('π × 300 = ' + d2(PI * 300)) + ' mm.', 'Add the seam allowance from the drawing: ' + d2(PI * 300) + ' + 25 = ' + d2(PI * 300 + 25) + ' mm.'],
       calc: { seq: 'π × 300 + 25 =', expect: d2(PI * 300 + 25) },
       answer: n(Math.round(PI * 300 + 25)) + ' mm by 1,200 mm.'
     }),
     EX({
       title: 'A jacket around a pipe',
       q: 'A sheet-metal jacket wraps around the outside of a pipe. The outside diameter is 6' + L.fr(5, 8) + ' in. Find the stretch-out to the nearest 1/16 in.',
-      steps: ['The jacket wraps the outside surface, so use the outside diameter: ' + m('π × 6.625 = ' + d3(jacket)) + ' in.', 'Sixteenths: 0.813 × 16 = ' + d2(0.813 * 16) + ', which rounds to 13.'],
+      steps: ['The jacket wraps the outside surface, so use the outside diameter.', m('π × 6.625 = ' + d3(jacket)) + ' in.', 'Sixteenths: 0.813 × 16 = ' + d2(0.813 * 16) + ', which rounds to 13.'],
       calc: { seq: 'π × 6 ab/c 5 ab/c 8 =', expect: d3(jacket) },
       answer: L.inch(jacket, 16)
     }),
@@ -218,7 +230,7 @@ module.exports = function (B, L) {
       title: 'A plate with a round end',
       q: 'A plate is a 400 mm by 200 mm rectangle with a half circle on one end. Find its perimeter.',
       fig: G.rectSemi(400, 200, { split: true, max: '2.1in' }),
-      steps: ['Part A gives three outside edges: 400 + 400 + 200 = 1,000 mm. The dashed line is inside the plate. Part B is a half circle with D = 200 mm: π × 200 ÷ 2 = ' + d2(PI * 100) + ' mm.', 'Add: 1,000 + ' + d2(PI * 100) + ' = ' + d2(1000 + PI * 100) + '.'],
+      steps: ['Part A gives three outside edges: 400 + 400 + 200 = 1,000 mm. Its right side is the dashed line, inside the plate.', 'Part B is a half circle with D = 200 mm: π × 200 ÷ 2 = ' + d2(PI * 100) + ' mm.', 'Add: 1,000 + ' + d2(PI * 100) + ' = ' + d2(1000 + PI * 100) + '.'],
       answer: d2(1000 + PI * 100) + ' mm'
     }),
     B.check('2 × 400 + 200 + π × 200 ÷ 2 =', d2(1000 + PI * 100)),
@@ -226,28 +238,74 @@ module.exports = function (B, L) {
       title: 'A belt around two pulleys',
       q: 'A belt runs around two pulleys, each 200 mm in diameter. The centres are 800 mm apart. How long is the belt?',
       fig: G.belt(200, 800, { max: '2.4in' }),
-      steps: ['Each straight run is as long as the centre distance: 2 × 800 = 1,600 mm.', 'The belt wraps half of each pulley, and two halves make one circle: π × 200 = ' + d2(PI * 200) + ' mm. Add: 1,600 + ' + d2(PI * 200) + ' = ' + d2(1600 + PI * 200) + '.'],
+      steps: ['The two straight runs are each as long as the centre distance: 2 × 800 = 1,600 mm.', 'The belt wraps half of each pulley. Two halves make one circle: π × 200 = ' + d2(PI * 200) + ' mm.', 'Add: 1,600 + ' + d2(PI * 200) + ' = ' + d2(1600 + PI * 200) + '.'],
       answer: d2(1600 + PI * 200) + ' mm'
     }),
     B.check('2 × 800 + π × 200 =', d2(1600 + PI * 200)),
     B.tryIt([
-      { q: 'A slot: straight sides 50 mm, ends 20 mm across. Find P.', a: d2(100 + PI * 20) + ' mm' },
-      { q: 'A 600 mm by 400 mm plate, 50 mm corner radius. Find P.', a: d2(2 * (600 - 100) + 2 * (400 - 100) + PI * 100) + ' mm (four quarter circles make one circle, D = 100 mm)' },
-      { q: 'Two 150 mm pulleys, centres 600 mm apart. Belt length?', a: d2(1200 + PI * 150) + ' mm' },
-      { q: 'A quarter circle, r = 300 mm. Find P, edges and arc.', a: d2(600 + PI * 600 / 4) + ' mm' }
+      { q: 'A slot has straight sides of 50 mm and ends 20 mm across. Find the perimeter.', a: d2(100 + PI * 20) + ' mm' },
+      { q: 'A 600 mm by 400 mm plate has a 50 mm radius on each corner. Find the perimeter.', a: d2(2 * (600 - 100) + 2 * (400 - 100) + PI * 100) + ' mm (four quarter circles make one circle, D = 100 mm)' },
+      { q: 'Two pulleys 150 mm in diameter have centres 600 mm apart. Find the belt length.', a: d2(1200 + PI * 150) + ' mm' },
+      { q: 'A quarter circle has r = 300 mm. Find the perimeter, both straight edges and the arc.', a: d2(600 + PI * 600 / 4) + ' mm' }
     ]),
+
+    B.section('Carpentry: plates, rim joists, fascia and trim'),
+    B.p('A carpenter measures around the outside of a building again and again: for the wall plates, for the rim joists of a floor, for the fascia along the roof edge, and for baseboard and trim inside. Each one is a perimeter.',
+      'In a wood-frame wall the studs stand on a bottom plate and carry top plates. The BC Building Code says "a bottom wall plate shall be provided in all cases" (BCBC 2024, Division B, Sentence 9.23.11.2.(1), page ' + PL.article('9.23.11.2').page + '), and "at least 2 top plates shall be provided in loadbearing walls", except where Sentences (2) to (4) allow one or none (Sentence 9.23.11.3.(1), page ' + PL.article('9.23.11.3').page + '). A loadbearing wall with a double top plate therefore needs three plates along its length.'),
+    plate('9.23.11.3', { crop: [42, 152, 466, 372], width: '3.6in', caption: 'Panel A of plate 9.23.11.3: a loadbearing wall with two top plates over the studs.' }),
+    EX({
+      title: 'Wall plates for a house',
+      q: 'The outside walls of a house are 12,200 mm by 8,500 mm. All four walls are loadbearing, with one bottom plate and two top plates. The estimate uses the outside perimeter and ignores openings. How much plate is needed? The plate comes in 4,880 mm lengths. How many lengths are ordered?',
+      steps: ['Perimeter: ' + m('P = 2 × (12,200 + 8,500) = ' + n(2 * (12200 + 8500))) + ' mm.', 'Three plates all the way around: ' + m('3 × ' + n(2 * (12200 + 8500)) + ' = ' + n(3 * 2 * (12200 + 8500))) + ' mm.', 'Lengths: ' + m(n(3 * 2 * (12200 + 8500)) + ' ÷ 4,880 = ' + d2(3 * 2 * (12200 + 8500) / 4880)) + '. Round up to ' + Math.ceil(3 * 2 * (12200 + 8500) / 4880) + ', because 25 lengths are too short.'],
+      calc: { rows: [{ label: 'Plate', seq: '3 × 2 × ( 12200 + 8500 ) =', expect: n(3 * 2 * (12200 + 8500)) }, { label: 'Lengths', seq: '124200 ÷ 4880 =', expect: d2(124200 / 4880) }] },
+      answer: n(3 * 2 * (12200 + 8500)) + ' mm (' + n(3 * 2 * (12200 + 8500) / 1000, 1) + ' m) of plate, so ' + Math.ceil(124200 / 4880) + ' lengths.'
+    }),
+    B.p('The code defines a rim joist as "the outermost member in floor framing, other than blocking, be it parallel, perpendicular or on an angle to the floor joists" (Division A, Sentence 1.4.1.2.(1), page 1-23). The rim joists run all the way around the floor, so their total length is the perimeter of the floor framing.'),
+    EX({
+      title: 'Rim joists',
+      q: 'A floor frame is 9,760 mm by 7,320 mm. Find the total length of rim joist. The rim board comes in 4,880 mm lengths. How many lengths are needed, ignoring joints?',
+      steps: [m('P = 2 × (9,760 + 7,320) = 2 × 17,080 = ' + n(2 * (9760 + 7320))) + ' mm.', m(n(2 * (9760 + 7320)) + ' ÷ 4,880 = ' + n(2 * (9760 + 7320) / 4880)) + ' lengths exactly.'],
+      calc: { rows: [{ label: 'Rim joist', seq: '2 × ( 9760 + 7320 ) =', expect: n(2 * (9760 + 7320)) }, { label: 'Lengths', seq: '34160 ÷ 4880 =', expect: n(34160 / 4880) }] },
+      answer: n(2 * (9760 + 7320)) + ' mm of rim joist, ' + n(34160 / 4880) + ' lengths.'
+    }),
+    B.figure(G.roofPlan(10000, 7200, 600, { L: '10,000 mm', W: '7,200 mm', ov: '600 mm', max: '3.4in' }), 'A roof plan. The roof edge sits 600 mm outside the walls on every side, so it is 1,200 mm longer and 1,200 mm wider than the walls.'),
+    EX({
+      title: 'Fascia around a roof',
+      q: 'A building has walls 10,000 mm by 7,200 mm. Its hip roof overhangs 600 mm on every side, and fascia runs along all four roof edges. How long is the fascia?',
+      steps: ['The overhang adds 600 mm at each end: length 10,000 + 2 × 600 = 11,200 mm, width 7,200 + 2 × 600 = 8,400 mm.', m('P = 2 × (11,200 + 8,400) = ' + n(2 * (11200 + 8400))) + ' mm.', 'Compare the walls: 2 × (10,000 + 7,200) = ' + n(2 * 17200) + ' mm. The fascia is longer by ' + n(2 * (11200 + 8400) - 2 * 17200) + ' mm, which is 8 × 600.'],
+      calc: { seq: '2 × ( 10000 + 2 × 600 + 7200 + 2 × 600 ) =', expect: n(2 * (11200 + 8400)) },
+      answer: n(2 * (11200 + 8400)) + ' mm, or ' + n(2 * (11200 + 8400) / 1000, 1) + ' m.'
+    }),
+    EX({
+      title: 'Baseboard in feet and inches',
+      q: 'A room is 14 ft 6 in by 11 ft 9 in. Baseboard runs around the walls except across one door opening 32 in wide. How much baseboard is needed? Give feet and inches.',
+      fig: G.roomPlan({ l: '14′ 6″', w: '11′ 9″', d: '32″' }, { ratio: 174 / 141, door: 32 / 174, max: '2.6in' }),
+      steps: ['Change to inches: 14 ft 6 in = 174 in, 11 ft 9 in = 141 in.', m('P = 2 × (174 + 141) = ' + 2 * (174 + 141)) + ' in.', 'Take off the door: ' + 2 * (174 + 141) + ' − 32 = ' + (2 * (174 + 141) - 32) + ' in.', (2 * (174 + 141) - 32) + ' ÷ 12 = 49 ft and 10 in left over, because 49 × 12 = 588.'],
+      calc: { seq: '2 × ( 174 + 141 ) − 32 =', expect: String(2 * (174 + 141) - 32) },
+      answer: L.ftin(598) + ' of baseboard.'
+    }),
+    B.check('598 − 588 =', '10'),
+    B.tryIt([
+      { q: 'A loadbearing wall 6,100 mm long has one bottom plate and two top plates. How much plate is that?', a: n(3 * 6100) + ' mm' },
+      { q: 'A floor frame is 8,540 mm by 6,100 mm. Find the total length of rim joist.', a: n(2 * (8540 + 6100)) + ' mm' },
+      { q: 'Walls are 9,000 mm by 6,000 mm and the roof overhangs 450 mm on every side. Find the length of fascia around all four edges.', a: n(2 * (9900 + 6900)) + ' mm' },
+      { q: 'A room is 3,600 mm by 3,000 mm with one door opening 810 mm wide. How much baseboard is needed?', a: n(2 * (3600 + 3000) - 810) + ' mm' },
+      { q: 'A room is 12 ft by 10 ft 6 in with two door openings, each 30 in wide. How much baseboard is needed, in feet?', a: (2 * (144 + 126) - 60) + ' in = ' + ((2 * (144 + 126) - 60) / 12) + ' ft' },
+      { q: 'Fascia of 39,200 mm is cut from boards 4,880 mm long. Ignoring joints, how many boards are bought?', a: Math.ceil(39200 / 4880) + ' boards (39,200 ÷ 4,880 = ' + d2(39200 / 4880) + ')' }
+    ]),
+    B.check('39200 ÷ 4880 =', d2(39200 / 4880)),
 
     B.worksheet({ title: 'Around the outside', sub: 'Find the perimeter, or find the ? from the perimeter', intro: 'Add every outside edge. If a perimeter is given, transpose to find the ?' }),
     B.grid2(
       B.prob({ q: 'Find the perimeter of the plate.', canvas: SH('rectangle', { l: 1800, w: 950 }, { width: '1.7in' }), a: n(2 * (1800 + 950)) + ' mm', lines: 2 }),
-      B.prob({ q: 'Find the perimeter. The dashed height is not an edge.', canvas: G.tri(14, 13, 15, 'cm', { h: '12 cm', max: '2.25in' }), a: (14 + 13 + 15) + ' cm', lines: 2 })
+      B.prob({ q: 'Find the perimeter. The dashed line is the height of the triangle. It is not an edge.', canvas: G.tri(14, 13, 15, 'cm', { h: '12 cm', max: '2.25in' }), a: (14 + 13 + 15) + ' cm', lines: 2 })
     ),
     B.grid2(
       B.prob({ q: 'The perimeter is 4,200 mm. Find the width.', canvas: SH('rectangle', { l: 1350, w: 750 }, { hide: ['w'], width: '1.7in' }), a: n(4200 / 2 - 1350) + ' mm', work: 'w = P ÷ 2 − l = 4,200 ÷ 2 − 1,350', lines: 2 }),
       B.prob({ q: 'Find the perimeter in feet and inches.', canvas: G.ftinRect('10′ 4″', '6′ 8″', '1.6in', 124 / 80), a: '2 × (124 + 80) = ' + (2 * (124 + 80)) + ' in = ' + (2 * (124 + 80) / 12) + ' ft', lines: 2 })
     ),
     B.grid2(
-      B.prob({ q: 'A square has a perimeter of 2,000 mm. Find the side.', a: n(2000 / 4) + ' mm', work: 's = P ÷ 4', lines: 2 }),
+      B.prob({ q: 'The perimeter of the square is 2,000 mm. Find the side.', canvas: G8.rectFig(500, 500, 'mm', { askL: true, square: true, max: '1.25in' }), a: n(2000 / 4) + ' mm', work: 's = P ÷ 4', lines: 2 }),
       B.prob({ q: 'Change one value: both sides of the plate in problem 1 are doubled. Find the new perimeter. What happened to it?', a: n(2 * 2 * (1800 + 950)) + ' mm. The perimeter doubled.', lines: 2 })
     ),
 
@@ -257,30 +315,36 @@ module.exports = function (B, L) {
       B.prob({ q: 'A tape around the tank reads 3,000 mm. Find the diameter.', canvas: G8.circleCallout('C = 3,000 mm', '1.8in'), a: 'D = 3,000 ÷ π = ' + d2(3000 / PI) + ' mm', lines: 2 })
     ),
     B.grid2(
-      B.prob({ q: 'Unfold it. Find the stretch-out marked ? above the net.', canvas: side2(G8.cyl3d(200, 400, 'mm', { max: '0.9in' }), G8.cylNet(200, 400, 'mm', { askS: true, max: '1.75in' })), a: 'π × 400 = ' + d2(PI * 400) + ' mm', lines: 2 }),
+      B.prob({ q: 'Unfold it. Find the stretch-out, the length marked ?, of the cylinder.', canvas: side2(G8.cyl3d(200, 400, 'mm', { max: '0.9in' }), G8.cylNet(200, 400, 'mm', { askS: true, max: '1.75in' })), a: 'π × 400 = ' + d2(PI * 400) + ' mm', lines: 2 }),
       B.prob({ q: 'Find the length of the arc.', canvas: G.sectorFig(400, 75, 'mm', { askL: true, max: '1.3in' }), a: '75 ÷ 360 × π × 800 = ' + d2(75 / 360 * PI * 800) + ' mm', lines: 2 })
     ),
     B.grid2(
       B.prob({ q: 'A wheel is 700 mm in diameter. How many turns does it make in 10 m?', a: d2(10000 / (PI * 700)) + ' turns', lines: 2 }),
       B.prob({ q: 'A jacket wraps a pipe with an outside diameter of 8' + L.fr(5, 8) + ' in. Find the stretch-out to the nearest 1/16 in.', a: L.inch(PI * 8.625, 16), lines: 2 })
     ),
+    B.grid2(
+      B.prob({ q: 'Find the curved edge and the whole perimeter of the half circle.', canvas: SH('semicircle', { r: 250 }, { derived: 'show', width: '1.9in' }), a: 'Curved edge ' + d2(PI * 500 / 2) + ' mm, perimeter ' + d2(PI * 500 / 2 + 500) + ' mm', lines: 2 }),
+      ''
+    ),
 
     B.worksheet({ title: 'Break it down: composite shapes', sub: 'Split each shape into straight edges and arcs', intro: 'Add only the outside edges. Dashed lines are not edges. Round to two decimal places.' }),
     B.grid2(
       B.prob({ q: 'Find the perimeter of the slot.', canvas: SH('stadium', { l: 80, r: 20 }, { derived: 'show', width: '2.3in' }), a: '2 × 80 + π × 40 = ' + d2(160 + PI * 40) + ' mm', lines: 2 }),
-      B.prob({ q: 'Find the perimeter. Part B is a half circle.', canvas: G.rectSemi(500, 240, { split: true, max: '2.3in' }), a: '500 + 500 + 240 + π × 240 ÷ 2 = ' + d2(1240 + PI * 120) + ' mm', lines: 2 })
+      B.prob({ q: 'Find the perimeter of the plate. Part B is a half circle.', canvas: G.rectSemi(500, 240, { split: true, max: '2.3in' }), a: '500 + 500 + 240 + π × 240 ÷ 2 = ' + d2(1240 + PI * 120) + ' mm', lines: 2 })
     ),
     B.grid2(
       B.prob({ q: 'Each corner is a quarter circle. Find the perimeter.', canvas: G.roundedPlate(800, 500, 40, { split: true, max: '1.6in' }), a: '2 × 720 + 2 × 420 + π × 80 = ' + d2(1440 + 840 + PI * 80) + ' mm', lines: 2 }),
-      B.prob({ q: 'Find the total length of both edges of the washer.', canvas: G8.washer(60, 30, 'mm', { max: '1.15in' }), a: 'π × 120 + π × 60 = ' + d2(PI * 180) + ' mm', lines: 2 })
+      B.prob({ q: 'Find the total length of both edges of the washer, inside and outside.', canvas: G8.washer(60, 30, 'mm', { max: '1.15in' }), a: 'π × 120 + π × 60 = ' + d2(PI * 180) + ' mm', lines: 2 })
     ),
     B.grid2(
       B.prob({ q: 'Find the length of the belt.', canvas: G.belt(250, 1000, { max: '2.3in' }), a: '2 × 1,000 + π × 250 = ' + d2(2000 + PI * 250) + ' mm', lines: 2 }),
-      B.prob({ q: 'A quarter circle has a radius of 250 mm. Find its perimeter, both straight edges and the arc.', a: '2 × 250 + π × 500 ÷ 4 = 500 + ' + d2(PI * 125) + ' = ' + d2(500 + PI * 125) + ' mm', lines: 2 })
+      B.prob({ q: 'Find the perimeter of the quarter circle.', canvas: SH('quarter-circle', { r: 250 }, { width: '1.3in' }), a: '2 × 250 + π × 500 ÷ 4 = 500 + ' + d2(PI * 125) + ' = ' + d2(500 + PI * 125) + ' mm', lines: 2 })
     ),
     B.check('π × 350 =', d2(PI * 350)),
     B.check('3000 ÷ π =', d2(3000 / PI)),
     B.check('π × 400 =', d2(PI * 400)),
+    B.check('π × 500 ÷ 2 =', d2(PI * 250)),
+    B.check('π × 500 ÷ 2 + 500 =', d2(PI * 250 + 500)),
     B.check('75 ÷ 360 × π × 800 =', d2(75 / 360 * PI * 800)),
     B.check('10000 ÷ ( π × 700 ) =', d2(10000 / (PI * 700))),
     B.check('2 × 80 + π × 40 =', d2(160 + PI * 40)),

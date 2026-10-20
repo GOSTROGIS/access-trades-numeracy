@@ -18,7 +18,8 @@ Everything runs in the browser. Once the folder is downloaded, the hub, the canv
 | `numeracy-hub/index.html` | Numeracy Hub: shapes, order of operations, volume and layout, angles and trig, fabrication, pipe trades, unit conversions, mechanical aptitude, coordinate systems, measuring tools and the exam builder |
 | `shape-canvas/index.html` | Shape Canvas: drag shapes onto a sheet with every angle and formula shown, make flat shapes 3D, change their sizes, unfold them into nets, snap pieces together, style them, copy them into PowerPoint, and export drawings with a title block (vector PDF, SVG, PNG) |
 | `calculators/` | TI-30Xa, Sharp EL-531XT and HP-15C calculators that work in the browser |
-| `books/` | Textbook, Exercise Book and Answer Key (PDF, US Letter) |
+| `books/` | Textbook, Exercise Book and Answer Key (PDF, US Letter), and a web edition of each |
+| `bcbc/` | ACCESS drawings of the BC Building Code 2024 Part 9 Articles, one SVG per Article (`bcbc/<section>/<Article>.svg`, titles in `bcbc/plates.json`) |
 
 Your progress in the hub is saved in the browser you use. Using a different browser or computer starts a fresh record.
 

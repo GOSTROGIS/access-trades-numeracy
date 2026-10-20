@@ -42,6 +42,19 @@ module.exports = function (B, L) {
   const dsh = R(6.5 - 1.25 - 2.375, 3)
   const w1 = near(1.71, 16), w2 = near(1.71, 32), w3 = near(75 / 25.4, 16)
   const buy = R(3 * 6 * 4.15 + 12 * 0.38, 2)
+  /* Sections 5.8 and 5.9 and Worksheet 5C: numbers and helpers */
+  const W = require('../engine/figs-ch01.js')
+  const PL = require('../engine/plates.js')
+  const d1 = W.divSteps('9.25', 4, 4), d2 = W.divSteps('2', 7, 4), d3 = W.divSteps('5', 12, 4)
+  const nails = [['45', '2.64'], ['51', '2.84'], ['57', '2.87'], ['63', '3.25'], ['76', '3.66'], ['82', '3.66'], ['101 or greater', '4.88']]
+  /* every diameter is checked against the code text */
+  nails.forEach(r => { if (!PL.article('9.23.3.1').text.includes(r[1])) throw new Error('nail diameter not in code text: ' + r[1]) })
+  const pr = { n: 24, perM: 2.79, sheets: 12, sheet: 54.99 }
+  pr.m = R(pr.n * 2.44, 2)
+  pr.lumberRaw = R(pr.m * pr.perM, 4)
+  pr.lumber = R(pr.lumberRaw, 2)
+  pr.sheetsC = R(pr.sheets * pr.sheet, 2)
+  pr.total = R(pr.lumber + pr.sheetsC, 2)
 
   return L.join([
     B.chapter({
@@ -170,6 +183,7 @@ module.exports = function (B, L) {
 
     B.section('Dividing decimals'),
     B.p('When you divide by a whole number, divide as usual and keep the point in the same place in the answer. When you divide by a decimal, move the point to the right in both numbers until the number you divide by is a whole number. Dividing by 10, 100 or 1,000 moves the point 1, 2 or 3 places to the left: 254 ÷ 100 = 2.54.'),
+    B.p('When a division does not come out even, keep going past the last digit: write zeros after the point and bring them down. Section 5.8 shows this by hand, and how to round the answer to hundredths or thousandths.'),
     B.example({
       title: 'Dividing by a decimal',
       q: 'How many 0.25 m lengths can be cut from a 7.5 m bar? Ignore the saw cuts.',
@@ -198,6 +212,7 @@ module.exports = function (B, L) {
     B.calc({ title: 'Fraction to decimal', rows: [{ label: fr(3, 8) + ' by dividing', seq: '3 ÷ 8 =', expect: '0.375' }, { label: mx(2, 5, 8) + ' with the fraction key', seq: '2 ab/c 5 ab/c 8 F⇄D', expect: '2.625' }] }),
     B.raw('<div class="keep">' + B.table(['Fraction', 'Decimal inch', 'Millimetres'], eighths.map(k => [L.frac(k, 8) + ' in', n(k / 8) + ' in', n(R(k / 8 * 25.4, 3)) + ' mm']), { align: ['c', 'c', 'c'], caption: 'Eighths of an inch as decimal inches and millimetres. All of these are exact.' }) + '</div>'),
     B.p('To change a decimal with three places or fewer to a fraction, write it over 10, 100 or 1,000 and put it in ' + B.term('lowest terms') + ': 0.375 = ' + fr(375, '1,000') + ' = ' + fr(3, 8) + ' (divide both by 125). The fraction key does this for you (2nd F⇄D on the TI-30Xa, a b/c on the Sharp), as Chapter 4 showed.'),
+    B.p('Some fractions never end as a decimal. ' + fr(2, 3) + ' = 0.666… and ' + fr(5, 12) + ' = 0.4166… go on forever. Section 5.8 divides them by hand and rounds them to three decimal places.'),
     B.sub('Decimal inches to the nearest sixteenth'),
     B.p('A tape is marked in sixteenths, but a calculator gives decimal inches such as 2.83 in. To mark the length, change the decimal part to the nearest ' + fr(1, 16) + ' in. For finer work on a steel rule, use the nearest ' + fr(1, 32) + ' in. Always say which one you used.'),
     B.how(['Keep the whole number of inches.', 'Multiply the decimal part by 16 (or by 32).', 'Round to the nearest whole number. That is the number of sixteenths (or 32nds).', 'Write it over 16 (or 32) and put it in lowest terms.']),
@@ -248,6 +263,83 @@ module.exports = function (B, L) {
       { q: 'Five workers split a $68.40 lunch bill equally. How much each?', a: '$' + n(R(68.4 / 5, 2), 2) }
     ]),
 
+    B.section('Dividing to thousandths and rounding'),
+    B.p('Many divisions do not come out even. To carry on, divide as usual and write the point in the answer straight above the point in the number you are dividing. When you run out of digits, write a 0 at the end of the number and bring it down. Keep going until you have one more decimal place than you need, then round.'),
+    B.how(['Divide the whole number part as usual.', 'Write the point in the answer above the point in the number.', 'Write a 0 after the last digit, bring it down and divide again. Repeat.', 'Stop one place past the place you round to. Then round.']),
+    B.example({
+      title: 'Dividing past the last digit',
+      q: 'A 9.25 m length of trim is cut into 4 equal pieces. Ignore the saw cuts. How long is each piece? Round to two and to three decimal places.',
+      steps: d1.steps.concat(['The answer is ' + d1.q + ' m. It ends here, because the remainder is 0.', 'To two decimal places: the digit after the hundredths is 2, so ' + d1.q + ' rounds to ' + n(R(9.25 / 4, 2), 2) + '. To three places: the digit after the thousandths is 5, so it rounds up to ' + n(R(9.25 / 4, 3), 3) + '.']),
+      calc: { seq: '9.25 ÷ 4 =', expect: d1.q },
+      answer: n(R(9.25 / 4, 2), 2) + ' m to two decimal places, ' + n(R(9.25 / 4, 3), 3) + ' m to three. Three decimal places of a metre is the nearest millimetre: ' + n(R(9.25 / 4 * 1000, 0)) + ' mm.'
+    }),
+    B.example({
+      title: 'A division that never ends',
+      q: 'A 2 kg bag of grout is shared equally among 7 forms. How much goes in each form? Round to three decimal places.',
+      steps: d2.steps.concat(['The digits keep coming, so stop at four places: ' + d2.q + '.', 'The fourth digit is 7, which is 5 or more, so the third digit goes up: ' + n(R(2 / 7, 3), 3) + '.']),
+      calc: { seq: '2 ÷ 7 =', expect: n(R(2 / 7, 3), 3), say: 'The display shows ' + DSP('2 ÷ 7 =', 'ti30xa') + '. Round it the same way.' },
+      answer: n(R(2 / 7, 3), 3) + ' kg in each form, to three decimal places.'
+    }),
+    B.example({
+      title: 'A fraction that does not end',
+      q: 'Change ' + fr(5, 12) + ' to a decimal by hand. Round to three decimal places.',
+      steps: d3.steps.concat(['The 6 repeats forever: ' + d3.q + '…', 'To three places, look at the fourth digit, 6. Round up: ' + n(R(5 / 12, 3), 3) + '.']),
+      calc: { seq: '5 ÷ 12 =', expect: n(R(5 / 12, 3), 3) },
+      answer: fr(5, 12) + ' ≈ ' + n(R(5 / 12, 3), 3) + '. The ≈ sign means "is about".'
+    }),
+    B.watch('Carry one digit past the place', 'To round to thousandths you need the digit after the thousandths. Divide to four decimal places, round to three, and write only the three.'),
+    B.tryIt([
+      { q: '7 ÷ 8 by hand', a: n(7 / 8) },
+      { q: '10 ÷ 3, to three decimal places', a: n(R(10 / 3, 3), 3) },
+      { q: '1 ÷ 6, to two decimal places', a: n(R(1 / 6, 2), 2) },
+      { q: '22 ÷ 7, to three decimal places', a: n(R(22 / 7, 3), 3) },
+      { q: '4.5 ÷ 7, to three decimal places', a: n(R(4.5 / 7, 3), 3) },
+      { q: 'Change ' + fr(7, 9) + ' to a decimal, to three decimal places.', a: n(R(7 / 9, 3), 3) }
+    ]),
+
+    B.section('Carpentry: decimal feet and pricing'),
+    B.p('A builder’s plans or a calculator may give lengths in decimal feet, such as 12.75 ft. A tape reads feet, inches and sixteenths. A foot has 12 inches, so to change the decimal part of a foot to inches, multiply it by 12. To go the other way, divide the inches by 12.'),
+    B.example({
+      title: 'Decimal feet to a tape reading',
+      q: 'A rafter calculation gives 8.6 ft. What do you mark on the tape, to the nearest ' + fr(1, 16) + ' in?',
+      steps: ['Keep the 8 feet. The decimal part is 0.6 ft.', '0.6 × 12 = ' + n(R(0.6 * 12, 2)) + ' in. Keep the 7 inches.', 'Change the 0.2 in to sixteenths: 0.2 × 16 = ' + n(R(0.2 * 16, 2)) + ', which rounds to 3.'],
+      calc: { rows: [{ label: 'Inches', seq: '0.6 × 12 =', expect: '7.2' }, { label: 'Sixteenths', seq: '0.2 × 16 =', expect: '3.2' }] },
+      answer: '8 ft ' + mx(7, 3, 16) + ' in'
+    }),
+    B.example({
+      title: 'Feet and inches to decimal feet',
+      q: 'A wall is 14 ft 5 in long. Write it in decimal feet, to three decimal places.',
+      steps: ['5 in is ' + fr(5, 12) + ' ft. Divide: 5 ÷ 12 = 0.4166…', 'Round to three places: 0.417.', 'Add the whole feet: 14 + 0.417 = 14.417.'],
+      calc: { seq: '14 + 5 ÷ 12 =', expect: '14.417' },
+      answer: '14.417 ft'
+    }),
+    B.p('Building code values are metric decimals. Article 9.23.3.1, Sentence (2) says nails used for the framing and sheathing nailing tables shall have a diameter not less than that stated in Table 9.23.3.1. The table gives the minimum diameter for each minimum nail length (' + PL.cite('9.23.3.1') + ').'),
+    PL.figure(B, '9.23.3.1', { crop: [55, 208, 760, 330], width: '6.2in', caption: 'Table 9.23.3.1 drawn to scale. Left: the minimum length of each nail. Right: its minimum diameter in millimetres, with decimal inches in brackets.' }),
+    B.raw('<div class="keep">' + B.table(['Minimum length of nails, mm', 'Minimum diameter of nails, mm'], nails.map(r => [r[0], r[1]]), { align: ['c', 'c'], caption: 'Table 9.23.3.1, Diameter of Nails. ' + PL.cite('9.23.3.1') + '.' }) + '</div>'),
+    B.example({
+      title: 'Comparing nail diameters',
+      q: 'Use Table 5.' + B.tab + '. By how much is the minimum diameter of a 76 mm nail larger than that of a 63 mm nail? Which two lengths have the closest diameters?',
+      steps: ['3.66 − 3.25 = ' + n(R(3.66 - 3.25, 2), 2) + ' mm.', 'Line up the points and compare each diameter with the next: 2.84 and 2.87 differ by only ' + n(R(2.87 - 2.84, 2), 2) + ' mm. The 76 mm and 82 mm nails have the same diameter, 3.66 mm.'],
+      answer: n(R(3.66 - 3.25, 2), 2) + ' mm larger. The 51 mm and 57 mm nails have the closest different diameters, ' + n(R(2.87 - 2.84, 2), 2) + ' mm apart.'
+    }),
+    B.check('3.66 − 3.25 =', '0.41'),
+    B.example({
+      title: 'Pricing lumber and sheets',
+      q: 'An order has ' + pr.n + ' pieces of 38 × 89 lumber, each 2.44 m long, at $' + n(pr.perM, 2) + ' per metre, and ' + pr.sheets + ' sheets of sheathing at $' + n(pr.sheet, 2) + ' each. The prices are from the supplier’s quote. Find the total before tax.',
+      steps: ['Metres of lumber: ' + pr.n + ' × 2.44 = ' + n(pr.m) + ' m.', 'Lumber: ' + n(pr.m) + ' × ' + n(pr.perM, 2) + ' = $' + n(pr.lumberRaw) + ', which rounds to $' + n(pr.lumber, 2) + '.', 'Sheets: ' + pr.sheets + ' × ' + n(pr.sheet, 2) + ' = $' + n(pr.sheetsC, 2) + '.', 'Total: ' + n(pr.lumber, 2) + ' + ' + n(pr.sheetsC, 2) + ' = $' + n(pr.total, 2) + '.'],
+      calc: { rows: [{ label: 'Lumber', seq: pr.n + ' × 2.44 × ' + pr.perM + ' =', expect: n(pr.lumber, 2) }, { label: 'Sheets', seq: pr.sheets + ' × ' + pr.sheet + ' =', expect: n(pr.sheetsC, 2) }] },
+      answer: '$' + n(pr.total, 2) + ' before tax.'
+    }),
+    B.tryIt([
+      { q: 'Change 10.25 ft to feet and inches.', a: '10 ft 3 in' },
+      { q: 'Change 6 ft 9 in to decimal feet.', a: '6.75 ft' },
+      { q: 'Change 3.4 ft to feet and inches, to the nearest ' + fr(1, 16) + ' in.', a: '3 ft ' + mx(4, 13, 16) + ' in (0.4 × 12 = 4.8 in, 0.8 × 16 = 12.8, rounds to 13)' },
+      { q: 'Change 9 ft 7 in to decimal feet, to three decimal places.', a: n(R(9 + 7 / 12, 3), 3) + ' ft' },
+      { q: 'In Table 5.' + B.tab + ', what is the minimum diameter of a 57 mm nail?', a: '2.87 mm' },
+      { q: '16 studs at $4.87 each. Cost?', a: '$' + n(R(16 * 4.87, 2), 2) }
+    ]),
+    B.check('9 + 7 ÷ 12 =', n(R(9 + 7 / 12, 3), 3)), B.check('16 × 4.87 =', n(R(16 * 4.87, 2), 2)),
+
     B.worksheet({ title: 'Decimal parts on the canvas', sub: 'Metric parts with decimal sizes. Find every red ?', intro: 'Line up the decimal points when you add or subtract. Estimate first, then check with your calculator.' }),
     B.prob({ q: 'The pin is 165.1 mm long overall. Find the length of the middle step.', canvas: G.shaft([{ len: 31.75, dia: 30 }, { len: wsMid, dia: 22, ask: true }, { len: 44.45, dia: 26 }], { fmt: v => n(R(v, 2)) + ' mm', totalLab: '165.1 mm', w: 560, hmax: 46, ls: 15, max: '4.8in' }), a: mm(wsMid), work: '165.1 − 31.75 − 44.45 = ' + n(wsMid), lines: 2 }),
     B.prob({ q: 'Read marks A, B and C to the nearest 0.5 mm.', canvas: F.mmRuler(0, 50, rmm.map((v, i) => ({ v, lab: 'ABC'[i] })), { ppm: 12, max: '5.6in' }).replace(/font-size="10"([^>]*>cm<)/, 'font-size="12.5"$1'), a: rmm.map((v, i) => 'ABC'[i] + ' = ' + n(v) + ' mm').join(', '), lines: 1 }),
@@ -273,6 +365,19 @@ module.exports = function (B, L) {
     B.check('3 × 6 × 4.15 + 12 × 0.38 =', n(buy, 2)),
     B.check('165.1 − 31.75 − 44.45 =', n(wsMid)),
     B.check('0.71 × 16 =', '11.36'),
-    B.check('0.71 × 32 =', '22.72')
+    B.check('0.71 × 32 =', '22.72'),
+
+    B.worksheet({ title: 'Carpentry: decimal feet and pricing', sub: 'Feet, inches and decimal feet, lumber prices and nail sizes', intro: 'A foot has 12 inches. Round tape readings to the nearest 1/16 in and money to the nearest cent. Prices are given in each problem. Code values come from Table 5.' + B.tab + '.' }),
+    B.grid2(
+      B.prob({ q: 'Change 11.5 ft to feet and inches.', a: '11 ft 6 in', work: '0.5 × 12 = 6', lines: 2 }),
+      B.prob({ q: 'Change 7 ft 8 in to decimal feet, to three decimal places.', a: n(R(7 + 8 / 12, 3), 3) + ' ft', work: '8 ÷ 12 = 0.6666…, rounds to 0.667', lines: 2 })),
+    B.grid2(
+      B.prob({ q: 'A plan gives 5.3 ft. What is that in feet and inches, to the nearest ' + fr(1, 16) + ' in?', a: '5 ft ' + mx(3, 5, 8) + ' in', work: '0.3 × 12 = 3.6 in. 0.6 × 16 = 9.6, rounds to 10. ' + fr(10, 16) + ' = ' + fr(5, 8), lines: 2 }),
+      B.prob({ q: 'Divide by hand: 15 ft of trim is cut into 7 equal pieces. Ignore the saw cuts. How long is each piece, to three decimal places?', a: n(R(15 / 7, 3), 3) + ' ft', work: '15 ÷ 7 = 2.1428…, rounds to 2.143', lines: 2 })),
+    B.prob({ q: 'A 16 ft board is cut into 3 equal pieces. Ignore the saw cuts. Find each piece in decimal feet to three decimal places, then in feet and inches.', canvas: G.cutBar([1, 2, 3].map(() => ({ len: 16 / 3, ask: true })), { totalLab: '16 ft', fmt: v => n(R(v, 3)) + ' ft', s: 15, max: '5.4in' }), a: n(R(16 / 3, 3), 3) + ' ft = 5 ft 4 in', work: '16 ÷ 3 = 5.333… 0.333… × 12 = 4 in', lines: 2 }),
+    B.prob({ q: 'An order has 30 studs at $4.87 each and 8 sheets at $62.45 each. What is the total before tax?', a: '$' + n(R(30 * 4.87 + 8 * 62.45, 2), 2), work: '30 × 4.87 = 146.10. 8 × 62.45 = 499.60.', lines: 3 }),
+    B.prob({ q: 'Baseboard runs around a room with walls of 3.66 m, 2.44 m, 3.66 m and 2.44 m. Ignore the door. Baseboard costs $3.15 per metre. How many metres, and what does it cost?', canvas: B.shape('rectangle', { l: 3.66, w: 2.44 }, { units: 'm', width: '2.2in' }), a: n(R(2 * (3.66 + 2.44), 2)) + ' m, $' + n(R(2 * (3.66 + 2.44) * 3.15, 2), 2), work: '3.66 + 2.44 + 3.66 + 2.44 = 12.2 m. 12.2 × 3.15', lines: 3 }),
+    B.prob({ q: 'Use Table 5.' + B.tab + '. Write the minimum diameters of the 45 mm, 63 mm and 101 mm nails from smallest to largest. How much bigger is the largest than the smallest?', a: '2.64 mm, 3.25 mm, 4.88 mm. ' + n(R(4.88 - 2.64, 2), 2) + ' mm bigger.', lines: 2 }),
+    B.check('7 + 8 ÷ 12 =', n(R(7 + 8 / 12, 3), 3)), B.check('15 ÷ 7 =', n(R(15 / 7, 3), 3)), B.check('30 × 4.87 + 8 × 62.45 =', n(R(30 * 4.87 + 8 * 62.45, 2), 2)), B.check('2 × ( 3.66 + 2.44 ) × 3.15 =', n(R(2 * (3.66 + 2.44) * 3.15, 2), 2))
   ])
 }

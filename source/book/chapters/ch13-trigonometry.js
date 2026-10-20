@@ -77,6 +77,19 @@ module.exports = function (B, L) {
   const bv2 = { t: 10, w: 6 }, bv2A = atan(bv2.w / bv2.t)
   const frames = [4, 6, 8, 12]
 
+  /* 13.5 inches per foot, and Section 13.8 roofs, stairs and ramps */
+  const PL = require('../engine/plates.js')
+  const ipf = 0.25
+  const pitches = [2, 3, 4, 5, 6, 8, 10, 12]
+  const rp5 = atan(5 / 12)
+  const dn = { ipf: 0.25, run: 30 }
+  const sh = { p: 3, normal: 3, low: 6 }
+  const vt = { p: 1.5, area: 96 }
+  const sa = { rise: 2720 / 14, run: 265 }
+  const ramps = [['Exterior ramps', 'a', 10], ['Interior ramps serving residential occupancies', 'b', 10], ['Industrial occupancies', 'c', 6], ['All other occupancies', 'd', 8]]
+  const rx = { rise: 600, k: 10 }
+  const rc = { p: 6 }
+
   return L.join([
     B.chapter({
       num: 13, id: 'trig', title: 'Trigonometry',
@@ -218,6 +231,13 @@ module.exports = function (B, L) {
       answer: 'Fall ' + n(drF) + ' mm, angle ' + deg(drA) + '.'
     }),
     B.check(n(dr.g / 100) + ' TAN⁻¹', f2(drA)),
+    B.sub('Inches per foot'),
+    B.p('A slope can also be given as the rise in inches for every foot (12″) of run, such as ' + L.fr(1, 4) + '″ per foot. Divide the inches by 12 to get the ratio rise ÷ run. ' + L.fr(1, 4) + '″ per foot is 0.25 ÷ 12, the same as 1 in ' + n(12 / ipf) + ', which is also written 1:' + n(12 / ipf) + '. As a grade it is 0.25 ÷ 12 × 100 = ' + f2(ipf / 12 * 100) + '%, and its angle is tan⁻¹(0.25 ÷ 12) = ' + deg(atan(ipf / 12)) + '.',
+      'A roof that rises 5″ per foot is a 5 in 12 roof. Its ratio is 5 ÷ 12, which is 1 in ' + n(L.round(12 / 5, 2)) + ', and its angle is tan⁻¹(5 ÷ 12) = ' + deg(atan(5 / 12)) + '. Section 13.8 works with roof slopes in this form.'),
+    B.keyidea('One slope, five ways', L.fr(1, 4) + '″ per foot = 1 in ' + n(12 / ipf) + ' = 1:' + n(12 / ipf) + ' = ' + f2(ipf / 12 * 100) + '% grade = ' + deg(atan(ipf / 12)) + '. The first three are ratios of rise to run, the grade is the ratio × 100 and the angle comes from TAN⁻¹ of the ratio.'),
+    B.check('0.25 ÷ 12 × 100 =', f2(ipf / 12 * 100)),
+    B.check('( 0.25 ÷ 12 ) TAN⁻¹', f2(atan(ipf / 12))),
+    B.check('( 5 ÷ 12 ) TAN⁻¹', f2(atan(5 / 12))),
     B.tryIt([
       { q: 'Rise 300 mm, run 4,000 mm. Find the angle and the grade to two decimal places.', a: deg(atan(300 / 4000)) + ', ' + f2(300 / 4000 * 100) + '%' },
       { q: 'A slope of 1 in 20. Find the angle to two decimal places.', a: deg(atan(1 / 20)) },
@@ -286,6 +306,86 @@ module.exports = function (B, L) {
       { q: 'Two plates are each bevelled at 35°. What is the groove angle?', a: '70°' },
       { q: 'A square frame corner is cut at 45°. A cut of 46° is made by mistake on both pieces. What corner angle do the pieces make?', a: '92° (2 × 46°)' }
     ]),
+
+    /* ---------- 13.8 Roofs, stairs and ramps ---------- */
+    B.section('Roofs, stairs and ramps'),
+    B.p('Carpentry slopes are right triangles too. A roof slope written as rise in 12, a stair step with its unit rise and unit run, and a ramp written as 1 in 10 all give a rise and a run. The angle is tan⁻¹(rise ÷ run), the same as for the ramps in Section 13.5. Section 12.10 finds rafter lengths from the same numbers.'),
+    B.sub('Roof slope'),
+    B.table(['Rise in 12', 'As 1 in …', 'Percent grade', 'Angle tan⁻¹(rise ÷ 12)'], pitches.map(p => [p + ' in 12', '1 in ' + n(L.round(12 / p, 2)), f2(p / 12 * 100) + '%', deg(atan(p / 12))]), { align: ['c', 'c', 'c', 'c'], caption: 'Roof slopes worked out with the calculator, to two decimal places.' }),
+    B.example({
+      title: 'Angle of a 5 in 12 roof',
+      q: 'Find the angle of a 5 in 12 roof to two decimal places, and in degrees, minutes and seconds to the nearest second (Section 12.8).',
+      fig: A(() => tt(rp5, { opp: '5', adj: '12', ang: '?' }, { max: '2.1in' }), EX),
+      steps: ['Rise 5 and run 12 are the opposite and adjacent sides: TOA.', 'Angle = tan⁻¹(5 ÷ 12) = ' + deg(rp5) + '.', 'In D°M′S: ' + G.dmsText(rp5) + '.'],
+      after: G.dmsCalc(B, { rows: [{ label: 'Angle', seq: '( 5 ÷ 12 ) TAN⁻¹', expect: f2(rp5) }, { label: 'In D°M′S', seq: '( 5 ÷ 12 ) TAN⁻¹ DD▸DMS', expect: f2(rp5) }] }),
+      answer: deg(rp5) + ', which is ' + G.dmsText(rp5) + ' to the nearest second.'
+    }),
+    B.example({
+      title: 'A slope in inches per foot',
+      q: 'A drain line slopes ' + L.fr(1, 4) + '″ per foot. Write the slope as 1 in …, as a percent grade and as an angle to two decimal places. How far does it fall over a ' + dn.run + ' ft run?',
+      steps: ['Ratio: 0.25 ÷ 12. Turn it over: 12 ÷ 0.25 = ' + n(12 / dn.ipf) + ', so the slope is 1 in ' + n(12 / dn.ipf) + '.', 'Grade = 0.25 ÷ 12 × 100 = ' + f2(dn.ipf / 12 * 100) + '%.', 'Angle = tan⁻¹(0.25 ÷ 12) = ' + deg(atan(dn.ipf / 12)) + '.', 'Fall = ' + dn.run + ' ft × 0.25″ per foot = ' + n(dn.run * dn.ipf) + '″.'],
+      calc: { rows: [{ label: 'Angle', seq: '( 0.25 ÷ 12 ) TAN⁻¹', expect: f2(atan(dn.ipf / 12)) }, { label: 'Grade', seq: '0.25 ÷ 12 × 100 =', expect: f2(dn.ipf / 12 * 100) }] },
+      answer: '1 in ' + n(12 / dn.ipf) + ', ' + f2(dn.ipf / 12 * 100) + '%, ' + deg(atan(dn.ipf / 12)) + '. It falls ' + n(dn.run * dn.ipf) + '″ (' + L.mx(7, 1, 2) + '″) over ' + dn.run + ' ft.'
+    }),
+    B.p('The BC Building Code 2024 (BCBC), Division B, sets the slopes that roof coverings may be put on. Sentence 9.26.3.1.(1) says the slopes "shall conform to Table 9.26.3.1." In that table (page 9-242), asphalt shingles have a minimum slope of "1 in 3" for normal application and "1 in 6" for low slope application, with "no limit" as the maximum. Wood shingles have a minimum of "1 in 4" and cedar shakes "1 in 3".'),
+    PL.figure(B, '9.26.3.1', { crop: [50, 160, 595, 131], width: '5.4in', caption: 'The asphalt shingle rows of Table 9.26.3.1. A slope of 1 in 3 rises 1 unit for every 3 units of run, the same as 4 in 12.' }),
+    B.example({
+      title: 'Shingles on a 3 in 12 roof',
+      q: 'Can asphalt shingles go on a 3 in 12 roof in normal application? In low slope application? Compare the angles.',
+      steps: ['3 in 12 is 3 ÷ 12 = 1 in 4. Its angle is tan⁻¹(3 ÷ 12) = ' + deg(atan(3 / 12)) + '.', 'Normal application needs at least 1 in 3 = 4 in 12, an angle of tan⁻¹(1 ÷ 3) = ' + deg(atan(1 / 3)) + '. The roof is flatter than that.', 'Low slope application needs at least 1 in 6 = 2 in 12, an angle of tan⁻¹(1 ÷ 6) = ' + deg(atan(1 / 6)) + '. The roof is steeper than that.'],
+      answer: 'Not in normal application. Yes in low slope application.'
+    }),
+    B.check('( 3 ÷ 12 ) TAN⁻¹', f2(atan(3 / 12))), B.check('( 1 ÷ 3 ) TAN⁻¹', f2(atan(1 / 3))), B.check('( 1 ÷ 6 ) TAN⁻¹', f2(atan(1 / 6))),
+    B.p('Roof slope also changes how much venting a roof space needs. Sentence 9.19.1.2.(1) says "the unobstructed vent area shall be not less than 1/300 of the insulated ceiling area." Sentence 9.19.1.2.(2) says "Where the roof slope is less than 1 in 6 or in roofs that are constructed with roof joists, the unobstructed vent area shall be not less than 1/150 of the insulated ceiling area" (page 9-136).'),
+    PL.figure(B, '9.19.1.2', { crop: [528, 560, 465, 250], width: '3.8in', caption: 'The worked example on the 9.19.1.2 plate: the same ceiling needs twice the vent area when Sentence (2) applies.' }),
+    B.example({
+      title: 'Vent area for a low roof',
+      q: 'A roof framed with trusses has a slope of ' + vt.p + ' in 12. The insulated ceiling below it is ' + vt.area + ' m². Which Sentence of Article 9.19.1.2 applies, and what is the least vent area?',
+      steps: [vt.p + ' in 12 is ' + vt.p + ' ÷ 12 = 1 in ' + n(12 / vt.p) + '. 1 in 6 is 2 in 12. The roof is flatter, so its slope is less than 1 in 6.', 'Sentence (2) applies: vent area = ' + vt.area + ' ÷ 150 = ' + f2(vt.area / 150) + ' m².', 'For comparison, a roof of 1 in 6 or steeper over the same ceiling needs ' + vt.area + ' ÷ 300 = ' + f2(vt.area / 300) + ' m² (Sentence (1)).'],
+      answer: 'Sentence (2). At least ' + f2(vt.area / 150) + ' m² of unobstructed vent area.'
+    }),
+    B.sub('Stair angle'),
+    B.p('Each step of a stair is a small right triangle. The stair angle is tan⁻¹(unit rise ÷ unit run). The largest rise with the smallest run allowed by Tables 9.8.4.1 and 9.8.4.2 (Section 12.9) gives the steepest stair those two limits allow: tan⁻¹(200 ÷ 255) = ' + deg(atan(200 / 255)) + ' for a private stair and tan⁻¹(180 ÷ 280) = ' + deg(atan(180 / 280)) + ' for a public stair.'),
+    B.check('( 200 ÷ 255 ) TAN⁻¹', f2(atan(200 / 255))), B.check('( 180 ÷ 280 ) TAN⁻¹', f2(atan(180 / 280))),
+    B.example({
+      title: 'Angle of a stair',
+      q: 'The stair in Example 12.15 has a unit rise of ' + n(L.round(sa.rise, 2), 2) + ' mm (2,720 ÷ 14) and a unit run of ' + sa.run + ' mm. Find the stair angle to two decimal places.',
+      steps: ['Angle = tan⁻¹(unit rise ÷ unit run) = tan⁻¹(' + n(L.round(sa.rise, 2), 2) + ' ÷ ' + sa.run + ').', 'Key 2,720 ÷ 14 in the brackets so the calculator keeps every digit of the unit rise.'],
+      calc: { seq: '( 2720 ÷ 14 ÷ ' + sa.run + ' ) TAN⁻¹', expect: f2(atan(sa.rise / sa.run)) },
+      answer: deg(atan(sa.rise / sa.run)) + '. It is less steep than ' + deg(atan(200 / 255)) + ', the steepest the private stair limits allow.'
+    }),
+    B.sub('Ramp slope'),
+    B.p('Sentence 9.8.5.4.(1) says "The slope of ramps shall be not more than a) 1 in 10 for exterior ramps, b) 1 in 10 for interior ramps serving residential occupancies, c) 1 in 6 for industrial occupancies, and d) 1 in 8 for all other occupancies" (pages 9-33 and 9-34).'),
+    B.table(['Ramp', 'Clause', 'Steepest slope', 'Percent grade', 'Angle'], ramps.map(r => [r[0], '(' + r[1] + ')', '1 in ' + r[2], f2(100 / r[2]) + '%', deg(atan(1 / r[2]))]), { align: ['', 'c', 'c', 'c', 'c'], caption: 'The ramp limits of Sentence 9.8.5.4.(1) as grades and angles.' }),
+    PL.figure(B, '9.8.5.4', { crop: [150, 300, 690, 430], width: '4.6in', caption: 'Four ramps, each at the steepest slope Sentence 9.8.5.4.(1) allows for its use.' }),
+    B.example({
+      title: 'Shortest exterior ramp',
+      q: 'An exterior ramp must rise ' + rx.rise + ' mm. Find the shortest run Clause 9.8.5.4.(1)(a) allows, the length along the slope to two decimal places and the angle.',
+      fig: A(() => G.ramp(rx.rise * rx.k, rx.rise, { ang: { A: { ask: true, r: 90, s: 15 } }, sides: [{ a: 'A', b: 'R', ask: true, dim: true, s: 15 }, { a: 'R', b: 'B', lab: rx.rise + ' mm', dim: true, s: 15 }], W: 440, H: 150, pad: 56, max: '2.8in' }), EX),
+      steps: ['1 in 10 means the run is at least 10 times the rise: ' + rx.rise + ' × 10 = ' + n(rx.rise * rx.k) + ' mm.', 'Length along the slope = √(' + n(rx.rise * rx.k) + '² + ' + rx.rise + '²) = ' + f2(Math.hypot(rx.rise * rx.k, rx.rise)) + ' mm.', 'Angle = tan⁻¹(1 ÷ 10) = ' + deg(atan(1 / rx.k)) + '.'],
+      calc: { rows: [{ label: 'Length along the slope', seq: '( ' + rx.rise * rx.k + ' x² + ' + rx.rise + ' x² ) √x', expect: f2(Math.hypot(rx.rise * rx.k, rx.rise)) }, { label: 'Angle', seq: '( 1 ÷ 10 ) TAN⁻¹', expect: f2(atan(1 / rx.k)) }] },
+      answer: 'Run ' + n(rx.rise * rx.k) + ' mm, length ' + f2(Math.hypot(rx.rise * rx.k, rx.rise)) + ' mm, angle ' + deg(atan(1 / rx.k)) + '.'
+    }),
+    B.check('( 1 ÷ 6 ) TAN⁻¹', f2(atan(1 / 6))), B.check('( 1 ÷ 8 ) TAN⁻¹', f2(atan(1 / 8))),
+    B.sub('Rafter cuts'),
+    B.p('A rafter sits at the roof angle θ. Two of its cuts are plumb or level when the rafter is in place. The plumb cut at the ridge is vertical. The birdsmouth over the wall has a level seat cut and a plumb heel cut. Because the rafter edge slopes at θ, the seat cut meets the rafter edge at θ, and a plumb cut meets the rafter edge at 90° − θ. A square cut across the rafter is 90° to the edge, so a plumb cut is θ away from square.'),
+    B.figure(A(() => G.rafterCuts(atan(rc.p / 12), { topLab: deg(90 - atan(rc.p / 12)), seatLab: deg(atan(rc.p / 12)), max: '4.2in' }), FULL), 'A ' + rc.p + ' in 12 rafter with a plumb cut at the ridge end and a birdsmouth over the wall plate. The roof angle is ' + deg(atan(rc.p / 12)) + '.'),
+    B.example({
+      title: 'Cut angles for a 6 in 12 rafter',
+      q: 'Find the roof angle of a ' + rc.p + ' in 12 roof, the angle between the seat cut and the rafter edge, and the angle between the plumb cut and the rafter edge, to two decimal places.',
+      steps: ['Roof angle θ = tan⁻¹(' + rc.p + ' ÷ 12) = ' + deg(atan(rc.p / 12)) + '.', 'The seat cut is level, so it meets the rafter edge at θ = ' + deg(atan(rc.p / 12)) + '.', 'The plumb cut meets the rafter edge at 90° − ' + deg(atan(rc.p / 12)) + ' = ' + deg(90 - L.round(atan(rc.p / 12), 2)) + '. It is ' + deg(atan(rc.p / 12)) + ' away from a square cut.'],
+      calc: { seq: '( ' + rc.p + ' ÷ 12 ) TAN⁻¹', expect: f2(atan(rc.p / 12)) },
+      answer: 'θ = ' + deg(atan(rc.p / 12)) + ', seat cut ' + deg(atan(rc.p / 12)) + ', plumb cut ' + deg(90 - L.round(atan(rc.p / 12), 2)) + ' to the rafter edge.'
+    }),
+    B.tryIt([
+      { q: 'Find the angle of a 4 in 12 roof to two decimal places.', a: deg(atan(4 / 12)) },
+      { q: 'A roof is 7 in 12. Write it as 1 in … to two decimal places, and find its angle.', a: '1 in ' + f2(12 / 7) + ', ' + deg(atan(7 / 12)) },
+      { q: 'A drain slopes ' + L.fr(1, 8) + '″ per foot. Write the slope as 1 in … and as a percent grade to two decimal places.', a: '1 in ' + n(12 / 0.125) + ', ' + f2(0.125 / 12 * 100) + '%' },
+      { q: 'Can asphalt shingles go on a 2.5 in 12 roof in normal application? In low slope application? Use Table 9.26.3.1.', a: '2.5 in 12 is 1 in ' + n(12 / 2.5) + '. Not in normal application (needs 1 in 3, 4 in 12). Yes in low slope application (needs 1 in 6, 2 in 12).' },
+      { q: 'An industrial ramp rises 450 mm at the steepest slope Clause 9.8.5.4.(1)(c) allows. Find the run and the angle.', a: 'Run ' + n(450 * 6) + ' mm, angle ' + deg(atan(1 / 6)) },
+      { q: 'A rafter is 8 in 12. Find the angle between the seat cut and the rafter edge, and between the plumb cut and the rafter edge.', a: 'Seat cut ' + deg(atan(8 / 12)) + ', plumb cut ' + deg(90 - L.round(atan(8 / 12), 2)) }
+    ]),
+    B.check('( 4 ÷ 12 ) TAN⁻¹', f2(atan(4 / 12))), B.check('( 7 ÷ 12 ) TAN⁻¹', f2(atan(7 / 12))), B.check('( 8 ÷ 12 ) TAN⁻¹', f2(atan(8 / 12))), B.check('0.125 ÷ 12 × 100 =', f2(0.125 / 12 * 100)),
 
     B.worksheet({ title: 'Find the side', sub: 'Each triangle is drawn at its true angle. Find every red ?', intro: 'Mark the angle, name the sides, pick SOH, CAH or TOA, then multiply or divide. Give metric answers to two decimal places and inch answers to the nearest 1/16″.' }),
     B.grid2(
