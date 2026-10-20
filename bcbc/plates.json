@@ -1,0 +1,4612 @@
+{
+ "9.1.1.1": {
+  "title": "Application",
+  "section": "9.1",
+  "sectionTitle": "General"
+ },
+ "9.10.1.1": {
+  "title": "Sloped Roofs",
+  "section": "9.10",
+  "sectionTitle": "Fire Protection"
+ },
+ "9.10.1.2": {
+  "title": "Testing of Integrated Fire Protection and Life Safety Systems",
+  "section": "9.10",
+  "sectionTitle": "Fire Protection"
+ },
+ "9.10.1.3": {
+  "title": "Items under Part 3 Jurisdiction",
+  "section": "9.10",
+  "sectionTitle": "Fire Protection"
+ },
+ "9.10.1.4": {
+  "title": "Items under Part 6 Jurisdiction",
+  "section": "9.10",
+  "sectionTitle": "Fire Protection"
+ },
+ "9.10.10.1": {
+  "title": "Application",
+  "section": "9.10",
+  "sectionTitle": "Fire Protection"
+ },
+ "9.10.10.2": {
+  "title": "Service Room Floors",
+  "section": "9.10",
+  "sectionTitle": "Fire Protection"
+ },
+ "9.10.10.3": {
+  "title": "Separation of Service Rooms",
+  "section": "9.10",
+  "sectionTitle": "Fire Protection"
+ },
+ "9.10.10.4": {
+  "title": "Location of Fuel-Fired Appliances",
+  "section": "9.10",
+  "sectionTitle": "Fire Protection"
+ },
+ "9.10.10.5": {
+  "title": "Incinerators",
+  "section": "9.10",
+  "sectionTitle": "Fire Protection"
+ },
+ "9.10.10.6": {
+  "title": "Storage Rooms",
+  "section": "9.10",
+  "sectionTitle": "Fire Protection"
+ },
+ "9.10.11.1": {
+  "title": "Required Firewalls",
+  "section": "9.10",
+  "sectionTitle": "Fire Protection"
+ },
+ "9.10.11.2": {
+  "title": "Firewalls Not Required",
+  "section": "9.10",
+  "sectionTitle": "Fire Protection"
+ },
+ "9.10.11.3": {
+  "title": "Construction of Firewalls",
+  "section": "9.10",
+  "sectionTitle": "Fire Protection"
+ },
+ "9.10.12.1": {
+  "title": "Termination of Floors or Mezzanines",
+  "section": "9.10",
+  "sectionTitle": "Fire Protection"
+ },
+ "9.10.12.2": {
+  "title": "Location of Skylights",
+  "section": "9.10",
+  "sectionTitle": "Fire Protection"
+ },
+ "9.10.12.3": {
+  "title": "Exterior Walls Meeting at an Angle",
+  "section": "9.10",
+  "sectionTitle": "Fire Protection"
+ },
+ "9.10.12.4": {
+  "title": "Protection of Soffits",
+  "section": "9.10",
+  "sectionTitle": "Fire Protection"
+ },
+ "9.10.13.1": {
+  "title": "Closures",
+  "section": "9.10",
+  "sectionTitle": "Fire Protection"
+ },
+ "9.10.13.10": {
+  "title": "Self-closing Device",
+  "section": "9.10",
+  "sectionTitle": "Fire Protection"
+ },
+ "9.10.13.11": {
+  "title": "Hold-Open Devices",
+  "section": "9.10",
+  "sectionTitle": "Fire Protection"
+ },
+ "9.10.13.12": {
+  "title": "Service Room Doors",
+  "section": "9.10",
+  "sectionTitle": "Fire Protection"
+ },
+ "9.10.13.13": {
+  "title": "Fire Dampers",
+  "section": "9.10",
+  "sectionTitle": "Fire Protection"
+ },
+ "9.10.13.14": {
+  "title": "Fire Stop Flaps",
+  "section": "9.10",
+  "sectionTitle": "Fire Protection"
+ },
+ "9.10.13.15": {
+  "title": "Doors between Garages and Dwelling Units",
+  "section": "9.10",
+  "sectionTitle": "Fire Protection"
+ },
+ "9.10.13.16": {
+  "title": "Door Stops",
+  "section": "9.10",
+  "sectionTitle": "Fire Protection"
+ },
+ "9.10.13.2": {
+  "title": "Solid Core Wood Door as a Closure",
+  "section": "9.10",
+  "sectionTitle": "Fire Protection"
+ },
+ "9.10.13.3": {
+  "title": "Unrated Wood Door Frames",
+  "section": "9.10",
+  "sectionTitle": "Fire Protection"
+ },
+ "9.10.13.4": {
+  "title": "Doors as a Means of Egress",
+  "section": "9.10",
+  "sectionTitle": "Fire Protection"
+ },
+ "9.10.13.5": {
+  "title": "Wired Glass as a Closure",
+  "section": "9.10",
+  "sectionTitle": "Fire Protection"
+ },
+ "9.10.13.6": {
+  "title": "Steel Door Frames",
+  "section": "9.10",
+  "sectionTitle": "Fire Protection"
+ },
+ "9.10.13.7": {
+  "title": "Glass Block as a Closure",
+  "section": "9.10",
+  "sectionTitle": "Fire Protection"
+ },
+ "9.10.13.8": {
+  "title": "Maximum Size of Opening",
+  "section": "9.10",
+  "sectionTitle": "Fire Protection"
+ },
+ "9.10.13.9": {
+  "title": "Door Latch",
+  "section": "9.10",
+  "sectionTitle": "Fire Protection"
+ },
+ "9.10.14.1": {
+  "title": "Application",
+  "section": "9.10",
+  "sectionTitle": "Fire Protection"
+ },
+ "9.10.14.2": {
+  "title": "Area and Location of Exposing Building Face",
+  "section": "9.10",
+  "sectionTitle": "Fire Protection"
+ },
+ "9.10.14.3": {
+  "title": "Limiting Distance and Fire Department Response",
+  "section": "9.10",
+  "sectionTitle": "Fire Protection"
+ },
+ "9.10.14.4": {
+  "title": "Openings in Exposing Building Face",
+  "section": "9.10",
+  "sectionTitle": "Fire Protection"
+ },
+ "9.10.14.5": {
+  "title": "Construction of Exposing Building Face and Walls above Exposing Building Face",
+  "section": "9.10",
+  "sectionTitle": "Fire Protection"
+ },
+ "9.10.15.1": {
+  "title": "Application",
+  "section": "9.10",
+  "sectionTitle": "Fire Protection"
+ },
+ "9.10.15.2": {
+  "title": "Area and Location of Exposing Building Face",
+  "section": "9.10",
+  "sectionTitle": "Fire Protection"
+ },
+ "9.10.15.3": {
+  "title": "Limiting Distance and Fire Department Response",
+  "section": "9.10",
+  "sectionTitle": "Fire Protection"
+ },
+ "9.10.15.4": {
+  "title": "Glazed Openings in Exposing Building Face",
+  "section": "9.10",
+  "sectionTitle": "Fire Protection"
+ },
+ "9.10.15.5": {
+  "title": "Construction of Exposing Building Face of Houses",
+  "section": "9.10",
+  "sectionTitle": "Fire Protection"
+ },
+ "9.10.16.1": {
+  "title": "Required Fire Blocks in Concealed Spaces",
+  "section": "9.10",
+  "sectionTitle": "Fire Protection"
+ },
+ "9.10.16.2": {
+  "title": "Required Fire Blocks in Wall Assemblies",
+  "section": "9.10",
+  "sectionTitle": "Fire Protection"
+ },
+ "9.10.16.3": {
+  "title": "Fire Block Materials",
+  "section": "9.10",
+  "sectionTitle": "Fire Protection"
+ },
+ "9.10.16.4": {
+  "title": "Penetration of Fire Blocks",
+  "section": "9.10",
+  "sectionTitle": "Fire Protection"
+ },
+ "9.10.17.1": {
+  "title": "Flame-Spread Rating of Interior Surfaces",
+  "section": "9.10",
+  "sectionTitle": "Fire Protection"
+ },
+ "9.10.17.10": {
+  "title": "Protection of Foamed Plastics",
+  "section": "9.10",
+  "sectionTitle": "Fire Protection"
+ },
+ "9.10.17.11": {
+  "title": "Walls and Ceilings in Bathrooms",
+  "section": "9.10",
+  "sectionTitle": "Fire Protection"
+ },
+ "9.10.17.12": {
+  "title": "Coverings or Linings of Ducts",
+  "section": "9.10",
+  "sectionTitle": "Fire Protection"
+ },
+ "9.10.17.2": {
+  "title": "Ceilings in Exits or Public Corridors",
+  "section": "9.10",
+  "sectionTitle": "Fire Protection"
+ },
+ "9.10.17.3": {
+  "title": "Walls in Exits",
+  "section": "9.10",
+  "sectionTitle": "Fire Protection"
+ },
+ "9.10.17.4": {
+  "title": "Exterior Exit Passageways",
+  "section": "9.10",
+  "sectionTitle": "Fire Protection"
+ },
+ "9.10.17.5": {
+  "title": "Walls in Public Corridors",
+  "section": "9.10",
+  "sectionTitle": "Fire Protection"
+ },
+ "9.10.17.6": {
+  "title": "Calculation of Wall and Ceiling Areas",
+  "section": "9.10",
+  "sectionTitle": "Fire Protection"
+ },
+ "9.10.17.7": {
+  "title": "Corridors Containing an Occupancy",
+  "section": "9.10",
+  "sectionTitle": "Fire Protection"
+ },
+ "9.10.17.8": {
+  "title": "Light Diffusers and Lenses",
+  "section": "9.10",
+  "sectionTitle": "Fire Protection"
+ },
+ "9.10.17.9": {
+  "title": "Combustible Skylights",
+  "section": "9.10",
+  "sectionTitle": "Fire Protection"
+ },
+ "9.10.18.1": {
+  "title": "Access Provided through a Firewall",
+  "section": "9.10",
+  "sectionTitle": "Fire Protection"
+ },
+ "9.10.18.2": {
+  "title": "Fire Alarm System Required",
+  "section": "9.10",
+  "sectionTitle": "Fire Protection"
+ },
+ "9.10.18.3": {
+  "title": "Design and Installation Requirements",
+  "section": "9.10",
+  "sectionTitle": "Fire Protection"
+ },
+ "9.10.18.4": {
+  "title": "Rooms and Spaces Requiring Heat Detectors or Smoke Detectors",
+  "section": "9.10",
+  "sectionTitle": "Fire Protection"
+ },
+ "9.10.18.5": {
+  "title": "Smoke Detectors in Recirculating Air-Handling Systems",
+  "section": "9.10",
+  "sectionTitle": "Fire Protection"
+ },
+ "9.10.18.6": {
+  "title": "Portions of Buildings Considered as Separate Buildings",
+  "section": "9.10",
+  "sectionTitle": "Fire Protection"
+ },
+ "9.10.18.7": {
+  "title": "Central Vacuum Systems",
+  "section": "9.10",
+  "sectionTitle": "Fire Protection"
+ },
+ "9.10.18.8": {
+  "title": "Open-Air Storage Garages",
+  "section": "9.10",
+  "sectionTitle": "Fire Protection"
+ },
+ "9.10.19.1": {
+  "title": "Required Smoke Alarms",
+  "section": "9.10",
+  "sectionTitle": "Fire Protection"
+ },
+ "9.10.19.2": {
+  "title": "Sound Patterns of Smoke Alarms",
+  "section": "9.10",
+  "sectionTitle": "Fire Protection"
+ },
+ "9.10.19.3": {
+  "title": "Location of Smoke Alarms",
+  "section": "9.10",
+  "sectionTitle": "Fire Protection"
+ },
+ "9.10.19.4": {
+  "title": "Power Supply",
+  "section": "9.10",
+  "sectionTitle": "Fire Protection"
+ },
+ "9.10.19.5": {
+  "title": "Interconnection of Smoke Alarms",
+  "section": "9.10",
+  "sectionTitle": "Fire Protection"
+ },
+ "9.10.19.6": {
+  "title": "Silencing of Smoke Alarms",
+  "section": "9.10",
+  "sectionTitle": "Fire Protection"
+ },
+ "9.10.19.7": {
+  "title": "Instructions for Maintenance and Care",
+  "section": "9.10",
+  "sectionTitle": "Fire Protection"
+ },
+ "9.10.19.8": {
+  "title": "Residential Fire Warning Systems",
+  "section": "9.10",
+  "sectionTitle": "Fire Protection"
+ },
+ "9.10.2.1": {
+  "title": "Occupancy Classification",
+  "section": "9.10",
+  "sectionTitle": "Fire Protection"
+ },
+ "9.10.2.2": {
+  "title": "Custodial, Convalescent and Residential Care Homes",
+  "section": "9.10",
+  "sectionTitle": "Fire Protection"
+ },
+ "9.10.2.3": {
+  "title": "Major Occupancies above Other Major Occupancies",
+  "section": "9.10",
+  "sectionTitle": "Fire Protection"
+ },
+ "9.10.2.4": {
+  "title": "Buildings Containing More Than One Major Occupancy",
+  "section": "9.10",
+  "sectionTitle": "Fire Protection"
+ },
+ "9.10.2.5": {
+  "title": "Group A, Division 2, Low Occupant Load",
+  "section": "9.10",
+  "sectionTitle": "Fire Protection"
+ },
+ "9.10.20.1": {
+  "title": "Windows or Access Panels Required",
+  "section": "9.10",
+  "sectionTitle": "Fire Protection"
+ },
+ "9.10.20.2": {
+  "title": "Access to Basements",
+  "section": "9.10",
+  "sectionTitle": "Fire Protection"
+ },
+ "9.10.20.3": {
+  "title": "Fire Department Access to Buildings",
+  "section": "9.10",
+  "sectionTitle": "Fire Protection"
+ },
+ "9.10.20.4": {
+  "title": "Portable Extinguishers",
+  "section": "9.10",
+  "sectionTitle": "Fire Protection"
+ },
+ "9.10.20.5": {
+  "title": "Freeze Protection of Fire Protection Systems",
+  "section": "9.10",
+  "sectionTitle": "Fire Protection"
+ },
+ "9.10.21.1": {
+  "title": "Requirements for Construction Camps",
+  "section": "9.10",
+  "sectionTitle": "Fire Protection"
+ },
+ "9.10.21.2": {
+  "title": "Separation of Sleeping Rooms",
+  "section": "9.10",
+  "sectionTitle": "Fire Protection"
+ },
+ "9.10.21.3": {
+  "title": "Floor Assemblies between the First and Second Storey",
+  "section": "9.10",
+  "sectionTitle": "Fire Protection"
+ },
+ "9.10.21.4": {
+  "title": "Walkways Connecting Buildings",
+  "section": "9.10",
+  "sectionTitle": "Fire Protection"
+ },
+ "9.10.21.5": {
+  "title": "Spatial Separations",
+  "section": "9.10",
+  "sectionTitle": "Fire Protection"
+ },
+ "9.10.21.6": {
+  "title": "Flame-Spread Ratings",
+  "section": "9.10",
+  "sectionTitle": "Fire Protection"
+ },
+ "9.10.21.7": {
+  "title": "Smoke Detectors",
+  "section": "9.10",
+  "sectionTitle": "Fire Protection"
+ },
+ "9.10.21.8": {
+  "title": "Portable Fire Extinguishers",
+  "section": "9.10",
+  "sectionTitle": "Fire Protection"
+ },
+ "9.10.21.9": {
+  "title": "Hose Stations",
+  "section": "9.10",
+  "sectionTitle": "Fire Protection"
+ },
+ "9.10.22.1": {
+  "title": "Installation of Cooktops and Ovens",
+  "section": "9.10",
+  "sectionTitle": "Fire Protection"
+ },
+ "9.10.22.2": {
+  "title": "Vertical Clearances above Cooktops",
+  "section": "9.10",
+  "sectionTitle": "Fire Protection"
+ },
+ "9.10.22.3": {
+  "title": "Protection around Cooktops",
+  "section": "9.10",
+  "sectionTitle": "Fire Protection"
+ },
+ "9.10.3.1": {
+  "title": "Fire-Resistance and Fire-Protection Ratings",
+  "section": "9.10",
+  "sectionTitle": "Fire Protection"
+ },
+ "9.10.3.2": {
+  "title": "Flame-Spread Ratings",
+  "section": "9.10",
+  "sectionTitle": "Fire Protection"
+ },
+ "9.10.3.3": {
+  "title": "Fire Exposure",
+  "section": "9.10",
+  "sectionTitle": "Fire Protection"
+ },
+ "9.10.3.4": {
+  "title": "Suspended Membrane Ceilings",
+  "section": "9.10",
+  "sectionTitle": "Fire Protection"
+ },
+ "9.10.4.1": {
+  "title": "Mezzanines not Considered as Storeys",
+  "section": "9.10",
+  "sectionTitle": "Fire Protection"
+ },
+ "9.10.4.2": {
+  "title": "More Than One Level of Mezzanine",
+  "section": "9.10",
+  "sectionTitle": "Fire Protection"
+ },
+ "9.10.4.3": {
+  "title": "Basement Storage Garages",
+  "section": "9.10",
+  "sectionTitle": "Fire Protection"
+ },
+ "9.10.4.4": {
+  "title": "Rooftop Enclosures",
+  "section": "9.10",
+  "sectionTitle": "Fire Protection"
+ },
+ "9.10.5.1": {
+  "title": "Permitted Openings in Wall and Ceiling Membranes",
+  "section": "9.10",
+  "sectionTitle": "Fire Protection"
+ },
+ "9.10.6.1": {
+  "title": "Combustible Elements in Noncombustible Construction",
+  "section": "9.10",
+  "sectionTitle": "Fire Protection"
+ },
+ "9.10.6.2": {
+  "title": "Heavy Timber Construction",
+  "section": "9.10",
+  "sectionTitle": "Fire Protection"
+ },
+ "9.10.7.1": {
+  "title": "Protection of Steel Members",
+  "section": "9.10",
+  "sectionTitle": "Fire Protection"
+ },
+ "9.10.8.1": {
+  "title": "Fire-Resistance Ratings for Floors and Roofs",
+  "section": "9.10",
+  "sectionTitle": "Fire Protection"
+ },
+ "9.10.8.10": {
+  "title": "Application to Houses",
+  "section": "9.10",
+  "sectionTitle": "Fire Protection"
+ },
+ "9.10.8.11": {
+  "title": "Part 3 as an Alternative",
+  "section": "9.10",
+  "sectionTitle": "Fire Protection"
+ },
+ "9.10.8.2": {
+  "title": "Fire-Resistance Ratings in Sprinklered Buildings",
+  "section": "9.10",
+  "sectionTitle": "Fire Protection"
+ },
+ "9.10.8.3": {
+  "title": "Fire-Resistance Ratings for Walls, Columns and Arches",
+  "section": "9.10",
+  "sectionTitle": "Fire Protection"
+ },
+ "9.10.8.4": {
+  "title": "Support of Noncombustible Construction",
+  "section": "9.10",
+  "sectionTitle": "Fire Protection"
+ },
+ "9.10.8.5": {
+  "title": "Service Rooms",
+  "section": "9.10",
+  "sectionTitle": "Fire Protection"
+ },
+ "9.10.8.6": {
+  "title": "Mezzanines",
+  "section": "9.10",
+  "sectionTitle": "Fire Protection"
+ },
+ "9.10.8.7": {
+  "title": "Roofs Supporting an Occupancy",
+  "section": "9.10",
+  "sectionTitle": "Fire Protection"
+ },
+ "9.10.8.8": {
+  "title": "Floors of Exterior Passageways",
+  "section": "9.10",
+  "sectionTitle": "Fire Protection"
+ },
+ "9.10.8.9": {
+  "title": "Crawl Spaces",
+  "section": "9.10",
+  "sectionTitle": "Fire Protection"
+ },
+ "9.10.9.1": {
+  "title": "Application",
+  "section": "9.10",
+  "sectionTitle": "Fire Protection"
+ },
+ "9.10.9.10": {
+  "title": "Collapse of Combustible Construction",
+  "section": "9.10",
+  "sectionTitle": "Fire Protection"
+ },
+ "9.10.9.11": {
+  "title": "Reduction in Thickness of Fire Separation by Beams and Joists",
+  "section": "9.10",
+  "sectionTitle": "Fire Protection"
+ },
+ "9.10.9.12": {
+  "title": "Concealed Spaces above Fire Separations",
+  "section": "9.10",
+  "sectionTitle": "Fire Protection"
+ },
+ "9.10.9.13": {
+  "title": "Separation of Residential Occupancies",
+  "section": "9.10",
+  "sectionTitle": "Fire Protection"
+ },
+ "9.10.9.14": {
+  "title": "Residential Suites in Industrial Buildings",
+  "section": "9.10",
+  "sectionTitle": "Fire Protection"
+ },
+ "9.10.9.15": {
+  "title": "Separation of Suites",
+  "section": "9.10",
+  "sectionTitle": "Fire Protection"
+ },
+ "9.10.9.16": {
+  "title": "Separation of Residential Suites",
+  "section": "9.10",
+  "sectionTitle": "Fire Protection"
+ },
+ "9.10.9.17": {
+  "title": "Separation of Public Corridors",
+  "section": "9.10",
+  "sectionTitle": "Fire Protection"
+ },
+ "9.10.9.18": {
+  "title": "Separation of Storage Garages",
+  "section": "9.10",
+  "sectionTitle": "Fire Protection"
+ },
+ "9.10.9.19": {
+  "title": "Separation of Repair Garages",
+  "section": "9.10",
+  "sectionTitle": "Fire Protection"
+ },
+ "9.10.9.2": {
+  "title": "Continuous Barrier",
+  "section": "9.10",
+  "sectionTitle": "Fire Protection"
+ },
+ "9.10.9.20": {
+  "title": "Exhaust Ducts Serving More Than One Fire Compartment",
+  "section": "9.10",
+  "sectionTitle": "Fire Protection"
+ },
+ "9.10.9.21": {
+  "title": "Central Vacuum Systems",
+  "section": "9.10",
+  "sectionTitle": "Fire Protection"
+ },
+ "9.10.9.22": {
+  "title": "Multiple Tenant Self Storage Warehouses",
+  "section": "9.10",
+  "sectionTitle": "Fire Protection"
+ },
+ "9.10.9.3": {
+  "title": "Openings to be Protected with Closures",
+  "section": "9.10",
+  "sectionTitle": "Fire Protection"
+ },
+ "9.10.9.4": {
+  "title": "Floor Assemblies",
+  "section": "9.10",
+  "sectionTitle": "Fire Protection"
+ },
+ "9.10.9.5": {
+  "title": "Interconnected Floor Spaces",
+  "section": "9.10",
+  "sectionTitle": "Fire Protection"
+ },
+ "9.10.9.6": {
+  "title": "General Requirements for Penetrations of Fire Separations",
+  "section": "9.10",
+  "sectionTitle": "Fire Protection"
+ },
+ "9.10.9.7": {
+  "title": "Piping Penetrations",
+  "section": "9.10",
+  "sectionTitle": "Fire Protection"
+ },
+ "9.10.9.8": {
+  "title": "Penetrations by Outlet Boxes or Service Equipment in Concealed Spaces",
+  "section": "9.10",
+  "sectionTitle": "Fire Protection"
+ },
+ "9.10.9.9": {
+  "title": "Penetrations by Raceways, Sprinklers and Fire Dampers",
+  "section": "9.10",
+  "sectionTitle": "Fire Protection"
+ },
+ "9.11.1.1": {
+  "title": "Required Protection",
+  "section": "9.11",
+  "sectionTitle": "Sound Transmission"
+ },
+ "9.11.1.2": {
+  "title": "Determination of Sound Transmission Ratings",
+  "section": "9.11",
+  "sectionTitle": "Sound Transmission"
+ },
+ "9.11.1.3": {
+  "title": "Compliance with Required Ratings",
+  "section": "9.11",
+  "sectionTitle": "Sound Transmission"
+ },
+ "9.11.1.4": {
+  "title": "Adjoining Constructions",
+  "section": "9.11",
+  "sectionTitle": "Sound Transmission"
+ },
+ "9.12.1.1": {
+  "title": "Removal of Topsoil and Organic Matter",
+  "section": "9.12",
+  "sectionTitle": "Excavation"
+ },
+ "9.12.1.2": {
+  "title": "Standing Water",
+  "section": "9.12",
+  "sectionTitle": "Excavation"
+ },
+ "9.12.1.3": {
+  "title": "Protection from Freezing",
+  "section": "9.12",
+  "sectionTitle": "Excavation"
+ },
+ "9.12.2.1": {
+  "title": "Excavation to Undisturbed Soil",
+  "section": "9.12",
+  "sectionTitle": "Excavation"
+ },
+ "9.12.2.2": {
+  "title": "Minimum Depth of Foundations",
+  "section": "9.12",
+  "sectionTitle": "Excavation"
+ },
+ "9.12.3.1": {
+  "title": "Placement of Backfill",
+  "section": "9.12",
+  "sectionTitle": "Excavation"
+ },
+ "9.12.3.2": {
+  "title": "Grading of Backfill",
+  "section": "9.12",
+  "sectionTitle": "Excavation"
+ },
+ "9.12.3.3": {
+  "title": "Deleterious Debris and Boulders",
+  "section": "9.12",
+  "sectionTitle": "Excavation"
+ },
+ "9.12.4.1": {
+  "title": "Support of Footings",
+  "section": "9.12",
+  "sectionTitle": "Excavation"
+ },
+ "9.13.1.1": {
+  "title": "Scope and Application",
+  "section": "9.13",
+  "sectionTitle": "Dampproofing, Waterproofing and Soil Gas Control"
+ },
+ "9.13.2.1": {
+  "title": "Required Dampproofing",
+  "section": "9.13",
+  "sectionTitle": "Dampproofing, Waterproofing and Soil Gas Control"
+ },
+ "9.13.2.2": {
+  "title": "Dampproofing Materials",
+  "section": "9.13",
+  "sectionTitle": "Dampproofing, Waterproofing and Soil Gas Control"
+ },
+ "9.13.2.3": {
+  "title": "Preparation of Surface",
+  "section": "9.13",
+  "sectionTitle": "Dampproofing, Waterproofing and Soil Gas Control"
+ },
+ "9.13.2.4": {
+  "title": "Application of Dampproofing Material",
+  "section": "9.13",
+  "sectionTitle": "Dampproofing, Waterproofing and Soil Gas Control"
+ },
+ "9.13.2.5": {
+  "title": "Moisture Protection for Interior Finishes",
+  "section": "9.13",
+  "sectionTitle": "Dampproofing, Waterproofing and Soil Gas Control"
+ },
+ "9.13.2.6": {
+  "title": "Dampproofing of Floors-on-Ground",
+  "section": "9.13",
+  "sectionTitle": "Dampproofing, Waterproofing and Soil Gas Control"
+ },
+ "9.13.3.1": {
+  "title": "Required Waterproofing",
+  "section": "9.13",
+  "sectionTitle": "Dampproofing, Waterproofing and Soil Gas Control"
+ },
+ "9.13.3.2": {
+  "title": "Waterproofing Materials",
+  "section": "9.13",
+  "sectionTitle": "Dampproofing, Waterproofing and Soil Gas Control"
+ },
+ "9.13.3.3": {
+  "title": "Preparation of Surface",
+  "section": "9.13",
+  "sectionTitle": "Dampproofing, Waterproofing and Soil Gas Control"
+ },
+ "9.13.3.4": {
+  "title": "Application of Waterproofing Membranes",
+  "section": "9.13",
+  "sectionTitle": "Dampproofing, Waterproofing and Soil Gas Control"
+ },
+ "9.13.3.5": {
+  "title": "Floor Waterproofing System",
+  "section": "9.13",
+  "sectionTitle": "Dampproofing, Waterproofing and Soil Gas Control"
+ },
+ "9.13.4.1": {
+  "title": "Application and Scope",
+  "section": "9.13",
+  "sectionTitle": "Dampproofing, Waterproofing and Soil Gas Control"
+ },
+ "9.13.4.2": {
+  "title": "Protection from Soil Gas Ingress",
+  "section": "9.13",
+  "sectionTitle": "Dampproofing, Waterproofing and Soil Gas Control"
+ },
+ "9.13.4.3": {
+  "title": "Rough-in for a Subfloor Depressurization System",
+  "section": "9.13",
+  "sectionTitle": "Dampproofing, Waterproofing and Soil Gas Control"
+ },
+ "9.14.1.1": {
+  "title": "Application",
+  "section": "9.14",
+  "sectionTitle": "Drainage"
+ },
+ "9.14.1.2": {
+  "title": "Crawl Spaces",
+  "section": "9.14",
+  "sectionTitle": "Drainage"
+ },
+ "9.14.1.3": {
+  "title": "Floors-on-Ground",
+  "section": "9.14",
+  "sectionTitle": "Drainage"
+ },
+ "9.14.2.1": {
+  "title": "Foundation Wall Drainage",
+  "section": "9.14",
+  "sectionTitle": "Drainage"
+ },
+ "9.14.3.1": {
+  "title": "Material Standards",
+  "section": "9.14",
+  "sectionTitle": "Drainage"
+ },
+ "9.14.3.2": {
+  "title": "Minimum Size",
+  "section": "9.14",
+  "sectionTitle": "Drainage"
+ },
+ "9.14.3.3": {
+  "title": "Installation",
+  "section": "9.14",
+  "sectionTitle": "Drainage"
+ },
+ "9.14.4.1": {
+  "title": "Type of Granular Material",
+  "section": "9.14",
+  "sectionTitle": "Drainage"
+ },
+ "9.14.4.2": {
+  "title": "Installation",
+  "section": "9.14",
+  "sectionTitle": "Drainage"
+ },
+ "9.14.4.3": {
+  "title": "Grading",
+  "section": "9.14",
+  "sectionTitle": "Drainage"
+ },
+ "9.14.4.4": {
+  "title": "Wet Site Conditions",
+  "section": "9.14",
+  "sectionTitle": "Drainage"
+ },
+ "9.14.5.1": {
+  "title": "Drainage Disposal",
+  "section": "9.14",
+  "sectionTitle": "Drainage"
+ },
+ "9.14.5.2": {
+  "title": "Sump Pits",
+  "section": "9.14",
+  "sectionTitle": "Drainage"
+ },
+ "9.14.5.3": {
+  "title": "Dry Wells",
+  "section": "9.14",
+  "sectionTitle": "Drainage"
+ },
+ "9.14.6.1": {
+  "title": "Surface Drainage",
+  "section": "9.14",
+  "sectionTitle": "Drainage"
+ },
+ "9.14.6.2": {
+  "title": "Drainage away from Wells or Septic Disposal Beds",
+  "section": "9.14",
+  "sectionTitle": "Drainage"
+ },
+ "9.14.6.3": {
+  "title": "Window Wells",
+  "section": "9.14",
+  "sectionTitle": "Drainage"
+ },
+ "9.14.6.4": {
+  "title": "Catch Basin",
+  "section": "9.14",
+  "sectionTitle": "Drainage"
+ },
+ "9.14.6.5": {
+  "title": "Downspouts",
+  "section": "9.14",
+  "sectionTitle": "Drainage"
+ },
+ "9.15.1.1": {
+  "title": "General",
+  "section": "9.15",
+  "sectionTitle": "Footings and Foundations"
+ },
+ "9.15.1.2": {
+  "title": "Permafrost",
+  "section": "9.15",
+  "sectionTitle": "Footings and Foundations"
+ },
+ "9.15.1.3": {
+  "title": "Foundations for Deformation-Resistant Buildings",
+  "section": "9.15",
+  "sectionTitle": "Footings and Foundations"
+ },
+ "9.15.2.1": {
+  "title": "Concrete",
+  "section": "9.15",
+  "sectionTitle": "Footings and Foundations"
+ },
+ "9.15.2.2": {
+  "title": "Unit Masonry Construction",
+  "section": "9.15",
+  "sectionTitle": "Footings and Foundations"
+ },
+ "9.15.2.3": {
+  "title": "Pier-Type Foundations",
+  "section": "9.15",
+  "sectionTitle": "Footings and Foundations"
+ },
+ "9.15.2.4": {
+  "title": "Wood-Frame Foundations",
+  "section": "9.15",
+  "sectionTitle": "Footings and Foundations"
+ },
+ "9.15.3.1": {
+  "title": "Footings Required",
+  "section": "9.15",
+  "sectionTitle": "Footings and Foundations"
+ },
+ "9.15.3.2": {
+  "title": "Support of Footings",
+  "section": "9.15",
+  "sectionTitle": "Footings and Foundations"
+ },
+ "9.15.3.3": {
+  "title": "Application of Footing Width and Area Requirements",
+  "section": "9.15",
+  "sectionTitle": "Footings and Foundations"
+ },
+ "9.15.3.4": {
+  "title": "Basic Footing Widths and Areas",
+  "section": "9.15",
+  "sectionTitle": "Footings and Foundations"
+ },
+ "9.15.3.5": {
+  "title": "Adjustments to Footing Widths for Exterior Walls",
+  "section": "9.15",
+  "sectionTitle": "Footings and Foundations"
+ },
+ "9.15.3.6": {
+  "title": "Adjustments to Footing Widths for Interior Walls",
+  "section": "9.15",
+  "sectionTitle": "Footings and Foundations"
+ },
+ "9.15.3.7": {
+  "title": "Adjustments to Footing Area for Columns",
+  "section": "9.15",
+  "sectionTitle": "Footings and Foundations"
+ },
+ "9.15.3.8": {
+  "title": "Footing Thickness",
+  "section": "9.15",
+  "sectionTitle": "Footings and Foundations"
+ },
+ "9.15.3.9": {
+  "title": "Step Footings",
+  "section": "9.15",
+  "sectionTitle": "Footings and Foundations"
+ },
+ "9.15.4.1": {
+  "title": "Flat Wall Insulating Concrete Form Units",
+  "section": "9.15",
+  "sectionTitle": "Footings and Foundations"
+ },
+ "9.15.4.10": {
+  "title": "Interior Masonry Walls",
+  "section": "9.15",
+  "sectionTitle": "Footings and Foundations"
+ },
+ "9.15.4.2": {
+  "title": "Foundation Wall Thickness and Required Lateral Support",
+  "section": "9.15",
+  "sectionTitle": "Footings and Foundations"
+ },
+ "9.15.4.3": {
+  "title": "Foundation Walls Considered to be Laterally Supported at the Top",
+  "section": "9.15",
+  "sectionTitle": "Footings and Foundations"
+ },
+ "9.15.4.4": {
+  "title": "Foundation Walls Considered to be Laterally Supported at the Bottom",
+  "section": "9.15",
+  "sectionTitle": "Footings and Foundations"
+ },
+ "9.15.4.5": {
+  "title": "Reinforcement for Flat Insulating Concrete Form Foundation Walls",
+  "section": "9.15",
+  "sectionTitle": "Footings and Foundations"
+ },
+ "9.15.4.6": {
+  "title": "Extension above Ground Level",
+  "section": "9.15",
+  "sectionTitle": "Footings and Foundations"
+ },
+ "9.15.4.7": {
+  "title": "Reduction in Thickness",
+  "section": "9.15",
+  "sectionTitle": "Footings and Foundations"
+ },
+ "9.15.4.8": {
+  "title": "Corbelling",
+  "section": "9.15",
+  "sectionTitle": "Footings and Foundations"
+ },
+ "9.15.4.9": {
+  "title": "Crack Control Joints",
+  "section": "9.15",
+  "sectionTitle": "Footings and Foundations"
+ },
+ "9.15.5.1": {
+  "title": "Support of Floor Joists",
+  "section": "9.15",
+  "sectionTitle": "Footings and Foundations"
+ },
+ "9.15.5.2": {
+  "title": "Support of Beams",
+  "section": "9.15",
+  "sectionTitle": "Footings and Foundations"
+ },
+ "9.15.5.3": {
+  "title": "Pilasters",
+  "section": "9.15",
+  "sectionTitle": "Footings and Foundations"
+ },
+ "9.15.6.1": {
+  "title": "Foundation Walls below Ground",
+  "section": "9.15",
+  "sectionTitle": "Footings and Foundations"
+ },
+ "9.15.6.2": {
+  "title": "Foundation Walls above Ground",
+  "section": "9.15",
+  "sectionTitle": "Footings and Foundations"
+ },
+ "9.15.6.3": {
+  "title": "Form Ties",
+  "section": "9.15",
+  "sectionTitle": "Footings and Foundations"
+ },
+ "9.16.1.1": {
+  "title": "Application",
+  "section": "9.16",
+  "sectionTitle": "Floors-on-Ground"
+ },
+ "9.16.1.2": {
+  "title": "Structural Floors",
+  "section": "9.16",
+  "sectionTitle": "Floors-on-Ground"
+ },
+ "9.16.1.3": {
+  "title": "Required Floors-on-Ground",
+  "section": "9.16",
+  "sectionTitle": "Floors-on-Ground"
+ },
+ "9.16.1.4": {
+  "title": "Dampproofing and Waterproofing",
+  "section": "9.16",
+  "sectionTitle": "Floors-on-Ground"
+ },
+ "9.16.2.1": {
+  "title": "Required Installation of Granular Material",
+  "section": "9.16",
+  "sectionTitle": "Floors-on-Ground"
+ },
+ "9.16.2.2": {
+  "title": "Support of Floors",
+  "section": "9.16",
+  "sectionTitle": "Floors-on-Ground"
+ },
+ "9.16.3.1": {
+  "title": "Control of Water Ingress",
+  "section": "9.16",
+  "sectionTitle": "Floors-on-Ground"
+ },
+ "9.16.3.2": {
+  "title": "Hydrostatic Pressure",
+  "section": "9.16",
+  "sectionTitle": "Floors-on-Ground"
+ },
+ "9.16.3.3": {
+  "title": "Floor Drains",
+  "section": "9.16",
+  "sectionTitle": "Floors-on-Ground"
+ },
+ "9.16.4.1": {
+  "title": "Surface Finish",
+  "section": "9.16",
+  "sectionTitle": "Floors-on-Ground"
+ },
+ "9.16.4.2": {
+  "title": "Topping Course",
+  "section": "9.16",
+  "sectionTitle": "Floors-on-Ground"
+ },
+ "9.16.4.3": {
+  "title": "Thickness",
+  "section": "9.16",
+  "sectionTitle": "Floors-on-Ground"
+ },
+ "9.16.4.4": {
+  "title": "Bond Break",
+  "section": "9.16",
+  "sectionTitle": "Floors-on-Ground"
+ },
+ "9.16.5.1": {
+  "title": "Wood-Frame Floors",
+  "section": "9.16",
+  "sectionTitle": "Floors-on-Ground"
+ },
+ "9.17.1.1": {
+  "title": "Application",
+  "section": "9.17",
+  "sectionTitle": "Columns"
+ },
+ "9.17.2.1": {
+  "title": "Location",
+  "section": "9.17",
+  "sectionTitle": "Columns"
+ },
+ "9.17.2.2": {
+  "title": "Lateral Support",
+  "section": "9.17",
+  "sectionTitle": "Columns"
+ },
+ "9.17.3.1": {
+  "title": "Size and Thickness",
+  "section": "9.17",
+  "sectionTitle": "Columns"
+ },
+ "9.17.3.2": {
+  "title": "End Bearing Plates",
+  "section": "9.17",
+  "sectionTitle": "Columns"
+ },
+ "9.17.3.3": {
+  "title": "Paint",
+  "section": "9.17",
+  "sectionTitle": "Columns"
+ },
+ "9.17.3.4": {
+  "title": "Design of Steel Columns",
+  "section": "9.17",
+  "sectionTitle": "Columns"
+ },
+ "9.17.4.1": {
+  "title": "Column Sizes",
+  "section": "9.17",
+  "sectionTitle": "Columns"
+ },
+ "9.17.4.2": {
+  "title": "Materials",
+  "section": "9.17",
+  "sectionTitle": "Columns"
+ },
+ "9.17.4.3": {
+  "title": "Columns in Contact with Concrete",
+  "section": "9.17",
+  "sectionTitle": "Columns"
+ },
+ "9.17.5.1": {
+  "title": "Materials",
+  "section": "9.17",
+  "sectionTitle": "Columns"
+ },
+ "9.17.5.2": {
+  "title": "Sizes",
+  "section": "9.17",
+  "sectionTitle": "Columns"
+ },
+ "9.17.6.1": {
+  "title": "Materials",
+  "section": "9.17",
+  "sectionTitle": "Columns"
+ },
+ "9.17.6.2": {
+  "title": "Sizes",
+  "section": "9.17",
+  "sectionTitle": "Columns"
+ },
+ "9.18.1.1": {
+  "title": "Application",
+  "section": "9.18",
+  "sectionTitle": "Crawl Spaces"
+ },
+ "9.18.1.2": {
+  "title": "Foundations",
+  "section": "9.18",
+  "sectionTitle": "Crawl Spaces"
+ },
+ "9.18.1.3": {
+  "title": "Heated and Unheated Crawl Spaces",
+  "section": "9.18",
+  "sectionTitle": "Crawl Spaces"
+ },
+ "9.18.2.1": {
+  "title": "Access Openings",
+  "section": "9.18",
+  "sectionTitle": "Crawl Spaces"
+ },
+ "9.18.3.1": {
+  "title": "Ventilation of Unheated Crawl Spaces",
+  "section": "9.18",
+  "sectionTitle": "Crawl Spaces"
+ },
+ "9.18.3.2": {
+  "title": "Ventilation of Heated Crawl Spaces",
+  "section": "9.18",
+  "sectionTitle": "Crawl Spaces"
+ },
+ "9.18.4.1": {
+  "title": "Access Way to Services",
+  "section": "9.18",
+  "sectionTitle": "Crawl Spaces"
+ },
+ "9.18.5.1": {
+  "title": "Drainage",
+  "section": "9.18",
+  "sectionTitle": "Crawl Spaces"
+ },
+ "9.18.6.1": {
+  "title": "Ground Cover in Unheated Crawl Spaces",
+  "section": "9.18",
+  "sectionTitle": "Crawl Spaces"
+ },
+ "9.18.6.2": {
+  "title": "Ground Cover in Heated Crawl Spaces",
+  "section": "9.18",
+  "sectionTitle": "Crawl Spaces"
+ },
+ "9.18.7.1": {
+  "title": "Crawl Spaces as Warm Air Plenums",
+  "section": "9.18",
+  "sectionTitle": "Crawl Spaces"
+ },
+ "9.19.1.1": {
+  "title": "Required Venting",
+  "section": "9.19",
+  "sectionTitle": "Roof Spaces"
+ },
+ "9.19.1.2": {
+  "title": "Vent Requirements",
+  "section": "9.19",
+  "sectionTitle": "Roof Spaces"
+ },
+ "9.19.1.3": {
+  "title": "Clearances",
+  "section": "9.19",
+  "sectionTitle": "Roof Spaces"
+ },
+ "9.19.1.4": {
+  "title": "Mansard or Gambrel Roof",
+  "section": "9.19",
+  "sectionTitle": "Roof Spaces"
+ },
+ "9.19.2.1": {
+  "title": "Access",
+  "section": "9.19",
+  "sectionTitle": "Roof Spaces"
+ },
+ "9.2.1.1": {
+  "title": "Defined Words",
+  "section": "9.2",
+  "sectionTitle": "Definitions"
+ },
+ "9.20.1.1": {
+  "title": "General",
+  "section": "9.20",
+  "sectionTitle": "Masonry and Insulating Concrete Form Walls Not In Contact with the Ground"
+ },
+ "9.20.1.2": {
+  "title": "Earthquake Reinforcement",
+  "section": "9.20",
+  "sectionTitle": "Masonry and Insulating Concrete Form Walls Not In Contact with the Ground"
+ },
+ "9.20.10.1": {
+  "title": "Lateral Support Required",
+  "section": "9.20",
+  "sectionTitle": "Masonry and Insulating Concrete Form Walls Not In Contact with the Ground"
+ },
+ "9.20.11.1": {
+  "title": "Anchorage to Floor or Roof Assemblies where Masonry Walls Require Lateral Support",
+  "section": "9.20",
+  "sectionTitle": "Masonry and Insulating Concrete Form Walls Not In Contact with the Ground"
+ },
+ "9.20.11.2": {
+  "title": "Bonding and Tying Intersecting Masonry Walls where Walls Require Lateral Support",
+  "section": "9.20",
+  "sectionTitle": "Masonry and Insulating Concrete Form Walls Not In Contact with the Ground"
+ },
+ "9.20.11.3": {
+  "title": "Anchoring Intersecting Wood-Frame Walls to Masonry Walls",
+  "section": "9.20",
+  "sectionTitle": "Masonry and Insulating Concrete Form Walls Not In Contact with the Ground"
+ },
+ "9.20.11.4": {
+  "title": "Anchoring Wood-Frame Roof Systems to Masonry Walls",
+  "section": "9.20",
+  "sectionTitle": "Masonry and Insulating Concrete Form Walls Not In Contact with the Ground"
+ },
+ "9.20.11.5": {
+  "title": "Anchoring Masonry Cornices, Sills and Trim to Masonry Walls",
+  "section": "9.20",
+  "sectionTitle": "Masonry and Insulating Concrete Form Walls Not In Contact with the Ground"
+ },
+ "9.20.11.6": {
+  "title": "Anchoring to Masonry Piers",
+  "section": "9.20",
+  "sectionTitle": "Masonry and Insulating Concrete Form Walls Not In Contact with the Ground"
+ },
+ "9.20.12.1": {
+  "title": "Corbelling",
+  "section": "9.20",
+  "sectionTitle": "Masonry and Insulating Concrete Form Walls Not In Contact with the Ground"
+ },
+ "9.20.12.2": {
+  "title": "Corbelling for Cavity Walls",
+  "section": "9.20",
+  "sectionTitle": "Masonry and Insulating Concrete Form Walls Not In Contact with the Ground"
+ },
+ "9.20.12.3": {
+  "title": "Corbelling for Masonry Veneer",
+  "section": "9.20",
+  "sectionTitle": "Masonry and Insulating Concrete Form Walls Not In Contact with the Ground"
+ },
+ "9.20.13.1": {
+  "title": "Materials for Flashing",
+  "section": "9.20",
+  "sectionTitle": "Masonry and Insulating Concrete Form Walls Not In Contact with the Ground"
+ },
+ "9.20.13.10": {
+  "title": "Mortar Droppings",
+  "section": "9.20",
+  "sectionTitle": "Masonry and Insulating Concrete Form Walls Not In Contact with the Ground"
+ },
+ "9.20.13.11": {
+  "title": "Caulking at Door and Window Frames",
+  "section": "9.20",
+  "sectionTitle": "Masonry and Insulating Concrete Form Walls Not In Contact with the Ground"
+ },
+ "9.20.13.12": {
+  "title": "Drips beneath Window Sills",
+  "section": "9.20",
+  "sectionTitle": "Masonry and Insulating Concrete Form Walls Not In Contact with the Ground"
+ },
+ "9.20.13.2": {
+  "title": "Fastening of Flashing",
+  "section": "9.20",
+  "sectionTitle": "Masonry and Insulating Concrete Form Walls Not In Contact with the Ground"
+ },
+ "9.20.13.3": {
+  "title": "Location of Flashing",
+  "section": "9.20",
+  "sectionTitle": "Masonry and Insulating Concrete Form Walls Not In Contact with the Ground"
+ },
+ "9.20.13.4": {
+  "title": "Extension of Flashing",
+  "section": "9.20",
+  "sectionTitle": "Masonry and Insulating Concrete Form Walls Not In Contact with the Ground"
+ },
+ "9.20.13.5": {
+  "title": "Flashing for Weep Holes in Masonry-Masonry Walls",
+  "section": "9.20",
+  "sectionTitle": "Masonry and Insulating Concrete Form Walls Not In Contact with the Ground"
+ },
+ "9.20.13.6": {
+  "title": "Flashing for Weep Holes in Masonry Veneer",
+  "section": "9.20",
+  "sectionTitle": "Masonry and Insulating Concrete Form Walls Not In Contact with the Ground"
+ },
+ "9.20.13.7": {
+  "title": "Flashing Joints",
+  "section": "9.20",
+  "sectionTitle": "Masonry and Insulating Concrete Form Walls Not In Contact with the Ground"
+ },
+ "9.20.13.8": {
+  "title": "Required Weep Holes",
+  "section": "9.20",
+  "sectionTitle": "Masonry and Insulating Concrete Form Walls Not In Contact with the Ground"
+ },
+ "9.20.13.9": {
+  "title": "Protection of Interior Finish",
+  "section": "9.20",
+  "sectionTitle": "Masonry and Insulating Concrete Form Walls Not In Contact with the Ground"
+ },
+ "9.20.14.1": {
+  "title": "Laying Temperature of Mortar and Masonry",
+  "section": "9.20",
+  "sectionTitle": "Masonry and Insulating Concrete Form Walls Not In Contact with the Ground"
+ },
+ "9.20.14.2": {
+  "title": "Protection from Weather",
+  "section": "9.20",
+  "sectionTitle": "Masonry and Insulating Concrete Form Walls Not In Contact with the Ground"
+ },
+ "9.20.15.1": {
+  "title": "Amount of Reinforcement",
+  "section": "9.20",
+  "sectionTitle": "Masonry and Insulating Concrete Form Walls Not In Contact with the Ground"
+ },
+ "9.20.15.2": {
+  "title": "Installation Standard",
+  "section": "9.20",
+  "sectionTitle": "Masonry and Insulating Concrete Form Walls Not In Contact with the Ground"
+ },
+ "9.20.16.1": {
+  "title": "Corrosion Resistance of Connectors",
+  "section": "9.20",
+  "sectionTitle": "Masonry and Insulating Concrete Form Walls Not In Contact with the Ground"
+ },
+ "9.20.17.1": {
+  "title": "Thickness of Flat Insulating Concrete Form Walls",
+  "section": "9.20",
+  "sectionTitle": "Masonry and Insulating Concrete Form Walls Not In Contact with the Ground"
+ },
+ "9.20.17.2": {
+  "title": "Reinforcement for Flat Insulating Concrete Form Walls",
+  "section": "9.20",
+  "sectionTitle": "Masonry and Insulating Concrete Form Walls Not In Contact with the Ground"
+ },
+ "9.20.17.3": {
+  "title": "Openings in Non-Loadbearing Flat Insulating Concrete Form Walls",
+  "section": "9.20",
+  "sectionTitle": "Masonry and Insulating Concrete Form Walls Not In Contact with the Ground"
+ },
+ "9.20.17.4": {
+  "title": "Openings in Loadbearing Flat Insulating Concrete Form Walls",
+  "section": "9.20",
+  "sectionTitle": "Masonry and Insulating Concrete Form Walls Not In Contact with the Ground"
+ },
+ "9.20.17.5": {
+  "title": "Framing Supported on Flat Insulating Concrete Form Walls",
+  "section": "9.20",
+  "sectionTitle": "Masonry and Insulating Concrete Form Walls Not In Contact with the Ground"
+ },
+ "9.20.17.6": {
+  "title": "Anchoring of Roof Framing to the Top of Flat Insulating Concrete Form Walls",
+  "section": "9.20",
+  "sectionTitle": "Masonry and Insulating Concrete Form Walls Not In Contact with the Ground"
+ },
+ "9.20.17.7": {
+  "title": "Protection from Precipitation and Damage",
+  "section": "9.20",
+  "sectionTitle": "Masonry and Insulating Concrete Form Walls Not In Contact with the Ground"
+ },
+ "9.20.2.1": {
+  "title": "Masonry Unit Standards",
+  "section": "9.20",
+  "sectionTitle": "Masonry and Insulating Concrete Form Walls Not In Contact with the Ground"
+ },
+ "9.20.2.2": {
+  "title": "Used Brick",
+  "section": "9.20",
+  "sectionTitle": "Masonry and Insulating Concrete Form Walls Not In Contact with the Ground"
+ },
+ "9.20.2.3": {
+  "title": "Glass Blocks",
+  "section": "9.20",
+  "sectionTitle": "Masonry and Insulating Concrete Form Walls Not In Contact with the Ground"
+ },
+ "9.20.2.4": {
+  "title": "Cellular Concrete",
+  "section": "9.20",
+  "sectionTitle": "Masonry and Insulating Concrete Form Walls Not In Contact with the Ground"
+ },
+ "9.20.2.5": {
+  "title": "Stone",
+  "section": "9.20",
+  "sectionTitle": "Masonry and Insulating Concrete Form Walls Not In Contact with the Ground"
+ },
+ "9.20.2.6": {
+  "title": "Concrete Blocks Exposed to the Weather",
+  "section": "9.20",
+  "sectionTitle": "Masonry and Insulating Concrete Form Walls Not In Contact with the Ground"
+ },
+ "9.20.2.7": {
+  "title": "Compressive Strength",
+  "section": "9.20",
+  "sectionTitle": "Masonry and Insulating Concrete Form Walls Not In Contact with the Ground"
+ },
+ "9.20.3.1": {
+  "title": "Mortar Materials",
+  "section": "9.20",
+  "sectionTitle": "Masonry and Insulating Concrete Form Walls Not In Contact with the Ground"
+ },
+ "9.20.3.2": {
+  "title": "Mortar and Grout Mixes",
+  "section": "9.20",
+  "sectionTitle": "Masonry and Insulating Concrete Form Walls Not In Contact with the Ground"
+ },
+ "9.20.4.1": {
+  "title": "Thickness",
+  "section": "9.20",
+  "sectionTitle": "Masonry and Insulating Concrete Form Walls Not In Contact with the Ground"
+ },
+ "9.20.4.2": {
+  "title": "Masonry Units",
+  "section": "9.20",
+  "sectionTitle": "Masonry and Insulating Concrete Form Walls Not In Contact with the Ground"
+ },
+ "9.20.5.1": {
+  "title": "Masonry Support",
+  "section": "9.20",
+  "sectionTitle": "Masonry and Insulating Concrete Form Walls Not In Contact with the Ground"
+ },
+ "9.20.5.2": {
+  "title": "Lintels or Arches",
+  "section": "9.20",
+  "sectionTitle": "Masonry and Insulating Concrete Form Walls Not In Contact with the Ground"
+ },
+ "9.20.6.1": {
+  "title": "Thickness of Exterior Walls",
+  "section": "9.20",
+  "sectionTitle": "Masonry and Insulating Concrete Form Walls Not In Contact with the Ground"
+ },
+ "9.20.6.2": {
+  "title": "Cavity Walls",
+  "section": "9.20",
+  "sectionTitle": "Masonry and Insulating Concrete Form Walls Not In Contact with the Ground"
+ },
+ "9.20.6.3": {
+  "title": "Thickness of Interior Walls",
+  "section": "9.20",
+  "sectionTitle": "Masonry and Insulating Concrete Form Walls Not In Contact with the Ground"
+ },
+ "9.20.6.4": {
+  "title": "Masonry Veneer",
+  "section": "9.20",
+  "sectionTitle": "Masonry and Insulating Concrete Form Walls Not In Contact with the Ground"
+ },
+ "9.20.6.5": {
+  "title": "Parapet Walls",
+  "section": "9.20",
+  "sectionTitle": "Masonry and Insulating Concrete Form Walls Not In Contact with the Ground"
+ },
+ "9.20.6.6": {
+  "title": "Stone or Concrete Facings",
+  "section": "9.20",
+  "sectionTitle": "Masonry and Insulating Concrete Form Walls Not In Contact with the Ground"
+ },
+ "9.20.7.1": {
+  "title": "Maximum Dimensions",
+  "section": "9.20",
+  "sectionTitle": "Masonry and Insulating Concrete Form Walls Not In Contact with the Ground"
+ },
+ "9.20.7.2": {
+  "title": "Minimum Wall Thickness",
+  "section": "9.20",
+  "sectionTitle": "Masonry and Insulating Concrete Form Walls Not In Contact with the Ground"
+ },
+ "9.20.7.3": {
+  "title": "Separation of Chases or Recesses",
+  "section": "9.20",
+  "sectionTitle": "Masonry and Insulating Concrete Form Walls Not In Contact with the Ground"
+ },
+ "9.20.7.4": {
+  "title": "Non-Conforming Chases or Recesses",
+  "section": "9.20",
+  "sectionTitle": "Masonry and Insulating Concrete Form Walls Not In Contact with the Ground"
+ },
+ "9.20.7.5": {
+  "title": "Chases or Recesses Cut into Walls",
+  "section": "9.20",
+  "sectionTitle": "Masonry and Insulating Concrete Form Walls Not In Contact with the Ground"
+ },
+ "9.20.8.1": {
+  "title": "Capping of Hollow Masonry Walls",
+  "section": "9.20",
+  "sectionTitle": "Masonry and Insulating Concrete Form Walls Not In Contact with the Ground"
+ },
+ "9.20.8.2": {
+  "title": "Cavity Walls Supporting Framing Members",
+  "section": "9.20",
+  "sectionTitle": "Masonry and Insulating Concrete Form Walls Not In Contact with the Ground"
+ },
+ "9.20.8.3": {
+  "title": "Bearing of Beams and Joists",
+  "section": "9.20",
+  "sectionTitle": "Masonry and Insulating Concrete Form Walls Not In Contact with the Ground"
+ },
+ "9.20.8.4": {
+  "title": "Support of Beams and Columns",
+  "section": "9.20",
+  "sectionTitle": "Masonry and Insulating Concrete Form Walls Not In Contact with the Ground"
+ },
+ "9.20.8.5": {
+  "title": "Projection of Masonry Veneer Beyond Supporting Members",
+  "section": "9.20",
+  "sectionTitle": "Masonry and Insulating Concrete Form Walls Not In Contact with the Ground"
+ },
+ "9.20.9.1": {
+  "title": "Joints to be Offset or Reinforced",
+  "section": "9.20",
+  "sectionTitle": "Masonry and Insulating Concrete Form Walls Not In Contact with the Ground"
+ },
+ "9.20.9.2": {
+  "title": "Bonding or Tying of Other than Masonry Veneer",
+  "section": "9.20",
+  "sectionTitle": "Masonry and Insulating Concrete Form Walls Not In Contact with the Ground"
+ },
+ "9.20.9.3": {
+  "title": "Bonding",
+  "section": "9.20",
+  "sectionTitle": "Masonry and Insulating Concrete Form Walls Not In Contact with the Ground"
+ },
+ "9.20.9.4": {
+  "title": "Tying",
+  "section": "9.20",
+  "sectionTitle": "Masonry and Insulating Concrete Form Walls Not In Contact with the Ground"
+ },
+ "9.20.9.5": {
+  "title": "Ties for Masonry Veneer",
+  "section": "9.20",
+  "sectionTitle": "Masonry and Insulating Concrete Form Walls Not In Contact with the Ground"
+ },
+ "9.20.9.6": {
+  "title": "Reinforcing for Glass Block",
+  "section": "9.20",
+  "sectionTitle": "Masonry and Insulating Concrete Form Walls Not In Contact with the Ground"
+ },
+ "9.21.1.1": {
+  "title": "Application",
+  "section": "9.21",
+  "sectionTitle": "Masonry and Concrete Chimneys and Flues"
+ },
+ "9.21.1.2": {
+  "title": "Chimney or Flue Pipe Walls",
+  "section": "9.21",
+  "sectionTitle": "Masonry and Concrete Chimneys and Flues"
+ },
+ "9.21.2.1": {
+  "title": "Chimney Flue Limitations",
+  "section": "9.21",
+  "sectionTitle": "Masonry and Concrete Chimneys and Flues"
+ },
+ "9.21.2.2": {
+  "title": "Connections of More Than One Appliance",
+  "section": "9.21",
+  "sectionTitle": "Masonry and Concrete Chimneys and Flues"
+ },
+ "9.21.2.3": {
+  "title": "Inclined Chimney Flues",
+  "section": "9.21",
+  "sectionTitle": "Masonry and Concrete Chimneys and Flues"
+ },
+ "9.21.2.4": {
+  "title": "Size of Chimney Flues",
+  "section": "9.21",
+  "sectionTitle": "Masonry and Concrete Chimneys and Flues"
+ },
+ "9.21.2.5": {
+  "title": "Fireplace Chimneys",
+  "section": "9.21",
+  "sectionTitle": "Masonry and Concrete Chimneys and Flues"
+ },
+ "9.21.2.6": {
+  "title": "Oval Chimney Flues",
+  "section": "9.21",
+  "sectionTitle": "Masonry and Concrete Chimneys and Flues"
+ },
+ "9.21.3.1": {
+  "title": "Lining Materials",
+  "section": "9.21",
+  "sectionTitle": "Masonry and Concrete Chimneys and Flues"
+ },
+ "9.21.3.10": {
+  "title": "Extension of Chimney Liners",
+  "section": "9.21",
+  "sectionTitle": "Masonry and Concrete Chimneys and Flues"
+ },
+ "9.21.3.2": {
+  "title": "Joints in Chimney Liners",
+  "section": "9.21",
+  "sectionTitle": "Masonry and Concrete Chimneys and Flues"
+ },
+ "9.21.3.3": {
+  "title": "Clay Liners",
+  "section": "9.21",
+  "sectionTitle": "Masonry and Concrete Chimneys and Flues"
+ },
+ "9.21.3.4": {
+  "title": "Firebrick Liners",
+  "section": "9.21",
+  "sectionTitle": "Masonry and Concrete Chimneys and Flues"
+ },
+ "9.21.3.5": {
+  "title": "Concrete Liners",
+  "section": "9.21",
+  "sectionTitle": "Masonry and Concrete Chimneys and Flues"
+ },
+ "9.21.3.6": {
+  "title": "Metal Liners",
+  "section": "9.21",
+  "sectionTitle": "Masonry and Concrete Chimneys and Flues"
+ },
+ "9.21.3.7": {
+  "title": "Installation of Chimney Liners",
+  "section": "9.21",
+  "sectionTitle": "Masonry and Concrete Chimneys and Flues"
+ },
+ "9.21.3.8": {
+  "title": "Spaces between Liners and Surrounding Masonry",
+  "section": "9.21",
+  "sectionTitle": "Masonry and Concrete Chimneys and Flues"
+ },
+ "9.21.3.9": {
+  "title": "Mortar for Chimney Liners",
+  "section": "9.21",
+  "sectionTitle": "Masonry and Concrete Chimneys and Flues"
+ },
+ "9.21.4.1": {
+  "title": "Unit Masonry",
+  "section": "9.21",
+  "sectionTitle": "Masonry and Concrete Chimneys and Flues"
+ },
+ "9.21.4.10": {
+  "title": "Flashing",
+  "section": "9.21",
+  "sectionTitle": "Masonry and Concrete Chimneys and Flues"
+ },
+ "9.21.4.2": {
+  "title": "Concrete",
+  "section": "9.21",
+  "sectionTitle": "Masonry and Concrete Chimneys and Flues"
+ },
+ "9.21.4.3": {
+  "title": "Footings",
+  "section": "9.21",
+  "sectionTitle": "Masonry and Concrete Chimneys and Flues"
+ },
+ "9.21.4.4": {
+  "title": "Height of Chimney Flues",
+  "section": "9.21",
+  "sectionTitle": "Masonry and Concrete Chimneys and Flues"
+ },
+ "9.21.4.5": {
+  "title": "Lateral Stability",
+  "section": "9.21",
+  "sectionTitle": "Masonry and Concrete Chimneys and Flues"
+ },
+ "9.21.4.6": {
+  "title": "Chimney Caps",
+  "section": "9.21",
+  "sectionTitle": "Masonry and Concrete Chimneys and Flues"
+ },
+ "9.21.4.7": {
+  "title": "Cleanout",
+  "section": "9.21",
+  "sectionTitle": "Masonry and Concrete Chimneys and Flues"
+ },
+ "9.21.4.8": {
+  "title": "Wall Thickness",
+  "section": "9.21",
+  "sectionTitle": "Masonry and Concrete Chimneys and Flues"
+ },
+ "9.21.4.9": {
+  "title": "Separation of Flue Liners",
+  "section": "9.21",
+  "sectionTitle": "Masonry and Concrete Chimneys and Flues"
+ },
+ "9.21.5.1": {
+  "title": "Clearance from Combustible Materials",
+  "section": "9.21",
+  "sectionTitle": "Masonry and Concrete Chimneys and Flues"
+ },
+ "9.21.5.2": {
+  "title": "Sealing of Spaces",
+  "section": "9.21",
+  "sectionTitle": "Masonry and Concrete Chimneys and Flues"
+ },
+ "9.21.5.3": {
+  "title": "Support of Joists or Beams",
+  "section": "9.21",
+  "sectionTitle": "Masonry and Concrete Chimneys and Flues"
+ },
+ "9.22.1.1": {
+  "title": "Application",
+  "section": "9.22",
+  "sectionTitle": "Fireplaces"
+ },
+ "9.22.1.2": {
+  "title": "Masonry and Concrete",
+  "section": "9.22",
+  "sectionTitle": "Fireplaces"
+ },
+ "9.22.1.3": {
+  "title": "Footings",
+  "section": "9.22",
+  "sectionTitle": "Fireplaces"
+ },
+ "9.22.1.4": {
+  "title": "Combustion Air",
+  "section": "9.22",
+  "sectionTitle": "Fireplaces"
+ },
+ "9.22.10.1": {
+  "title": "Appliance Standard",
+  "section": "9.22",
+  "sectionTitle": "Fireplaces"
+ },
+ "9.22.10.2": {
+  "title": "Installation",
+  "section": "9.22",
+  "sectionTitle": "Fireplaces"
+ },
+ "9.22.2.1": {
+  "title": "Brick or Steel Liners",
+  "section": "9.22",
+  "sectionTitle": "Fireplaces"
+ },
+ "9.22.2.2": {
+  "title": "Firebrick Liners",
+  "section": "9.22",
+  "sectionTitle": "Fireplaces"
+ },
+ "9.22.2.3": {
+  "title": "Steel Liners",
+  "section": "9.22",
+  "sectionTitle": "Fireplaces"
+ },
+ "9.22.3.1": {
+  "title": "Thickness of Walls",
+  "section": "9.22",
+  "sectionTitle": "Fireplaces"
+ },
+ "9.22.4.1": {
+  "title": "Fire Chamber Dimensions",
+  "section": "9.22",
+  "sectionTitle": "Fireplaces"
+ },
+ "9.22.5.1": {
+  "title": "Hearth Extension",
+  "section": "9.22",
+  "sectionTitle": "Fireplaces"
+ },
+ "9.22.5.2": {
+  "title": "Support of Hearth",
+  "section": "9.22",
+  "sectionTitle": "Fireplaces"
+ },
+ "9.22.6.1": {
+  "title": "Required Damper and Size",
+  "section": "9.22",
+  "sectionTitle": "Fireplaces"
+ },
+ "9.22.7.1": {
+  "title": "Slope of Smoke Chamber",
+  "section": "9.22",
+  "sectionTitle": "Fireplaces"
+ },
+ "9.22.7.2": {
+  "title": "Wall Thickness",
+  "section": "9.22",
+  "sectionTitle": "Fireplaces"
+ },
+ "9.22.8.1": {
+  "title": "Conformance to Standard",
+  "section": "9.22",
+  "sectionTitle": "Fireplaces"
+ },
+ "9.22.9.1": {
+  "title": "Clearance to the Fireplace Opening",
+  "section": "9.22",
+  "sectionTitle": "Fireplaces"
+ },
+ "9.22.9.2": {
+  "title": "Metal Exposed to the Interior",
+  "section": "9.22",
+  "sectionTitle": "Fireplaces"
+ },
+ "9.22.9.3": {
+  "title": "Clearance to Combustible Framing",
+  "section": "9.22",
+  "sectionTitle": "Fireplaces"
+ },
+ "9.22.9.4": {
+  "title": "Heat-Circulating Duct Outlets",
+  "section": "9.22",
+  "sectionTitle": "Fireplaces"
+ },
+ "9.23.1.1": {
+  "title": "Limitations",
+  "section": "9.23",
+  "sectionTitle": "Wood-Frame Construction"
+ },
+ "9.23.10.1": {
+  "title": "Stud Size and Spacing",
+  "section": "9.23",
+  "sectionTitle": "Wood-Frame Construction"
+ },
+ "9.23.10.2": {
+  "title": "Bracing and Lateral Support",
+  "section": "9.23",
+  "sectionTitle": "Wood-Frame Construction"
+ },
+ "9.23.10.3": {
+  "title": "Orientation of Studs",
+  "section": "9.23",
+  "sectionTitle": "Wood-Frame Construction"
+ },
+ "9.23.10.4": {
+  "title": "Continuity of Studs",
+  "section": "9.23",
+  "sectionTitle": "Wood-Frame Construction"
+ },
+ "9.23.10.5": {
+  "title": "Support for Cladding, Sheathing and Finishing Materials",
+  "section": "9.23",
+  "sectionTitle": "Wood-Frame Construction"
+ },
+ "9.23.10.6": {
+  "title": "Studs at Sides of Openings",
+  "section": "9.23",
+  "sectionTitle": "Wood-Frame Construction"
+ },
+ "9.23.11.1": {
+  "title": "Size of Wall Plates",
+  "section": "9.23",
+  "sectionTitle": "Wood-Frame Construction"
+ },
+ "9.23.11.2": {
+  "title": "Bottom Wall Plates",
+  "section": "9.23",
+  "sectionTitle": "Wood-Frame Construction"
+ },
+ "9.23.11.3": {
+  "title": "Top Plates",
+  "section": "9.23",
+  "sectionTitle": "Wood-Frame Construction"
+ },
+ "9.23.11.4": {
+  "title": "Joints in Top Plates",
+  "section": "9.23",
+  "sectionTitle": "Wood-Frame Construction"
+ },
+ "9.23.12.1": {
+  "title": "Openings in Non-Loadbearing Walls",
+  "section": "9.23",
+  "sectionTitle": "Wood-Frame Construction"
+ },
+ "9.23.12.2": {
+  "title": "Openings in Loadbearing Walls",
+  "section": "9.23",
+  "sectionTitle": "Wood-Frame Construction"
+ },
+ "9.23.12.3": {
+  "title": "Lintel Spans and Sizes",
+  "section": "9.23",
+  "sectionTitle": "Wood-Frame Construction"
+ },
+ "9.23.13.1": {
+  "title": "Requirements for Low to Moderate Wind and Seismic Forces",
+  "section": "9.23",
+  "sectionTitle": "Wood-Frame Construction"
+ },
+ "9.23.13.10": {
+  "title": "Additional System Considerations",
+  "section": "9.23",
+  "sectionTitle": "Wood-Frame Construction"
+ },
+ "9.23.13.11": {
+  "title": "Simplified Approach for Braced Wall Panel Length",
+  "section": "9.23",
+  "sectionTitle": "Wood-Frame Construction"
+ },
+ "9.23.13.2": {
+  "title": "Requirements for High Wind and Seismic Forces",
+  "section": "9.23",
+  "sectionTitle": "Wood-Frame Construction"
+ },
+ "9.23.13.3": {
+  "title": "Requirements for Extreme Wind and Seismic Forces",
+  "section": "9.23",
+  "sectionTitle": "Wood-Frame Construction"
+ },
+ "9.23.13.4": {
+  "title": "Braced Wall Bands",
+  "section": "9.23",
+  "sectionTitle": "Wood-Frame Construction"
+ },
+ "9.23.13.5": {
+  "title": "Braced Wall Panels in Braced Wall Bands",
+  "section": "9.23",
+  "sectionTitle": "Wood-Frame Construction"
+ },
+ "9.23.13.6": {
+  "title": "Materials in Braced Wall Panels",
+  "section": "9.23",
+  "sectionTitle": "Wood-Frame Construction"
+ },
+ "9.23.13.7": {
+  "title": "Braced Wall Panel Length",
+  "section": "9.23",
+  "sectionTitle": "Wood-Frame Construction"
+ },
+ "9.23.13.8": {
+  "title": "Foundation Cripple Walls",
+  "section": "9.23",
+  "sectionTitle": "Wood-Frame Construction"
+ },
+ "9.23.13.9": {
+  "title": "Cripple Walls in Stepped Foundations",
+  "section": "9.23",
+  "sectionTitle": "Wood-Frame Construction"
+ },
+ "9.23.14.1": {
+  "title": "Continuity of Rafters and Joists",
+  "section": "9.23",
+  "sectionTitle": "Wood-Frame Construction"
+ },
+ "9.23.14.10": {
+  "title": "Ceiling Joists Supporting Roof Load",
+  "section": "9.23",
+  "sectionTitle": "Wood-Frame Construction"
+ },
+ "9.23.14.11": {
+  "title": "Roof Trusses",
+  "section": "9.23",
+  "sectionTitle": "Wood-Frame Construction"
+ },
+ "9.23.14.2": {
+  "title": "Framing around Openings",
+  "section": "9.23",
+  "sectionTitle": "Wood-Frame Construction"
+ },
+ "9.23.14.3": {
+  "title": "End Bearing Length",
+  "section": "9.23",
+  "sectionTitle": "Wood-Frame Construction"
+ },
+ "9.23.14.4": {
+  "title": "Location and Attachment of Rafters",
+  "section": "9.23",
+  "sectionTitle": "Wood-Frame Construction"
+ },
+ "9.23.14.5": {
+  "title": "Shaping of Rafters",
+  "section": "9.23",
+  "sectionTitle": "Wood-Frame Construction"
+ },
+ "9.23.14.6": {
+  "title": "Hip and Valley Rafters",
+  "section": "9.23",
+  "sectionTitle": "Wood-Frame Construction"
+ },
+ "9.23.14.7": {
+  "title": "Intermediate Support for Rafters and Joists",
+  "section": "9.23",
+  "sectionTitle": "Wood-Frame Construction"
+ },
+ "9.23.14.8": {
+  "title": "Ridge Support",
+  "section": "9.23",
+  "sectionTitle": "Wood-Frame Construction"
+ },
+ "9.23.14.9": {
+  "title": "Restraint of Joist Bottoms",
+  "section": "9.23",
+  "sectionTitle": "Wood-Frame Construction"
+ },
+ "9.23.15.1": {
+  "title": "Subflooring Required",
+  "section": "9.23",
+  "sectionTitle": "Wood-Frame Construction"
+ },
+ "9.23.15.2": {
+  "title": "Material Standards",
+  "section": "9.23",
+  "sectionTitle": "Wood-Frame Construction"
+ },
+ "9.23.15.3": {
+  "title": "Edge Support",
+  "section": "9.23",
+  "sectionTitle": "Wood-Frame Construction"
+ },
+ "9.23.15.4": {
+  "title": "Direction of Installation",
+  "section": "9.23",
+  "sectionTitle": "Wood-Frame Construction"
+ },
+ "9.23.15.5": {
+  "title": "Subfloor Thickness or Rating",
+  "section": "9.23",
+  "sectionTitle": "Wood-Frame Construction"
+ },
+ "9.23.15.6": {
+  "title": "Annular Grooved Nails",
+  "section": "9.23",
+  "sectionTitle": "Wood-Frame Construction"
+ },
+ "9.23.15.7": {
+  "title": "Lumber Subflooring",
+  "section": "9.23",
+  "sectionTitle": "Wood-Frame Construction"
+ },
+ "9.23.16.1": {
+  "title": "Required Roof Sheathing",
+  "section": "9.23",
+  "sectionTitle": "Wood-Frame Construction"
+ },
+ "9.23.16.2": {
+  "title": "Material Standards",
+  "section": "9.23",
+  "sectionTitle": "Wood-Frame Construction"
+ },
+ "9.23.16.3": {
+  "title": "Direction of Installation",
+  "section": "9.23",
+  "sectionTitle": "Wood-Frame Construction"
+ },
+ "9.23.16.4": {
+  "title": "Joints in Panel-Type Sheathing",
+  "section": "9.23",
+  "sectionTitle": "Wood-Frame Construction"
+ },
+ "9.23.16.5": {
+  "title": "Lumber Roof Sheathing",
+  "section": "9.23",
+  "sectionTitle": "Wood-Frame Construction"
+ },
+ "9.23.16.6": {
+  "title": "Edge Support",
+  "section": "9.23",
+  "sectionTitle": "Wood-Frame Construction"
+ },
+ "9.23.16.7": {
+  "title": "Thickness or Rating",
+  "section": "9.23",
+  "sectionTitle": "Wood-Frame Construction"
+ },
+ "9.23.17.1": {
+  "title": "Required Sheathing",
+  "section": "9.23",
+  "sectionTitle": "Wood-Frame Construction"
+ },
+ "9.23.17.2": {
+  "title": "Thickness, Rating and Material Standards",
+  "section": "9.23",
+  "sectionTitle": "Wood-Frame Construction"
+ },
+ "9.23.17.3": {
+  "title": "Attachment of Cladding to Sheathing",
+  "section": "9.23",
+  "sectionTitle": "Wood-Frame Construction"
+ },
+ "9.23.17.4": {
+  "title": "Lumber Sheathing",
+  "section": "9.23",
+  "sectionTitle": "Wood-Frame Construction"
+ },
+ "9.23.17.5": {
+  "title": "Joints in Panel-Type Sheathing",
+  "section": "9.23",
+  "sectionTitle": "Wood-Frame Construction"
+ },
+ "9.23.17.6": {
+  "title": "Mansard Style Roofs",
+  "section": "9.23",
+  "sectionTitle": "Wood-Frame Construction"
+ },
+ "9.23.2.1": {
+  "title": "Strength and Rigidity",
+  "section": "9.23",
+  "sectionTitle": "Wood-Frame Construction"
+ },
+ "9.23.2.2": {
+  "title": "Protection from Decay",
+  "section": "9.23",
+  "sectionTitle": "Wood-Frame Construction"
+ },
+ "9.23.2.3": {
+  "title": "Protection from Dampness",
+  "section": "9.23",
+  "sectionTitle": "Wood-Frame Construction"
+ },
+ "9.23.2.4": {
+  "title": "Connections to Preservative-Treated Wood",
+  "section": "9.23",
+  "sectionTitle": "Wood-Frame Construction"
+ },
+ "9.23.2.5": {
+  "title": "Lumber",
+  "section": "9.23",
+  "sectionTitle": "Wood-Frame Construction"
+ },
+ "9.23.3.1": {
+  "title": "Standards for Nails and Screws",
+  "section": "9.23",
+  "sectionTitle": "Wood-Frame Construction"
+ },
+ "9.23.3.2": {
+  "title": "Length of Nails",
+  "section": "9.23",
+  "sectionTitle": "Wood-Frame Construction"
+ },
+ "9.23.3.3": {
+  "title": "Prevention of Splitting",
+  "section": "9.23",
+  "sectionTitle": "Wood-Frame Construction"
+ },
+ "9.23.3.4": {
+  "title": "Nailing of Framing",
+  "section": "9.23",
+  "sectionTitle": "Wood-Frame Construction"
+ },
+ "9.23.3.5": {
+  "title": "Fasteners for Sheathing or Subflooring",
+  "section": "9.23",
+  "sectionTitle": "Wood-Frame Construction"
+ },
+ "9.23.4.1": {
+  "title": "Application",
+  "section": "9.23",
+  "sectionTitle": "Wood-Frame Construction"
+ },
+ "9.23.4.2": {
+  "title": "Spans for Joists, Rafters and Beams",
+  "section": "9.23",
+  "sectionTitle": "Wood-Frame Construction"
+ },
+ "9.23.4.3": {
+  "title": "Steel Beams",
+  "section": "9.23",
+  "sectionTitle": "Wood-Frame Construction"
+ },
+ "9.23.4.4": {
+  "title": "Concrete Topping",
+  "section": "9.23",
+  "sectionTitle": "Wood-Frame Construction"
+ },
+ "9.23.4.5": {
+  "title": "Heavy Roofing Materials",
+  "section": "9.23",
+  "sectionTitle": "Wood-Frame Construction"
+ },
+ "9.23.5.1": {
+  "title": "Holes Drilled in Framing Members",
+  "section": "9.23",
+  "sectionTitle": "Wood-Frame Construction"
+ },
+ "9.23.5.2": {
+  "title": "Notching of Framing Members",
+  "section": "9.23",
+  "sectionTitle": "Wood-Frame Construction"
+ },
+ "9.23.5.3": {
+  "title": "Wall Studs",
+  "section": "9.23",
+  "sectionTitle": "Wood-Frame Construction"
+ },
+ "9.23.5.4": {
+  "title": "Top Plates",
+  "section": "9.23",
+  "sectionTitle": "Wood-Frame Construction"
+ },
+ "9.23.5.5": {
+  "title": "Roof Trusses",
+  "section": "9.23",
+  "sectionTitle": "Wood-Frame Construction"
+ },
+ "9.23.6.1": {
+  "title": "Anchorage of Building Frames",
+  "section": "9.23",
+  "sectionTitle": "Wood-Frame Construction"
+ },
+ "9.23.6.2": {
+  "title": "Anchorage of Columns and Posts",
+  "section": "9.23",
+  "sectionTitle": "Wood-Frame Construction"
+ },
+ "9.23.6.3": {
+  "title": "Anchorage of Smaller Buildings",
+  "section": "9.23",
+  "sectionTitle": "Wood-Frame Construction"
+ },
+ "9.23.7.1": {
+  "title": "Size of Sill Plates",
+  "section": "9.23",
+  "sectionTitle": "Wood-Frame Construction"
+ },
+ "9.23.7.2": {
+  "title": "Levelling and Sealing of Sill Plates",
+  "section": "9.23",
+  "sectionTitle": "Wood-Frame Construction"
+ },
+ "9.23.8.1": {
+  "title": "Bearing for Beams",
+  "section": "9.23",
+  "sectionTitle": "Wood-Frame Construction"
+ },
+ "9.23.8.2": {
+  "title": "Priming of Steel Beams",
+  "section": "9.23",
+  "sectionTitle": "Wood-Frame Construction"
+ },
+ "9.23.8.3": {
+  "title": "Built-up Wood Beams",
+  "section": "9.23",
+  "sectionTitle": "Wood-Frame Construction"
+ },
+ "9.23.9.1": {
+  "title": "End Bearing for Joists",
+  "section": "9.23",
+  "sectionTitle": "Wood-Frame Construction"
+ },
+ "9.23.9.2": {
+  "title": "Joists Supported by Beams",
+  "section": "9.23",
+  "sectionTitle": "Wood-Frame Construction"
+ },
+ "9.23.9.3": {
+  "title": "Restraint of Joist Bottoms",
+  "section": "9.23",
+  "sectionTitle": "Wood-Frame Construction"
+ },
+ "9.23.9.4": {
+  "title": "Strapping, Bridging, Furring and Ceilings in Span Tables 9.23.4.2.-A and -B",
+  "section": "9.23",
+  "sectionTitle": "Wood-Frame Construction"
+ },
+ "9.23.9.5": {
+  "title": "Header Joists",
+  "section": "9.23",
+  "sectionTitle": "Wood-Frame Construction"
+ },
+ "9.23.9.6": {
+  "title": "Trimmer Joists",
+  "section": "9.23",
+  "sectionTitle": "Wood-Frame Construction"
+ },
+ "9.23.9.7": {
+  "title": "Support of Tail and Header Joists",
+  "section": "9.23",
+  "sectionTitle": "Wood-Frame Construction"
+ },
+ "9.23.9.8": {
+  "title": "Support of Walls",
+  "section": "9.23",
+  "sectionTitle": "Wood-Frame Construction"
+ },
+ "9.23.9.9": {
+  "title": "Cantilevered Floor Joists",
+  "section": "9.23",
+  "sectionTitle": "Wood-Frame Construction"
+ },
+ "9.24.1.1": {
+  "title": "Application",
+  "section": "9.24",
+  "sectionTitle": "Sheet Steel Stud Wall Framing"
+ },
+ "9.24.1.2": {
+  "title": "Material Standards",
+  "section": "9.24",
+  "sectionTitle": "Sheet Steel Stud Wall Framing"
+ },
+ "9.24.1.3": {
+  "title": "Metal Thickness",
+  "section": "9.24",
+  "sectionTitle": "Sheet Steel Stud Wall Framing"
+ },
+ "9.24.1.4": {
+  "title": "Screws",
+  "section": "9.24",
+  "sectionTitle": "Sheet Steel Stud Wall Framing"
+ },
+ "9.24.1.5": {
+  "title": "Cladding, Sheathing and Interior Finish Required",
+  "section": "9.24",
+  "sectionTitle": "Sheet Steel Stud Wall Framing"
+ },
+ "9.24.2.1": {
+  "title": "Size and Spacing of Studs in Interior Walls",
+  "section": "9.24",
+  "sectionTitle": "Sheet Steel Stud Wall Framing"
+ },
+ "9.24.2.2": {
+  "title": "Thickness of Studs",
+  "section": "9.24",
+  "sectionTitle": "Sheet Steel Stud Wall Framing"
+ },
+ "9.24.2.3": {
+  "title": "Runners",
+  "section": "9.24",
+  "sectionTitle": "Sheet Steel Stud Wall Framing"
+ },
+ "9.24.2.4": {
+  "title": "Openings in Fire Separations",
+  "section": "9.24",
+  "sectionTitle": "Sheet Steel Stud Wall Framing"
+ },
+ "9.24.2.5": {
+  "title": "Size and Spacing of Studs in Exterior Walls",
+  "section": "9.24",
+  "sectionTitle": "Sheet Steel Stud Wall Framing"
+ },
+ "9.24.3.1": {
+  "title": "Installation of Runners",
+  "section": "9.24",
+  "sectionTitle": "Sheet Steel Stud Wall Framing"
+ },
+ "9.24.3.2": {
+  "title": "Fire-Rated Walls",
+  "section": "9.24",
+  "sectionTitle": "Sheet Steel Stud Wall Framing"
+ },
+ "9.24.3.3": {
+  "title": "Orientation of Studs",
+  "section": "9.24",
+  "sectionTitle": "Sheet Steel Stud Wall Framing"
+ },
+ "9.24.3.4": {
+  "title": "Support for Cladding Materials",
+  "section": "9.24",
+  "sectionTitle": "Sheet Steel Stud Wall Framing"
+ },
+ "9.24.3.5": {
+  "title": "Framing around Openings",
+  "section": "9.24",
+  "sectionTitle": "Sheet Steel Stud Wall Framing"
+ },
+ "9.24.3.6": {
+  "title": "Attachment of Studs to Runners",
+  "section": "9.24",
+  "sectionTitle": "Sheet Steel Stud Wall Framing"
+ },
+ "9.24.3.7": {
+  "title": "Openings for Fire Dampers",
+  "section": "9.24",
+  "sectionTitle": "Sheet Steel Stud Wall Framing"
+ },
+ "9.25.1.1": {
+  "title": "Scope and Application",
+  "section": "9.25",
+  "sectionTitle": "Heat Transfer, Air Leakage and Condensation Control"
+ },
+ "9.25.2.1": {
+  "title": "Required Insulation",
+  "section": "9.25",
+  "sectionTitle": "Heat Transfer, Air Leakage and Condensation Control"
+ },
+ "9.25.2.2": {
+  "title": "Insulation Materials",
+  "section": "9.25",
+  "sectionTitle": "Heat Transfer, Air Leakage and Condensation Control"
+ },
+ "9.25.2.3": {
+  "title": "Installation of Thermal Insulation",
+  "section": "9.25",
+  "sectionTitle": "Heat Transfer, Air Leakage and Condensation Control"
+ },
+ "9.25.2.4": {
+  "title": "Installation of Loose-Fill Insulation",
+  "section": "9.25",
+  "sectionTitle": "Heat Transfer, Air Leakage and Condensation Control"
+ },
+ "9.25.2.5": {
+  "title": "Installation of Spray-Applied Polyurethane",
+  "section": "9.25",
+  "sectionTitle": "Heat Transfer, Air Leakage and Condensation Control"
+ },
+ "9.25.3.1": {
+  "title": "Required Barrier to Air Leakage",
+  "section": "9.25",
+  "sectionTitle": "Heat Transfer, Air Leakage and Condensation Control"
+ },
+ "9.25.3.2": {
+  "title": "Air Barrier System Properties",
+  "section": "9.25",
+  "sectionTitle": "Heat Transfer, Air Leakage and Condensation Control"
+ },
+ "9.25.3.3": {
+  "title": "Continuity of the Air Barrier System",
+  "section": "9.25",
+  "sectionTitle": "Heat Transfer, Air Leakage and Condensation Control"
+ },
+ "9.25.3.4": {
+  "title": "Air Leakage Control in Masonry Walls",
+  "section": "9.25",
+  "sectionTitle": "Heat Transfer, Air Leakage and Condensation Control"
+ },
+ "9.25.3.5": {
+  "title": "Air Leakage Control in Underground Roofs",
+  "section": "9.25",
+  "sectionTitle": "Heat Transfer, Air Leakage and Condensation Control"
+ },
+ "9.25.3.6": {
+  "title": "Air Barrier Systems in Floors-on-ground",
+  "section": "9.25",
+  "sectionTitle": "Heat Transfer, Air Leakage and Condensation Control"
+ },
+ "9.25.4.1": {
+  "title": "Required Barrier to Vapour Diffusion",
+  "section": "9.25",
+  "sectionTitle": "Heat Transfer, Air Leakage and Condensation Control"
+ },
+ "9.25.4.2": {
+  "title": "Vapour Barrier Materials",
+  "section": "9.25",
+  "sectionTitle": "Heat Transfer, Air Leakage and Condensation Control"
+ },
+ "9.25.4.3": {
+  "title": "Installation of Vapour Barriers",
+  "section": "9.25",
+  "sectionTitle": "Heat Transfer, Air Leakage and Condensation Control"
+ },
+ "9.25.5.1": {
+  "title": "General",
+  "section": "9.25",
+  "sectionTitle": "Heat Transfer, Air Leakage and Condensation Control"
+ },
+ "9.25.5.2": {
+  "title": "Position of Low Permeance Materials",
+  "section": "9.25",
+  "sectionTitle": "Heat Transfer, Air Leakage and Condensation Control"
+ },
+ "9.26.1.1": {
+  "title": "Definitions",
+  "section": "9.26",
+  "sectionTitle": "Roofing"
+ },
+ "9.26.1.2": {
+  "title": "Required Protection",
+  "section": "9.26",
+  "sectionTitle": "Roofing"
+ },
+ "9.26.1.3": {
+  "title": "Alternative Installation Methods",
+  "section": "9.26",
+  "sectionTitle": "Roofing"
+ },
+ "9.26.10.1": {
+  "title": "Size and Thickness",
+  "section": "9.26",
+  "sectionTitle": "Roofing"
+ },
+ "9.26.10.2": {
+  "title": "Underlay",
+  "section": "9.26",
+  "sectionTitle": "Roofing"
+ },
+ "9.26.10.3": {
+  "title": "Spacing and Joints",
+  "section": "9.26",
+  "sectionTitle": "Roofing"
+ },
+ "9.26.10.4": {
+  "title": "Fastening",
+  "section": "9.26",
+  "sectionTitle": "Roofing"
+ },
+ "9.26.10.5": {
+  "title": "Exposure",
+  "section": "9.26",
+  "sectionTitle": "Roofing"
+ },
+ "9.26.10.6": {
+  "title": "Flashing",
+  "section": "9.26",
+  "sectionTitle": "Roofing"
+ },
+ "9.26.10.7": {
+  "title": "Eave Protection",
+  "section": "9.26",
+  "sectionTitle": "Roofing"
+ },
+ "9.26.10.8": {
+  "title": "Grade",
+  "section": "9.26",
+  "sectionTitle": "Roofing"
+ },
+ "9.26.11.1": {
+  "title": "Quantity of Materials",
+  "section": "9.26",
+  "sectionTitle": "Roofing"
+ },
+ "9.26.11.10": {
+  "title": "Cant Strips",
+  "section": "9.26",
+  "sectionTitle": "Roofing"
+ },
+ "9.26.11.2": {
+  "title": "Coal-Tar and Asphalt Products",
+  "section": "9.26",
+  "sectionTitle": "Roofing"
+ },
+ "9.26.11.3": {
+  "title": "Roof Felts",
+  "section": "9.26",
+  "sectionTitle": "Roofing"
+ },
+ "9.26.11.4": {
+  "title": "Aggregate Surfacing",
+  "section": "9.26",
+  "sectionTitle": "Roofing"
+ },
+ "9.26.11.5": {
+  "title": "Flashing",
+  "section": "9.26",
+  "sectionTitle": "Roofing"
+ },
+ "9.26.11.6": {
+  "title": "Number of Layers",
+  "section": "9.26",
+  "sectionTitle": "Roofing"
+ },
+ "9.26.11.7": {
+  "title": "Installation of Layers",
+  "section": "9.26",
+  "sectionTitle": "Roofing"
+ },
+ "9.26.11.8": {
+  "title": "Roofing over Wood-Based Sheathing",
+  "section": "9.26",
+  "sectionTitle": "Roofing"
+ },
+ "9.26.11.9": {
+  "title": "Attachment to Decking",
+  "section": "9.26",
+  "sectionTitle": "Roofing"
+ },
+ "9.26.12.1": {
+  "title": "Coverage",
+  "section": "9.26",
+  "sectionTitle": "Roofing"
+ },
+ "9.26.12.2": {
+  "title": "Joints",
+  "section": "9.26",
+  "sectionTitle": "Roofing"
+ },
+ "9.26.13.1": {
+  "title": "Thickness",
+  "section": "9.26",
+  "sectionTitle": "Roofing"
+ },
+ "9.26.13.2": {
+  "title": "Support",
+  "section": "9.26",
+  "sectionTitle": "Roofing"
+ },
+ "9.26.14.1": {
+  "title": "Support",
+  "section": "9.26",
+  "sectionTitle": "Roofing"
+ },
+ "9.26.15.1": {
+  "title": "Installation",
+  "section": "9.26",
+  "sectionTitle": "Roofing"
+ },
+ "9.26.16.1": {
+  "title": "Installation",
+  "section": "9.26",
+  "sectionTitle": "Roofing"
+ },
+ "9.26.17.1": {
+  "title": "Installation",
+  "section": "9.26",
+  "sectionTitle": "Roofing"
+ },
+ "9.26.18.1": {
+  "title": "Roof Drains",
+  "section": "9.26",
+  "sectionTitle": "Roofing"
+ },
+ "9.26.18.2": {
+  "title": "Downspouts",
+  "section": "9.26",
+  "sectionTitle": "Roofing"
+ },
+ "9.26.2.1": {
+  "title": "Material Standards",
+  "section": "9.26",
+  "sectionTitle": "Roofing"
+ },
+ "9.26.2.2": {
+  "title": "Installation of Materials",
+  "section": "9.26",
+  "sectionTitle": "Roofing"
+ },
+ "9.26.2.3": {
+  "title": "Nails",
+  "section": "9.26",
+  "sectionTitle": "Roofing"
+ },
+ "9.26.2.4": {
+  "title": "Staples",
+  "section": "9.26",
+  "sectionTitle": "Roofing"
+ },
+ "9.26.3.1": {
+  "title": "Slope",
+  "section": "9.26",
+  "sectionTitle": "Roofing"
+ },
+ "9.26.4.1": {
+  "title": "Required Flashing at Intersections",
+  "section": "9.26",
+  "sectionTitle": "Roofing"
+ },
+ "9.26.4.2": {
+  "title": "Materials",
+  "section": "9.26",
+  "sectionTitle": "Roofing"
+ },
+ "9.26.4.3": {
+  "title": "Valley Flashing",
+  "section": "9.26",
+  "sectionTitle": "Roofing"
+ },
+ "9.26.4.4": {
+  "title": "Intersection of Shingle Roofs and Masonry",
+  "section": "9.26",
+  "sectionTitle": "Roofing"
+ },
+ "9.26.4.5": {
+  "title": "Intersection of Shingle Roofs and Walls other than Masonry",
+  "section": "9.26",
+  "sectionTitle": "Roofing"
+ },
+ "9.26.4.6": {
+  "title": "Intersection of Built-Up Roofs and Masonry",
+  "section": "9.26",
+  "sectionTitle": "Roofing"
+ },
+ "9.26.4.7": {
+  "title": "Intersection of Built-Up Roofs and Walls other than Masonry",
+  "section": "9.26",
+  "sectionTitle": "Roofing"
+ },
+ "9.26.4.8": {
+  "title": "Chimney Saddles",
+  "section": "9.26",
+  "sectionTitle": "Roofing"
+ },
+ "9.26.5.1": {
+  "title": "Required Eave Protection",
+  "section": "9.26",
+  "sectionTitle": "Roofing"
+ },
+ "9.26.5.2": {
+  "title": "Materials",
+  "section": "9.26",
+  "sectionTitle": "Roofing"
+ },
+ "9.26.6.1": {
+  "title": "Materials",
+  "section": "9.26",
+  "sectionTitle": "Roofing"
+ },
+ "9.26.6.2": {
+  "title": "Installation",
+  "section": "9.26",
+  "sectionTitle": "Roofing"
+ },
+ "9.26.7.1": {
+  "title": "Coverage",
+  "section": "9.26",
+  "sectionTitle": "Roofing"
+ },
+ "9.26.7.2": {
+  "title": "Starter Strip",
+  "section": "9.26",
+  "sectionTitle": "Roofing"
+ },
+ "9.26.7.3": {
+  "title": "Head Lap",
+  "section": "9.26",
+  "sectionTitle": "Roofing"
+ },
+ "9.26.7.4": {
+  "title": "Fasteners",
+  "section": "9.26",
+  "sectionTitle": "Roofing"
+ },
+ "9.26.7.5": {
+  "title": "Securing of Tabs",
+  "section": "9.26",
+  "sectionTitle": "Roofing"
+ },
+ "9.26.7.6": {
+  "title": "Hips and Ridges",
+  "section": "9.26",
+  "sectionTitle": "Roofing"
+ },
+ "9.26.7.7": {
+  "title": "Eave Protection",
+  "section": "9.26",
+  "sectionTitle": "Roofing"
+ },
+ "9.26.7.8": {
+  "title": "Flashing",
+  "section": "9.26",
+  "sectionTitle": "Roofing"
+ },
+ "9.26.8.1": {
+  "title": "Coverage",
+  "section": "9.26",
+  "sectionTitle": "Roofing"
+ },
+ "9.26.8.2": {
+  "title": "Starter Strip",
+  "section": "9.26",
+  "sectionTitle": "Roofing"
+ },
+ "9.26.8.3": {
+  "title": "Securing of Tabs",
+  "section": "9.26",
+  "sectionTitle": "Roofing"
+ },
+ "9.26.8.4": {
+  "title": "Securing of Shingle Courses",
+  "section": "9.26",
+  "sectionTitle": "Roofing"
+ },
+ "9.26.8.5": {
+  "title": "Hips and Ridges",
+  "section": "9.26",
+  "sectionTitle": "Roofing"
+ },
+ "9.26.8.6": {
+  "title": "Flashing",
+  "section": "9.26",
+  "sectionTitle": "Roofing"
+ },
+ "9.26.8.7": {
+  "title": "Fastening",
+  "section": "9.26",
+  "sectionTitle": "Roofing"
+ },
+ "9.26.9.1": {
+  "title": "Decking",
+  "section": "9.26",
+  "sectionTitle": "Roofing"
+ },
+ "9.26.9.2": {
+  "title": "Grade",
+  "section": "9.26",
+  "sectionTitle": "Roofing"
+ },
+ "9.26.9.3": {
+  "title": "Size",
+  "section": "9.26",
+  "sectionTitle": "Roofing"
+ },
+ "9.26.9.4": {
+  "title": "Spacing and Joints",
+  "section": "9.26",
+  "sectionTitle": "Roofing"
+ },
+ "9.26.9.5": {
+  "title": "Fastening",
+  "section": "9.26",
+  "sectionTitle": "Roofing"
+ },
+ "9.26.9.6": {
+  "title": "Exposure",
+  "section": "9.26",
+  "sectionTitle": "Roofing"
+ },
+ "9.26.9.7": {
+  "title": "Flashing",
+  "section": "9.26",
+  "sectionTitle": "Roofing"
+ },
+ "9.26.9.8": {
+  "title": "Eave Protection",
+  "section": "9.26",
+  "sectionTitle": "Roofing"
+ },
+ "9.27.1.1": {
+  "title": "General",
+  "section": "9.27",
+  "sectionTitle": "Cladding"
+ },
+ "9.27.10.1": {
+  "title": "Material Standard",
+  "section": "9.27",
+  "sectionTitle": "Cladding"
+ },
+ "9.27.10.2": {
+  "title": "Thickness",
+  "section": "9.27",
+  "sectionTitle": "Cladding"
+ },
+ "9.27.10.3": {
+  "title": "Panel Cladding",
+  "section": "9.27",
+  "sectionTitle": "Cladding"
+ },
+ "9.27.10.4": {
+  "title": "Clearance",
+  "section": "9.27",
+  "sectionTitle": "Cladding"
+ },
+ "9.27.11.1": {
+  "title": "Material Standards",
+  "section": "9.27",
+  "sectionTitle": "Cladding"
+ },
+ "9.27.12.1": {
+  "title": "Material Standards",
+  "section": "9.27",
+  "sectionTitle": "Cladding"
+ },
+ "9.27.12.2": {
+  "title": "Attachment",
+  "section": "9.27",
+  "sectionTitle": "Cladding"
+ },
+ "9.27.13.1": {
+  "title": "Material Standard",
+  "section": "9.27",
+  "sectionTitle": "Cladding"
+ },
+ "9.27.13.2": {
+  "title": "Attachment",
+  "section": "9.27",
+  "sectionTitle": "Cladding"
+ },
+ "9.27.14.1": {
+  "title": "Application",
+  "section": "9.27",
+  "sectionTitle": "Cladding"
+ },
+ "9.27.14.2": {
+  "title": "Materials",
+  "section": "9.27",
+  "sectionTitle": "Cladding"
+ },
+ "9.27.14.3": {
+  "title": "Design and Installation",
+  "section": "9.27",
+  "sectionTitle": "Cladding"
+ },
+ "9.27.2.1": {
+  "title": "Minimizing and Preventing Ingress and Damage",
+  "section": "9.27",
+  "sectionTitle": "Cladding"
+ },
+ "9.27.2.2": {
+  "title": "Minimum Protection from Precipitation Ingress",
+  "section": "9.27",
+  "sectionTitle": "Cladding"
+ },
+ "9.27.2.3": {
+  "title": "First and Second Planes of Protection",
+  "section": "9.27",
+  "sectionTitle": "Cladding"
+ },
+ "9.27.2.4": {
+  "title": "Protection of Cladding from Moisture",
+  "section": "9.27",
+  "sectionTitle": "Cladding"
+ },
+ "9.27.3.1": {
+  "title": "Elements of the Second Plane of Protection",
+  "section": "9.27",
+  "sectionTitle": "Cladding"
+ },
+ "9.27.3.2": {
+  "title": "Sheathing Membrane Material Standard",
+  "section": "9.27",
+  "sectionTitle": "Cladding"
+ },
+ "9.27.3.3": {
+  "title": "Required Sheathing Membrane and Installation",
+  "section": "9.27",
+  "sectionTitle": "Cladding"
+ },
+ "9.27.3.4": {
+  "title": "Insulating Sheathing in lieu of Sheathing Membrane",
+  "section": "9.27",
+  "sectionTitle": "Cladding"
+ },
+ "9.27.3.5": {
+  "title": "Sheathing Membranes in lieu of Sheathing",
+  "section": "9.27",
+  "sectionTitle": "Cladding"
+ },
+ "9.27.3.6": {
+  "title": "Face Sealed Cladding",
+  "section": "9.27",
+  "sectionTitle": "Cladding"
+ },
+ "9.27.3.7": {
+  "title": "Flashing Materials",
+  "section": "9.27",
+  "sectionTitle": "Cladding"
+ },
+ "9.27.3.8": {
+  "title": "Flashing Installation",
+  "section": "9.27",
+  "sectionTitle": "Cladding"
+ },
+ "9.27.4.1": {
+  "title": "Required Sealants",
+  "section": "9.27",
+  "sectionTitle": "Cladding"
+ },
+ "9.27.4.2": {
+  "title": "Materials",
+  "section": "9.27",
+  "sectionTitle": "Cladding"
+ },
+ "9.27.5.1": {
+  "title": "Attachment",
+  "section": "9.27",
+  "sectionTitle": "Cladding"
+ },
+ "9.27.5.2": {
+  "title": "Blocking",
+  "section": "9.27",
+  "sectionTitle": "Cladding"
+ },
+ "9.27.5.3": {
+  "title": "Furring",
+  "section": "9.27",
+  "sectionTitle": "Cladding"
+ },
+ "9.27.5.4": {
+  "title": "Size and Spacing of Fasteners",
+  "section": "9.27",
+  "sectionTitle": "Cladding"
+ },
+ "9.27.5.5": {
+  "title": "Fastener Materials",
+  "section": "9.27",
+  "sectionTitle": "Cladding"
+ },
+ "9.27.5.6": {
+  "title": "Expansion and Contraction",
+  "section": "9.27",
+  "sectionTitle": "Cladding"
+ },
+ "9.27.5.7": {
+  "title": "Penetration of Fasteners",
+  "section": "9.27",
+  "sectionTitle": "Cladding"
+ },
+ "9.27.6.1": {
+  "title": "Materials",
+  "section": "9.27",
+  "sectionTitle": "Cladding"
+ },
+ "9.27.6.2": {
+  "title": "Thickness and Width",
+  "section": "9.27",
+  "sectionTitle": "Cladding"
+ },
+ "9.27.6.3": {
+  "title": "Joints",
+  "section": "9.27",
+  "sectionTitle": "Cladding"
+ },
+ "9.27.7.1": {
+  "title": "Materials",
+  "section": "9.27",
+  "sectionTitle": "Cladding"
+ },
+ "9.27.7.2": {
+  "title": "Width",
+  "section": "9.27",
+  "sectionTitle": "Cladding"
+ },
+ "9.27.7.3": {
+  "title": "Fasteners",
+  "section": "9.27",
+  "sectionTitle": "Cladding"
+ },
+ "9.27.7.4": {
+  "title": "Offsetting of Joints",
+  "section": "9.27",
+  "sectionTitle": "Cladding"
+ },
+ "9.27.7.5": {
+  "title": "Fastening to Lath",
+  "section": "9.27",
+  "sectionTitle": "Cladding"
+ },
+ "9.27.7.6": {
+  "title": "Exposure and Thickness",
+  "section": "9.27",
+  "sectionTitle": "Cladding"
+ },
+ "9.27.8.1": {
+  "title": "Material Standards",
+  "section": "9.27",
+  "sectionTitle": "Cladding"
+ },
+ "9.27.8.2": {
+  "title": "Thickness",
+  "section": "9.27",
+  "sectionTitle": "Cladding"
+ },
+ "9.27.8.3": {
+  "title": "Edge Treatment",
+  "section": "9.27",
+  "sectionTitle": "Cladding"
+ },
+ "9.27.8.4": {
+  "title": "Panel Cladding",
+  "section": "9.27",
+  "sectionTitle": "Cladding"
+ },
+ "9.27.8.5": {
+  "title": "Lapped Strip Siding",
+  "section": "9.27",
+  "sectionTitle": "Cladding"
+ },
+ "9.27.9.1": {
+  "title": "Material Standards",
+  "section": "9.27",
+  "sectionTitle": "Cladding"
+ },
+ "9.27.9.2": {
+  "title": "Thickness",
+  "section": "9.27",
+  "sectionTitle": "Cladding"
+ },
+ "9.27.9.3": {
+  "title": "Panel Cladding",
+  "section": "9.27",
+  "sectionTitle": "Cladding"
+ },
+ "9.27.9.4": {
+  "title": "Lapped Strip Siding",
+  "section": "9.27",
+  "sectionTitle": "Cladding"
+ },
+ "9.27.9.5": {
+  "title": "Clearance",
+  "section": "9.27",
+  "sectionTitle": "Cladding"
+ },
+ "9.28.1.1": {
+  "title": "Sheathing beneath Stucco",
+  "section": "9.28",
+  "sectionTitle": "Stucco"
+ },
+ "9.28.1.2": {
+  "title": "Lath and Reinforcing",
+  "section": "9.28",
+  "sectionTitle": "Stucco"
+ },
+ "9.28.1.3": {
+  "title": "Concrete Masonry Units",
+  "section": "9.28",
+  "sectionTitle": "Stucco"
+ },
+ "9.28.1.4": {
+  "title": "Clearance over Ground Level",
+  "section": "9.28",
+  "sectionTitle": "Stucco"
+ },
+ "9.28.1.5": {
+  "title": "Flashing and Caulking",
+  "section": "9.28",
+  "sectionTitle": "Stucco"
+ },
+ "9.28.2.1": {
+  "title": "Portland Cement",
+  "section": "9.28",
+  "sectionTitle": "Stucco"
+ },
+ "9.28.2.2": {
+  "title": "Aggregate",
+  "section": "9.28",
+  "sectionTitle": "Stucco"
+ },
+ "9.28.2.3": {
+  "title": "Water",
+  "section": "9.28",
+  "sectionTitle": "Stucco"
+ },
+ "9.28.3.1": {
+  "title": "Materials",
+  "section": "9.28",
+  "sectionTitle": "Stucco"
+ },
+ "9.28.3.2": {
+  "title": "Nails and Staples",
+  "section": "9.28",
+  "sectionTitle": "Stucco"
+ },
+ "9.28.4.1": {
+  "title": "Materials",
+  "section": "9.28",
+  "sectionTitle": "Stucco"
+ },
+ "9.28.4.2": {
+  "title": "No Sheathing Required",
+  "section": "9.28",
+  "sectionTitle": "Stucco"
+ },
+ "9.28.4.3": {
+  "title": "Stucco Lath Specifications",
+  "section": "9.28",
+  "sectionTitle": "Stucco"
+ },
+ "9.28.4.4": {
+  "title": "Self-Furring Devices",
+  "section": "9.28",
+  "sectionTitle": "Stucco"
+ },
+ "9.28.4.5": {
+  "title": "Application of Stucco Lath",
+  "section": "9.28",
+  "sectionTitle": "Stucco"
+ },
+ "9.28.4.6": {
+  "title": "Fastening",
+  "section": "9.28",
+  "sectionTitle": "Stucco"
+ },
+ "9.28.5.1": {
+  "title": "Mixes",
+  "section": "9.28",
+  "sectionTitle": "Stucco"
+ },
+ "9.28.5.2": {
+  "title": "Pigments",
+  "section": "9.28",
+  "sectionTitle": "Stucco"
+ },
+ "9.28.5.3": {
+  "title": "Mixing",
+  "section": "9.28",
+  "sectionTitle": "Stucco"
+ },
+ "9.28.6.1": {
+  "title": "Low Temperature Conditions",
+  "section": "9.28",
+  "sectionTitle": "Stucco"
+ },
+ "9.28.6.2": {
+  "title": "Number of Coats and Total Thickness",
+  "section": "9.28",
+  "sectionTitle": "Stucco"
+ },
+ "9.28.6.3": {
+  "title": "First Coat",
+  "section": "9.28",
+  "sectionTitle": "Stucco"
+ },
+ "9.28.6.4": {
+  "title": "Second Coat",
+  "section": "9.28",
+  "sectionTitle": "Stucco"
+ },
+ "9.28.6.5": {
+  "title": "Finish Coat",
+  "section": "9.28",
+  "sectionTitle": "Stucco"
+ },
+ "9.29.1.1": {
+  "title": "Fire Protection and Sound Control",
+  "section": "9.29",
+  "sectionTitle": "Interior Wall and Ceiling Finishes"
+ },
+ "9.29.10.1": {
+  "title": "Tile Application",
+  "section": "9.29",
+  "sectionTitle": "Interior Wall and Ceiling Finishes"
+ },
+ "9.29.10.2": {
+  "title": "Mortar Base",
+  "section": "9.29",
+  "sectionTitle": "Interior Wall and Ceiling Finishes"
+ },
+ "9.29.10.3": {
+  "title": "Adhesives",
+  "section": "9.29",
+  "sectionTitle": "Interior Wall and Ceiling Finishes"
+ },
+ "9.29.10.4": {
+  "title": "Moisture-Resistant Backing",
+  "section": "9.29",
+  "sectionTitle": "Interior Wall and Ceiling Finishes"
+ },
+ "9.29.10.5": {
+  "title": "Joints between Tiles and Bathtub",
+  "section": "9.29",
+  "sectionTitle": "Interior Wall and Ceiling Finishes"
+ },
+ "9.29.2.1": {
+  "title": "Where Required",
+  "section": "9.29",
+  "sectionTitle": "Interior Wall and Ceiling Finishes"
+ },
+ "9.29.2.2": {
+  "title": "Materials",
+  "section": "9.29",
+  "sectionTitle": "Interior Wall and Ceiling Finishes"
+ },
+ "9.29.3.1": {
+  "title": "Size and Spacing of Furring",
+  "section": "9.29",
+  "sectionTitle": "Interior Wall and Ceiling Finishes"
+ },
+ "9.29.3.2": {
+  "title": "Fastening",
+  "section": "9.29",
+  "sectionTitle": "Interior Wall and Ceiling Finishes"
+ },
+ "9.29.4.1": {
+  "title": "Application",
+  "section": "9.29",
+  "sectionTitle": "Interior Wall and Ceiling Finishes"
+ },
+ "9.29.5.1": {
+  "title": "Application",
+  "section": "9.29",
+  "sectionTitle": "Interior Wall and Ceiling Finishes"
+ },
+ "9.29.5.10": {
+  "title": "Low Temperature Conditions",
+  "section": "9.29",
+  "sectionTitle": "Interior Wall and Ceiling Finishes"
+ },
+ "9.29.5.2": {
+  "title": "Materials",
+  "section": "9.29",
+  "sectionTitle": "Interior Wall and Ceiling Finishes"
+ },
+ "9.29.5.3": {
+  "title": "Maximum Spacing of Supports",
+  "section": "9.29",
+  "sectionTitle": "Interior Wall and Ceiling Finishes"
+ },
+ "9.29.5.4": {
+  "title": "Support of Insulation",
+  "section": "9.29",
+  "sectionTitle": "Interior Wall and Ceiling Finishes"
+ },
+ "9.29.5.5": {
+  "title": "Length of Fasteners",
+  "section": "9.29",
+  "sectionTitle": "Interior Wall and Ceiling Finishes"
+ },
+ "9.29.5.6": {
+  "title": "Nails",
+  "section": "9.29",
+  "sectionTitle": "Interior Wall and Ceiling Finishes"
+ },
+ "9.29.5.7": {
+  "title": "Screws",
+  "section": "9.29",
+  "sectionTitle": "Interior Wall and Ceiling Finishes"
+ },
+ "9.29.5.8": {
+  "title": "Spacing of Nails",
+  "section": "9.29",
+  "sectionTitle": "Interior Wall and Ceiling Finishes"
+ },
+ "9.29.5.9": {
+  "title": "Spacing of Screws",
+  "section": "9.29",
+  "sectionTitle": "Interior Wall and Ceiling Finishes"
+ },
+ "9.29.6.1": {
+  "title": "Thickness",
+  "section": "9.29",
+  "sectionTitle": "Interior Wall and Ceiling Finishes"
+ },
+ "9.29.6.2": {
+  "title": "Grooved Plywood",
+  "section": "9.29",
+  "sectionTitle": "Interior Wall and Ceiling Finishes"
+ },
+ "9.29.6.3": {
+  "title": "Nails and Staples",
+  "section": "9.29",
+  "sectionTitle": "Interior Wall and Ceiling Finishes"
+ },
+ "9.29.6.4": {
+  "title": "Edge Support",
+  "section": "9.29",
+  "sectionTitle": "Interior Wall and Ceiling Finishes"
+ },
+ "9.29.7.1": {
+  "title": "Material Standard",
+  "section": "9.29",
+  "sectionTitle": "Interior Wall and Ceiling Finishes"
+ },
+ "9.29.7.2": {
+  "title": "Thickness",
+  "section": "9.29",
+  "sectionTitle": "Interior Wall and Ceiling Finishes"
+ },
+ "9.29.7.3": {
+  "title": "Nails",
+  "section": "9.29",
+  "sectionTitle": "Interior Wall and Ceiling Finishes"
+ },
+ "9.29.7.4": {
+  "title": "Edge Support",
+  "section": "9.29",
+  "sectionTitle": "Interior Wall and Ceiling Finishes"
+ },
+ "9.29.8.1": {
+  "title": "Material Standard",
+  "section": "9.29",
+  "sectionTitle": "Interior Wall and Ceiling Finishes"
+ },
+ "9.29.8.2": {
+  "title": "Thickness",
+  "section": "9.29",
+  "sectionTitle": "Interior Wall and Ceiling Finishes"
+ },
+ "9.29.8.3": {
+  "title": "Nails",
+  "section": "9.29",
+  "sectionTitle": "Interior Wall and Ceiling Finishes"
+ },
+ "9.29.8.4": {
+  "title": "Edge Support",
+  "section": "9.29",
+  "sectionTitle": "Interior Wall and Ceiling Finishes"
+ },
+ "9.29.9.1": {
+  "title": "Material Standard",
+  "section": "9.29",
+  "sectionTitle": "Interior Wall and Ceiling Finishes"
+ },
+ "9.29.9.2": {
+  "title": "Minimum Thickness",
+  "section": "9.29",
+  "sectionTitle": "Interior Wall and Ceiling Finishes"
+ },
+ "9.29.9.3": {
+  "title": "Nails",
+  "section": "9.29",
+  "sectionTitle": "Interior Wall and Ceiling Finishes"
+ },
+ "9.29.9.4": {
+  "title": "Edge Support",
+  "section": "9.29",
+  "sectionTitle": "Interior Wall and Ceiling Finishes"
+ },
+ "9.3.1.1": {
+  "title": "General",
+  "section": "9.3",
+  "sectionTitle": "Materials, Systems and Equipment"
+ },
+ "9.3.1.2": {
+  "title": "Cement",
+  "section": "9.3",
+  "sectionTitle": "Materials, Systems and Equipment"
+ },
+ "9.3.1.3": {
+  "title": "Concrete in Contact with Sulphate Soil",
+  "section": "9.3",
+  "sectionTitle": "Materials, Systems and Equipment"
+ },
+ "9.3.1.4": {
+  "title": "Aggregates",
+  "section": "9.3",
+  "sectionTitle": "Materials, Systems and Equipment"
+ },
+ "9.3.1.5": {
+  "title": "Water",
+  "section": "9.3",
+  "sectionTitle": "Materials, Systems and Equipment"
+ },
+ "9.3.1.6": {
+  "title": "Compressive Strength",
+  "section": "9.3",
+  "sectionTitle": "Materials, Systems and Equipment"
+ },
+ "9.3.1.7": {
+  "title": "Concrete Mixes",
+  "section": "9.3",
+  "sectionTitle": "Materials, Systems and Equipment"
+ },
+ "9.3.1.8": {
+  "title": "Admixtures",
+  "section": "9.3",
+  "sectionTitle": "Materials, Systems and Equipment"
+ },
+ "9.3.1.9": {
+  "title": "Cold Weather Requirements",
+  "section": "9.3",
+  "sectionTitle": "Materials, Systems and Equipment"
+ },
+ "9.3.2.1": {
+  "title": "Grade Marking",
+  "section": "9.3",
+  "sectionTitle": "Materials, Systems and Equipment"
+ },
+ "9.3.2.2": {
+  "title": "Lumber Grades",
+  "section": "9.3",
+  "sectionTitle": "Materials, Systems and Equipment"
+ },
+ "9.3.2.3": {
+  "title": "Machine Stress Rated Lumber",
+  "section": "9.3",
+  "sectionTitle": "Materials, Systems and Equipment"
+ },
+ "9.3.2.4": {
+  "title": "OSB, Waferboard and Plywood Marking",
+  "section": "9.3",
+  "sectionTitle": "Materials, Systems and Equipment"
+ },
+ "9.3.2.5": {
+  "title": "Moisture Content",
+  "section": "9.3",
+  "sectionTitle": "Materials, Systems and Equipment"
+ },
+ "9.3.2.6": {
+  "title": "Lumber Dimensions",
+  "section": "9.3",
+  "sectionTitle": "Materials, Systems and Equipment"
+ },
+ "9.3.2.7": {
+  "title": "Panel Thickness Tolerances",
+  "section": "9.3",
+  "sectionTitle": "Materials, Systems and Equipment"
+ },
+ "9.3.2.8": {
+  "title": "Undersized Lumber",
+  "section": "9.3",
+  "sectionTitle": "Materials, Systems and Equipment"
+ },
+ "9.3.2.9": {
+  "title": "Termite and Decay Protection",
+  "section": "9.3",
+  "sectionTitle": "Materials, Systems and Equipment"
+ },
+ "9.3.3.1": {
+  "title": "Sheet Metal Thickness",
+  "section": "9.3",
+  "sectionTitle": "Materials, Systems and Equipment"
+ },
+ "9.3.3.2": {
+  "title": "Galvanized Sheet Steel",
+  "section": "9.3",
+  "sectionTitle": "Materials, Systems and Equipment"
+ },
+ "9.30.1.1": {
+  "title": "Required Finished Flooring",
+  "section": "9.30",
+  "sectionTitle": "Flooring"
+ },
+ "9.30.1.2": {
+  "title": "Water Resistance",
+  "section": "9.30",
+  "sectionTitle": "Flooring"
+ },
+ "9.30.1.3": {
+  "title": "Sleepers",
+  "section": "9.30",
+  "sectionTitle": "Flooring"
+ },
+ "9.30.1.4": {
+  "title": "Finish Quality",
+  "section": "9.30",
+  "sectionTitle": "Flooring"
+ },
+ "9.30.2.1": {
+  "title": "Required Underlay",
+  "section": "9.30",
+  "sectionTitle": "Flooring"
+ },
+ "9.30.2.2": {
+  "title": "Materials and Thickness",
+  "section": "9.30",
+  "sectionTitle": "Flooring"
+ },
+ "9.30.2.3": {
+  "title": "Fastening",
+  "section": "9.30",
+  "sectionTitle": "Flooring"
+ },
+ "9.30.2.4": {
+  "title": "Joints Offset",
+  "section": "9.30",
+  "sectionTitle": "Flooring"
+ },
+ "9.30.2.5": {
+  "title": "Surface Defects",
+  "section": "9.30",
+  "sectionTitle": "Flooring"
+ },
+ "9.30.3.1": {
+  "title": "Thickness",
+  "section": "9.30",
+  "sectionTitle": "Flooring"
+ },
+ "9.30.3.2": {
+  "title": "Strip Direction and End Joints",
+  "section": "9.30",
+  "sectionTitle": "Flooring"
+ },
+ "9.30.3.3": {
+  "title": "Nailing",
+  "section": "9.30",
+  "sectionTitle": "Flooring"
+ },
+ "9.30.3.4": {
+  "title": "Staples",
+  "section": "9.30",
+  "sectionTitle": "Flooring"
+ },
+ "9.30.4.1": {
+  "title": "Adhesive",
+  "section": "9.30",
+  "sectionTitle": "Flooring"
+ },
+ "9.30.5.1": {
+  "title": "Materials",
+  "section": "9.30",
+  "sectionTitle": "Flooring"
+ },
+ "9.30.6.1": {
+  "title": "Substrate",
+  "section": "9.30",
+  "sectionTitle": "Flooring"
+ },
+ "9.31.1.1": {
+  "title": "Application",
+  "section": "9.31",
+  "sectionTitle": "Plumbing Facilities"
+ },
+ "9.31.2.1": {
+  "title": "General",
+  "section": "9.31",
+  "sectionTitle": "Plumbing Facilities"
+ },
+ "9.31.2.2": {
+  "title": "Corrosion Protection",
+  "section": "9.31",
+  "sectionTitle": "Plumbing Facilities"
+ },
+ "9.31.2.3": {
+  "title": "Grab Bars",
+  "section": "9.31",
+  "sectionTitle": "Plumbing Facilities"
+ },
+ "9.31.3.1": {
+  "title": "Required Water Supply",
+  "section": "9.31",
+  "sectionTitle": "Plumbing Facilities"
+ },
+ "9.31.3.2": {
+  "title": "Required Connections",
+  "section": "9.31",
+  "sectionTitle": "Plumbing Facilities"
+ },
+ "9.31.4.1": {
+  "title": "Required Fixtures",
+  "section": "9.31",
+  "sectionTitle": "Plumbing Facilities"
+ },
+ "9.31.4.2": {
+  "title": "Hot Water Supply",
+  "section": "9.31",
+  "sectionTitle": "Plumbing Facilities"
+ },
+ "9.31.4.3": {
+  "title": "Floor Drains",
+  "section": "9.31",
+  "sectionTitle": "Plumbing Facilities"
+ },
+ "9.31.5.1": {
+  "title": "Building Sewer",
+  "section": "9.31",
+  "sectionTitle": "Plumbing Facilities"
+ },
+ "9.31.5.2": {
+  "title": "Discharge of Sewage",
+  "section": "9.31",
+  "sectionTitle": "Plumbing Facilities"
+ },
+ "9.31.6.1": {
+  "title": "Hot Water Supply",
+  "section": "9.31",
+  "sectionTitle": "Plumbing Facilities"
+ },
+ "9.31.6.2": {
+  "title": "Equipment and Installation",
+  "section": "9.31",
+  "sectionTitle": "Plumbing Facilities"
+ },
+ "9.31.6.3": {
+  "title": "Corrosion-Resistant Coating",
+  "section": "9.31",
+  "sectionTitle": "Plumbing Facilities"
+ },
+ "9.31.6.4": {
+  "title": "Fuel-Burning Heaters",
+  "section": "9.31",
+  "sectionTitle": "Plumbing Facilities"
+ },
+ "9.31.6.5": {
+  "title": "Heating Coils",
+  "section": "9.31",
+  "sectionTitle": "Plumbing Facilities"
+ },
+ "9.32.1.1": {
+  "title": "Application",
+  "section": "9.32",
+  "sectionTitle": "Ventilation"
+ },
+ "9.32.1.2": {
+  "title": "Required Ventilation",
+  "section": "9.32",
+  "sectionTitle": "Ventilation"
+ },
+ "9.32.1.3": {
+  "title": "Venting of Laundry-Drying Equipment",
+  "section": "9.32",
+  "sectionTitle": "Ventilation"
+ },
+ "9.32.2.1": {
+  "title": "Required Ventilation",
+  "section": "9.32",
+  "sectionTitle": "Ventilation"
+ },
+ "9.32.2.2": {
+  "title": "Non-Heating-Season Natural Ventilation",
+  "section": "9.32",
+  "sectionTitle": "Ventilation"
+ },
+ "9.32.3.1": {
+  "title": "Required Ventilation",
+  "section": "9.32",
+  "sectionTitle": "Ventilation"
+ },
+ "9.32.3.10": {
+  "title": "Interior Distribution",
+  "section": "9.32",
+  "sectionTitle": "Ventilation"
+ },
+ "9.32.3.2": {
+  "title": "Design and Installation",
+  "section": "9.32",
+  "sectionTitle": "Ventilation"
+ },
+ "9.32.3.3": {
+  "title": "Mechanical Ventilation System Components",
+  "section": "9.32",
+  "sectionTitle": "Ventilation"
+ },
+ "9.32.3.4": {
+  "title": "Ventilation Systems Supply Air",
+  "section": "9.32",
+  "sectionTitle": "Ventilation"
+ },
+ "9.32.3.5": {
+  "title": "Principal Ventilation System Exhaust Fan",
+  "section": "9.32",
+  "sectionTitle": "Ventilation"
+ },
+ "9.32.3.6": {
+  "title": "Kitchen and Bathroom Exhaust Fans",
+  "section": "9.32",
+  "sectionTitle": "Ventilation"
+ },
+ "9.32.3.7": {
+  "title": "Heated Crawl Space Ventilation",
+  "section": "9.32",
+  "sectionTitle": "Ventilation"
+ },
+ "9.32.3.8": {
+  "title": "Air Ducts",
+  "section": "9.32",
+  "sectionTitle": "Ventilation"
+ },
+ "9.32.3.9": {
+  "title": "Outdoor Inlets and Outlets",
+  "section": "9.32",
+  "sectionTitle": "Ventilation"
+ },
+ "9.32.4.1": {
+  "title": "Protection Requirements",
+  "section": "9.32",
+  "sectionTitle": "Ventilation"
+ },
+ "9.32.4.2": {
+  "title": "Carbon Monoxide Alarms",
+  "section": "9.32",
+  "sectionTitle": "Ventilation"
+ },
+ "9.4.1.1": {
+  "title": "General",
+  "section": "9.4",
+  "sectionTitle": "Structural Requirements"
+ },
+ "9.4.2.1": {
+  "title": "Application",
+  "section": "9.4",
+  "sectionTitle": "Structural Requirements"
+ },
+ "9.4.2.2": {
+  "title": "Specified Snow Loads",
+  "section": "9.4",
+  "sectionTitle": "Structural Requirements"
+ },
+ "9.4.2.3": {
+  "title": "Platforms Subject to Snow and Occupancy Loads",
+  "section": "9.4",
+  "sectionTitle": "Structural Requirements"
+ },
+ "9.4.2.4": {
+  "title": "Attics and Roof Spaces",
+  "section": "9.4",
+  "sectionTitle": "Structural Requirements"
+ },
+ "9.4.2.5": {
+  "title": "Seismic Design Parameter",
+  "section": "9.4",
+  "sectionTitle": "Structural Requirements"
+ },
+ "9.4.3.1": {
+  "title": "Deflections",
+  "section": "9.4",
+  "sectionTitle": "Structural Requirements"
+ },
+ "9.4.4.1": {
+  "title": "Allowable Bearing Pressures",
+  "section": "9.4",
+  "sectionTitle": "Structural Requirements"
+ },
+ "9.4.4.2": {
+  "title": "Foundation Capacity in Weaker Soil and Rock",
+  "section": "9.4",
+  "sectionTitle": "Structural Requirements"
+ },
+ "9.4.4.3": {
+  "title": "High Water Table",
+  "section": "9.4",
+  "sectionTitle": "Structural Requirements"
+ },
+ "9.4.4.4": {
+  "title": "Soil Movement",
+  "section": "9.4",
+  "sectionTitle": "Structural Requirements"
+ },
+ "9.4.4.5": {
+  "title": "Retaining Walls",
+  "section": "9.4",
+  "sectionTitle": "Structural Requirements"
+ },
+ "9.4.4.6": {
+  "title": "Walls Supporting Drained Earth",
+  "section": "9.4",
+  "sectionTitle": "Structural Requirements"
+ },
+ "9.5.1.1": {
+  "title": "Method of Measurement",
+  "section": "9.5",
+  "sectionTitle": "Design of Areas and Spaces"
+ },
+ "9.5.1.2": {
+  "title": "Combination Rooms",
+  "section": "9.5",
+  "sectionTitle": "Design of Areas and Spaces"
+ },
+ "9.5.2.1": {
+  "title": "General",
+  "section": "9.5",
+  "sectionTitle": "Design of Areas and Spaces"
+ },
+ "9.5.2.2": {
+  "title": "Protection on Floor Areas with an Accessible Path of Travel",
+  "section": "9.5",
+  "sectionTitle": "Design of Areas and Spaces"
+ },
+ "9.5.2.3": {
+  "title": "Apartment Buildings",
+  "section": "9.5",
+  "sectionTitle": "Design of Areas and Spaces"
+ },
+ "9.5.2.4": {
+  "title": "Visible Signal Devices",
+  "section": "9.5",
+  "sectionTitle": "Design of Areas and Spaces"
+ },
+ "9.5.2.5": {
+  "title": "Lighting",
+  "section": "9.5",
+  "sectionTitle": "Design of Areas and Spaces"
+ },
+ "9.5.3.1": {
+  "title": "Ceiling Heights of Rooms or Spaces",
+  "section": "9.5",
+  "sectionTitle": "Design of Areas and Spaces"
+ },
+ "9.5.3.2": {
+  "title": "Mezzanines",
+  "section": "9.5",
+  "sectionTitle": "Design of Areas and Spaces"
+ },
+ "9.5.3.3": {
+  "title": "Storage Garages",
+  "section": "9.5",
+  "sectionTitle": "Design of Areas and Spaces"
+ },
+ "9.5.4.1": {
+  "title": "Hallway Width",
+  "section": "9.5",
+  "sectionTitle": "Design of Areas and Spaces"
+ },
+ "9.5.5.1": {
+  "title": "Doorway Opening Sizes",
+  "section": "9.5",
+  "sectionTitle": "Design of Areas and Spaces"
+ },
+ "9.5.5.2": {
+  "title": "Doorways to Public Water-Closet Rooms",
+  "section": "9.5",
+  "sectionTitle": "Design of Areas and Spaces"
+ },
+ "9.5.5.3": {
+  "title": "Doorways to Rooms with a Bathtub, Shower or Water Closet",
+  "section": "9.5",
+  "sectionTitle": "Design of Areas and Spaces"
+ },
+ "9.6.1.1": {
+  "title": "Application",
+  "section": "9.6",
+  "sectionTitle": "Glass"
+ },
+ "9.6.1.2": {
+  "title": "Material Standards for Glass",
+  "section": "9.6",
+  "sectionTitle": "Glass"
+ },
+ "9.6.1.3": {
+  "title": "Structural Sufficiency of Glass",
+  "section": "9.6",
+  "sectionTitle": "Glass"
+ },
+ "9.6.1.4": {
+  "title": "Types of Glazing and Protection of Glazing",
+  "section": "9.6",
+  "sectionTitle": "Glass"
+ },
+ "9.7.1.1": {
+  "title": "Application",
+  "section": "9.7",
+  "sectionTitle": "Windows, Doors and Skylights"
+ },
+ "9.7.2.1": {
+  "title": "Entrance Doors",
+  "section": "9.7",
+  "sectionTitle": "Windows, Doors and Skylights"
+ },
+ "9.7.3.1": {
+  "title": "General",
+  "section": "9.7",
+  "sectionTitle": "Windows, Doors and Skylights"
+ },
+ "9.7.3.2": {
+  "title": "Heat Transfer Performance",
+  "section": "9.7",
+  "sectionTitle": "Windows, Doors and Skylights"
+ },
+ "9.7.3.3": {
+  "title": "Thermal Characteristics of Windows, Doors and Skylights",
+  "section": "9.7",
+  "sectionTitle": "Windows, Doors and Skylights"
+ },
+ "9.7.4.1": {
+  "title": "General",
+  "section": "9.7",
+  "sectionTitle": "Windows, Doors and Skylights"
+ },
+ "9.7.4.2": {
+  "title": "Standards",
+  "section": "9.7",
+  "sectionTitle": "Windows, Doors and Skylights"
+ },
+ "9.7.4.3": {
+  "title": "Performance Requirements",
+  "section": "9.7",
+  "sectionTitle": "Windows, Doors and Skylights"
+ },
+ "9.7.5.1": {
+  "title": "Resistance to Forced Entry for Sliding Doors",
+  "section": "9.7",
+  "sectionTitle": "Windows, Doors and Skylights"
+ },
+ "9.7.5.2": {
+  "title": "Resistance to Forced Entry for Swinging Doors",
+  "section": "9.7",
+  "sectionTitle": "Windows, Doors and Skylights"
+ },
+ "9.7.5.3": {
+  "title": "Resistance to Forced Entry for Windows",
+  "section": "9.7",
+  "sectionTitle": "Windows, Doors and Skylights"
+ },
+ "9.7.6.1": {
+  "title": "Installation of Windows, Doors and Skylights",
+  "section": "9.7",
+  "sectionTitle": "Windows, Doors and Skylights"
+ },
+ "9.7.6.2": {
+  "title": "Sealants, Trim and Flashing",
+  "section": "9.7",
+  "sectionTitle": "Windows, Doors and Skylights"
+ },
+ "9.8.1.1": {
+  "title": "General",
+  "section": "9.8",
+  "sectionTitle": "Stairs, Ramps, Landings, Handrails and Guards"
+ },
+ "9.8.1.2": {
+  "title": "Stairs, Ramps, Landings, Handrails and Guards in Garages",
+  "section": "9.8",
+  "sectionTitle": "Stairs, Ramps, Landings, Handrails and Guards"
+ },
+ "9.8.1.3": {
+  "title": "Exit Stairs, Ramps and Landings",
+  "section": "9.8",
+  "sectionTitle": "Stairs, Ramps, Landings, Handrails and Guards"
+ },
+ "9.8.1.4": {
+  "title": "Escalators and Moving Walkways",
+  "section": "9.8",
+  "sectionTitle": "Stairs, Ramps, Landings, Handrails and Guards"
+ },
+ "9.8.1.5": {
+  "title": "Tactile Walking Surface Indicators",
+  "section": "9.8",
+  "sectionTitle": "Stairs, Ramps, Landings, Handrails and Guards"
+ },
+ "9.8.10.1": {
+  "title": "Design",
+  "section": "9.8",
+  "sectionTitle": "Stairs, Ramps, Landings, Handrails and Guards"
+ },
+ "9.8.10.2": {
+  "title": "Anchorage",
+  "section": "9.8",
+  "sectionTitle": "Stairs, Ramps, Landings, Handrails and Guards"
+ },
+ "9.8.10.3": {
+  "title": "Prevention of Damage Due to Frost",
+  "section": "9.8",
+  "sectionTitle": "Stairs, Ramps, Landings, Handrails and Guards"
+ },
+ "9.8.2.1": {
+  "title": "Stair Width",
+  "section": "9.8",
+  "sectionTitle": "Stairs, Ramps, Landings, Handrails and Guards"
+ },
+ "9.8.2.2": {
+  "title": "Height over Stairs",
+  "section": "9.8",
+  "sectionTitle": "Stairs, Ramps, Landings, Handrails and Guards"
+ },
+ "9.8.3.1": {
+  "title": "Permitted Configurations",
+  "section": "9.8",
+  "sectionTitle": "Stairs, Ramps, Landings, Handrails and Guards"
+ },
+ "9.8.3.2": {
+  "title": "Minimum Number of Risers",
+  "section": "9.8",
+  "sectionTitle": "Stairs, Ramps, Landings, Handrails and Guards"
+ },
+ "9.8.3.3": {
+  "title": "Maximum Height of Stairs",
+  "section": "9.8",
+  "sectionTitle": "Stairs, Ramps, Landings, Handrails and Guards"
+ },
+ "9.8.4.1": {
+  "title": "Dimensions for Risers",
+  "section": "9.8",
+  "sectionTitle": "Stairs, Ramps, Landings, Handrails and Guards"
+ },
+ "9.8.4.2": {
+  "title": "Dimensions for Rectangular Treads",
+  "section": "9.8",
+  "sectionTitle": "Stairs, Ramps, Landings, Handrails and Guards"
+ },
+ "9.8.4.3": {
+  "title": "Dimensions of Tapered Treads",
+  "section": "9.8",
+  "sectionTitle": "Stairs, Ramps, Landings, Handrails and Guards"
+ },
+ "9.8.4.4": {
+  "title": "Uniformity and Tolerances for Risers, Runs and Treads",
+  "section": "9.8",
+  "sectionTitle": "Stairs, Ramps, Landings, Handrails and Guards"
+ },
+ "9.8.4.6": {
+  "title": "Winders",
+  "section": "9.8",
+  "sectionTitle": "Stairs, Ramps, Landings, Handrails and Guards"
+ },
+ "9.8.4.8": {
+  "title": "Tread Nosings",
+  "section": "9.8",
+  "sectionTitle": "Stairs, Ramps, Landings, Handrails and Guards"
+ },
+ "9.8.4.9": {
+  "title": "Open Risers",
+  "section": "9.8",
+  "sectionTitle": "Stairs, Ramps, Landings, Handrails and Guards"
+ },
+ "9.8.5.1": {
+  "title": "Application",
+  "section": "9.8",
+  "sectionTitle": "Stairs, Ramps, Landings, Handrails and Guards"
+ },
+ "9.8.5.2": {
+  "title": "Ramp Width",
+  "section": "9.8",
+  "sectionTitle": "Stairs, Ramps, Landings, Handrails and Guards"
+ },
+ "9.8.5.3": {
+  "title": "Height over Ramps",
+  "section": "9.8",
+  "sectionTitle": "Stairs, Ramps, Landings, Handrails and Guards"
+ },
+ "9.8.5.4": {
+  "title": "Ramp Slope",
+  "section": "9.8",
+  "sectionTitle": "Stairs, Ramps, Landings, Handrails and Guards"
+ },
+ "9.8.6.1": {
+  "title": "Application",
+  "section": "9.8",
+  "sectionTitle": "Stairs, Ramps, Landings, Handrails and Guards"
+ },
+ "9.8.6.2": {
+  "title": "Required Landings",
+  "section": "9.8",
+  "sectionTitle": "Stairs, Ramps, Landings, Handrails and Guards"
+ },
+ "9.8.6.3": {
+  "title": "Dimensions of Landings",
+  "section": "9.8",
+  "sectionTitle": "Stairs, Ramps, Landings, Handrails and Guards"
+ },
+ "9.8.6.4": {
+  "title": "Height over Landings",
+  "section": "9.8",
+  "sectionTitle": "Stairs, Ramps, Landings, Handrails and Guards"
+ },
+ "9.8.7.1": {
+  "title": "Required Handrails",
+  "section": "9.8",
+  "sectionTitle": "Stairs, Ramps, Landings, Handrails and Guards"
+ },
+ "9.8.7.2": {
+  "title": "Continuity of Handrails",
+  "section": "9.8",
+  "sectionTitle": "Stairs, Ramps, Landings, Handrails and Guards"
+ },
+ "9.8.7.3": {
+  "title": "Termination of Handrails",
+  "section": "9.8",
+  "sectionTitle": "Stairs, Ramps, Landings, Handrails and Guards"
+ },
+ "9.8.7.4": {
+  "title": "Height of Handrails",
+  "section": "9.8",
+  "sectionTitle": "Stairs, Ramps, Landings, Handrails and Guards"
+ },
+ "9.8.7.5": {
+  "title": "Ergonomic Design",
+  "section": "9.8",
+  "sectionTitle": "Stairs, Ramps, Landings, Handrails and Guards"
+ },
+ "9.8.7.6": {
+  "title": "Projections into Stairs and Ramps",
+  "section": "9.8",
+  "sectionTitle": "Stairs, Ramps, Landings, Handrails and Guards"
+ },
+ "9.8.7.7": {
+  "title": "Design and Attachment of Handrails",
+  "section": "9.8",
+  "sectionTitle": "Stairs, Ramps, Landings, Handrails and Guards"
+ },
+ "9.8.8.1": {
+  "title": "Required Guards",
+  "section": "9.8",
+  "sectionTitle": "Stairs, Ramps, Landings, Handrails and Guards"
+ },
+ "9.8.8.2": {
+  "title": "Loads on Guards",
+  "section": "9.8",
+  "sectionTitle": "Stairs, Ramps, Landings, Handrails and Guards"
+ },
+ "9.8.8.3": {
+  "title": "Height of Guards",
+  "section": "9.8",
+  "sectionTitle": "Stairs, Ramps, Landings, Handrails and Guards"
+ },
+ "9.8.8.4": {
+  "title": "Guards for Floors and Ramps in Garages",
+  "section": "9.8",
+  "sectionTitle": "Stairs, Ramps, Landings, Handrails and Guards"
+ },
+ "9.8.8.5": {
+  "title": "Openings in Guards",
+  "section": "9.8",
+  "sectionTitle": "Stairs, Ramps, Landings, Handrails and Guards"
+ },
+ "9.8.8.6": {
+  "title": "Design of Guards to Not Facilitate Climbing",
+  "section": "9.8",
+  "sectionTitle": "Stairs, Ramps, Landings, Handrails and Guards"
+ },
+ "9.8.8.7": {
+  "title": "Glass in Guards",
+  "section": "9.8",
+  "sectionTitle": "Stairs, Ramps, Landings, Handrails and Guards"
+ },
+ "9.8.9.1": {
+  "title": "Loads on Stairs and Ramps",
+  "section": "9.8",
+  "sectionTitle": "Stairs, Ramps, Landings, Handrails and Guards"
+ },
+ "9.8.9.2": {
+  "title": "Exterior Concrete Stairs",
+  "section": "9.8",
+  "sectionTitle": "Stairs, Ramps, Landings, Handrails and Guards"
+ },
+ "9.8.9.3": {
+  "title": "Exterior Wood Steps",
+  "section": "9.8",
+  "sectionTitle": "Stairs, Ramps, Landings, Handrails and Guards"
+ },
+ "9.8.9.4": {
+  "title": "Wooden Stair Stringers",
+  "section": "9.8",
+  "sectionTitle": "Stairs, Ramps, Landings, Handrails and Guards"
+ },
+ "9.8.9.5": {
+  "title": "Treads",
+  "section": "9.8",
+  "sectionTitle": "Stairs, Ramps, Landings, Handrails and Guards"
+ },
+ "9.8.9.6": {
+  "title": "Finish for Treads and Landings",
+  "section": "9.8",
+  "sectionTitle": "Stairs, Ramps, Landings, Handrails and Guards"
+ },
+ "9.9.1.1": {
+  "title": "Application",
+  "section": "9.9",
+  "sectionTitle": "Means of Egress"
+ },
+ "9.9.1.2": {
+  "title": "Fire Protection",
+  "section": "9.9",
+  "sectionTitle": "Means of Egress"
+ },
+ "9.9.1.3": {
+  "title": "Occupant Load",
+  "section": "9.9",
+  "sectionTitle": "Means of Egress"
+ },
+ "9.9.10.1": {
+  "title": "Egress Windows or Doors for Bedrooms",
+  "section": "9.9",
+  "sectionTitle": "Means of Egress"
+ },
+ "9.9.11.1": {
+  "title": "Application",
+  "section": "9.9",
+  "sectionTitle": "Means of Egress"
+ },
+ "9.9.11.2": {
+  "title": "Visibility of Exits",
+  "section": "9.9",
+  "sectionTitle": "Means of Egress"
+ },
+ "9.9.11.3": {
+  "title": "Exit Signs",
+  "section": "9.9",
+  "sectionTitle": "Means of Egress"
+ },
+ "9.9.11.4": {
+  "title": "Signs for Stairs and Ramps at Exit Level",
+  "section": "9.9",
+  "sectionTitle": "Means of Egress"
+ },
+ "9.9.11.5": {
+  "title": "Floor Numbering",
+  "section": "9.9",
+  "sectionTitle": "Means of Egress"
+ },
+ "9.9.12.1": {
+  "title": "Application",
+  "section": "9.9",
+  "sectionTitle": "Means of Egress"
+ },
+ "9.9.12.2": {
+  "title": "Required Lighting in Egress Facilities",
+  "section": "9.9",
+  "sectionTitle": "Means of Egress"
+ },
+ "9.9.12.3": {
+  "title": "Emergency Lighting",
+  "section": "9.9",
+  "sectionTitle": "Means of Egress"
+ },
+ "9.9.2.1": {
+  "title": "Types of Exits",
+  "section": "9.9",
+  "sectionTitle": "Means of Egress"
+ },
+ "9.9.2.2": {
+  "title": "Purpose of Exits",
+  "section": "9.9",
+  "sectionTitle": "Means of Egress"
+ },
+ "9.9.2.3": {
+  "title": "Elevators, Slide Escapes and Windows as Means of Egress",
+  "section": "9.9",
+  "sectionTitle": "Means of Egress"
+ },
+ "9.9.2.4": {
+  "title": "Principal Entrances",
+  "section": "9.9",
+  "sectionTitle": "Means of Egress"
+ },
+ "9.9.3.1": {
+  "title": "Application",
+  "section": "9.9",
+  "sectionTitle": "Means of Egress"
+ },
+ "9.9.3.2": {
+  "title": "Exit Width",
+  "section": "9.9",
+  "sectionTitle": "Means of Egress"
+ },
+ "9.9.3.3": {
+  "title": "Width of Corridors",
+  "section": "9.9",
+  "sectionTitle": "Means of Egress"
+ },
+ "9.9.3.4": {
+  "title": "Clear Height",
+  "section": "9.9",
+  "sectionTitle": "Means of Egress"
+ },
+ "9.9.4.1": {
+  "title": "Application",
+  "section": "9.9",
+  "sectionTitle": "Means of Egress"
+ },
+ "9.9.4.2": {
+  "title": "Fire Separations for Exits",
+  "section": "9.9",
+  "sectionTitle": "Means of Egress"
+ },
+ "9.9.4.3": {
+  "title": "Wired Glass or Glass Block",
+  "section": "9.9",
+  "sectionTitle": "Means of Egress"
+ },
+ "9.9.4.4": {
+  "title": "Openings Near Unenclosed Exterior Exit Stairs and Ramps",
+  "section": "9.9",
+  "sectionTitle": "Means of Egress"
+ },
+ "9.9.4.5": {
+  "title": "Openings in Exterior Walls of Exits",
+  "section": "9.9",
+  "sectionTitle": "Means of Egress"
+ },
+ "9.9.4.6": {
+  "title": "Openings Near Exit Doors",
+  "section": "9.9",
+  "sectionTitle": "Means of Egress"
+ },
+ "9.9.4.7": {
+  "title": "Stairways in 2 Storey, Group D or E Buildings",
+  "section": "9.9",
+  "sectionTitle": "Means of Egress"
+ },
+ "9.9.5.1": {
+  "title": "Application",
+  "section": "9.9",
+  "sectionTitle": "Means of Egress"
+ },
+ "9.9.5.2": {
+  "title": "Occupancies in Corridors",
+  "section": "9.9",
+  "sectionTitle": "Means of Egress"
+ },
+ "9.9.5.3": {
+  "title": "Obstructions in Public Corridors",
+  "section": "9.9",
+  "sectionTitle": "Means of Egress"
+ },
+ "9.9.5.4": {
+  "title": "Obstructions in Exits",
+  "section": "9.9",
+  "sectionTitle": "Means of Egress"
+ },
+ "9.9.5.5": {
+  "title": "Obstructions in Means of Egress",
+  "section": "9.9",
+  "sectionTitle": "Means of Egress"
+ },
+ "9.9.5.6": {
+  "title": "Mirrors or Draperies",
+  "section": "9.9",
+  "sectionTitle": "Means of Egress"
+ },
+ "9.9.5.7": {
+  "title": "Fuel-Fired Appliances",
+  "section": "9.9",
+  "sectionTitle": "Means of Egress"
+ },
+ "9.9.5.8": {
+  "title": "Service Rooms",
+  "section": "9.9",
+  "sectionTitle": "Means of Egress"
+ },
+ "9.9.5.9": {
+  "title": "Ancillary Rooms",
+  "section": "9.9",
+  "sectionTitle": "Means of Egress"
+ },
+ "9.9.6.1": {
+  "title": "Obstructions by Doors",
+  "section": "9.9",
+  "sectionTitle": "Means of Egress"
+ },
+ "9.9.6.2": {
+  "title": "Clear Opening Height at Doorways",
+  "section": "9.9",
+  "sectionTitle": "Means of Egress"
+ },
+ "9.9.6.3": {
+  "title": "Clear Opening Width at Doorways",
+  "section": "9.9",
+  "sectionTitle": "Means of Egress"
+ },
+ "9.9.6.4": {
+  "title": "Door Action",
+  "section": "9.9",
+  "sectionTitle": "Means of Egress"
+ },
+ "9.9.6.5": {
+  "title": "Direction of Door Swing",
+  "section": "9.9",
+  "sectionTitle": "Means of Egress"
+ },
+ "9.9.6.6": {
+  "title": "Nearness of Doors to Stairs",
+  "section": "9.9",
+  "sectionTitle": "Means of Egress"
+ },
+ "9.9.6.7": {
+  "title": "Door Latching, Locking and Opening Mechanisms",
+  "section": "9.9",
+  "sectionTitle": "Means of Egress"
+ },
+ "9.9.6.8": {
+  "title": "Effort Required to Open",
+  "section": "9.9",
+  "sectionTitle": "Means of Egress"
+ },
+ "9.9.7.1": {
+  "title": "Egress from Roof Area, Podiums, Terraces, Platforms and Contained Open Spaces",
+  "section": "9.9",
+  "sectionTitle": "Means of Egress"
+ },
+ "9.9.7.2": {
+  "title": "Means of Egress from Suites",
+  "section": "9.9",
+  "sectionTitle": "Means of Egress"
+ },
+ "9.9.7.3": {
+  "title": "Dead-End Corridors",
+  "section": "9.9",
+  "sectionTitle": "Means of Egress"
+ },
+ "9.9.7.4": {
+  "title": "Number and Spacing of Egress Doors",
+  "section": "9.9",
+  "sectionTitle": "Means of Egress"
+ },
+ "9.9.7.5": {
+  "title": "Independent Access to Exit",
+  "section": "9.9",
+  "sectionTitle": "Means of Egress"
+ },
+ "9.9.7.6": {
+  "title": "Travel Distance within Rooms and Suites",
+  "section": "9.9",
+  "sectionTitle": "Means of Egress"
+ },
+ "9.9.8.1": {
+  "title": "Measurement of Travel Distance",
+  "section": "9.9",
+  "sectionTitle": "Means of Egress"
+ },
+ "9.9.8.2": {
+  "title": "Number of Required Exits",
+  "section": "9.9",
+  "sectionTitle": "Means of Egress"
+ },
+ "9.9.8.3": {
+  "title": "Contribution of Each Exit",
+  "section": "9.9",
+  "sectionTitle": "Means of Egress"
+ },
+ "9.9.8.4": {
+  "title": "Location of Exits",
+  "section": "9.9",
+  "sectionTitle": "Means of Egress"
+ },
+ "9.9.8.5": {
+  "title": "Exiting through a Lobby",
+  "section": "9.9",
+  "sectionTitle": "Means of Egress"
+ },
+ "9.9.8.6": {
+  "title": "Mezzanine Means of Egress",
+  "section": "9.9",
+  "sectionTitle": "Means of Egress"
+ },
+ "9.9.9.1": {
+  "title": "Travel Limit to Exits or Egress Doors",
+  "section": "9.9",
+  "sectionTitle": "Means of Egress"
+ },
+ "9.9.9.2": {
+  "title": "Two Separate Exits",
+  "section": "9.9",
+  "sectionTitle": "Means of Egress"
+ },
+ "9.9.9.3": {
+  "title": "Shared Egress Facilities",
+  "section": "9.9",
+  "sectionTitle": "Means of Egress"
+ }
+}
