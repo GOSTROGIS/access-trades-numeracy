@@ -22,7 +22,7 @@ Everything runs in the browser. Once the folder is downloaded, the hub, the canv
 
 Your progress in the hub is saved in the browser you use. Using a different browser or computer starts a fresh record.
 
-## Carpentry Foundation — Intake 141
+## Carpentry Foundation — Intake 142
 
-- [PowerPoint slides with speaker notes](carpentry/intake-141/PowerPoint/)
-- [PDF slides](carpentry/intake-141/PDF/)
+- [PowerPoint slides with speaker notes](carpentry/intake-142/PowerPoint/)
+- [PDF slides](carpentry/intake-142/PDF/)
