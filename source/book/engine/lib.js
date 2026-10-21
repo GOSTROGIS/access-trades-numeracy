@@ -1,4 +1,4 @@
-/* ACCESS Trades Numeracy books: authoring helpers. Every helper returns an HTML string.
+/* ACCESS Indigenous Skills4Success Numeracy books: authoring helpers. Every helper returns an HTML string.
    A chapter module exports function (B) { return B.chapter({...}, [parts]) } and uses B.* helpers.
    Numbers stated in calculator boxes are checked against the TI-30Xa emulator, and the Sharp EL-531XT keys
    come from the hub translator and are checked to give the same value (engine/calc.js). */

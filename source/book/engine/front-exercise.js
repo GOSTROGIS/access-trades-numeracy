@@ -3,15 +3,15 @@ const fs = require('fs'), path = require('path');
 module.exports = function (B, L, part) {
   if (part !== 'front') return '';
   const S = path.join(__dirname, '..', '..');
-  const lockup = fs.readFileSync(path.join(S, 'brand', 'access-lockup.svg'), 'utf8').replace(/width="410"/, 'width="100%"');
+  const badge = require('./brand.js').badge();
   const art = '<div style="display:flex;gap:18pt;align-items:flex-end;justify-content:center">' +
     B.shape('rectangular-prism', { l: 160, w: 90, h: 70 }, { labels: 'none', width: '2in' }) +
     B.net('rectangular-prism', { l: 160, w: 90, h: 70 }, { labels: 'none', width: '2.4in' }) + '</div>';
-  const cover = '<section class="cover"><div class="top"><div class="kicker">ACCESS Trades</div>' +
+  const cover = '<section class="cover"><div class="top"><div class="kicker">ACCESS Indigenous Skills4Success</div>' +
     '<h1>Trades <span>Numeracy</span><br>Exercise Book</h1><div class="bar"></div>' +
     '<div class="sub">Practice for every chapter of the Trades Numeracy Textbook: skills, shop problems and Shape Canvas drawings, in metric and imperial. For fabrication, pipe trades, millwright and carpentry pre-apprentices.</div></div>' +
     '<div class="art">' + art + '</div>' +
-    '<div class="foot">' + lockup + '<div class="ed">Skills for Success: Numeracy<br>Answers are in the Answer Key</div></div></section>';
+    '<div class="foot">' + badge + '<div class="ed">Skills for Success: Numeracy<br>Answers are in the Answer Key</div></div></section>';
   const toc = '<section class="toc pbr"><h1>Contents</h1><!--TOC--></section>';
   const how = '<section class="front howto pbp"><h1 class="bm" style="font-size:20pt">How to use this book</h1>' +
     B.p('Each chapter of this book matches the chapter with the same number in the Trades Numeracy Textbook. Work through the textbook chapter first, then use these exercises for more practice.',

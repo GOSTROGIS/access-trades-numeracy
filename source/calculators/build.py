@@ -1,7 +1,7 @@
-"""Builds the standalone ACCESS Trades calculator pages in this folder:
+"""Builds the standalone ACCESS Indigenous Skills4Success calculator pages in this folder:
 ti30xa.html, el531xt.html, hp15c.html (one calculator each) and calculators.html (all three with a switcher).
 Each page is one offline file: the CalcKit build (calc2/calc-kit.js, the Numeracy Hub's own emulators), its styles,
-the page styles, the fonts (woff2 data URIs) and the ACCESS logo are all inline.
+the page styles, the fonts (woff2 data URIs) and the IS4S badge are all inline.
 Usage: python3 build.py"""
 import os, json, base64, html
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -31,10 +31,10 @@ for fam, d, w in FONTS:
 
 page_css = read(os.path.join(SRC, 'page.css'))
 page_js = read(os.path.join(SRC, 'page.js')).replace('</script', '<\\/script')
-logo_defs = read(os.path.join(S, 'brand', 'access-logo-defs.svg')).strip()
-LOCKUP = ('<svg class="lockup" viewBox="35 30 205.2 102.9" role="img" aria-label="ACCESS">'
-          '<g style="color:#FFBC00"><use href="#acc-gold"/></g><g style="color:#C60016"><use href="#acc-fig"/></g>'
-          '<g style="color:#D2181F"><use href="#acc-word"/></g></svg>')
+badge = read(os.path.join(S, 'brand', 'is4s-badge.svg'))
+badge_inner = badge[badge.index('<g id="is4s-badge">'):badge.rindex('</svg>')].strip()
+# the IS4S badge in the header, at the height the ACCESS lockup had (its 1800 x 1650 aspect kept by the CSS)
+LOCKUP = ('<svg class="lockup" viewBox="0 0 1800 1650" role="img" aria-label="ACCESS Indigenous Skills4Success">' + badge_inner + '</svg>')
 HOW = {m: read(os.path.join(SRC, 'how-%s.html' % m)).strip() for m in ['ti30xa', 'el531xt', 'hp15c']}
 NAME = {'ti30xa': 'TI-30Xa', 'el531xt': 'Sharp EL-531XT', 'hp15c': 'HP-15C'}
 FILE = {'ti30xa': 'ti30xa.html', 'el531xt': 'el531xt.html', 'hp15c': 'hp15c.html'}
@@ -42,26 +42,26 @@ OFFLINE = 'Everything is in this one file, so it works without an internet conne
 
 PAGES = {
     'ti30xa': {
-        'title': 'TI-30Xa calculator, ACCESS Trades',
+        'title': 'TI-30Xa calculator, ACCESS Indigenous Skills4Success',
         'h1': 'TI-30Xa calculator',
         'lede': 'A working TI-30Xa on screen. Press its keys or type on your keyboard. ' + OFFLINE,
-        'desc': 'A working TI-30Xa calculator for ACCESS Trades numeracy.'},
+        'desc': 'A working TI-30Xa calculator for ACCESS Indigenous Skills4Success numeracy.'},
     'el531xt': {
-        'title': 'Sharp EL-531XT calculator, ACCESS Trades',
+        'title': 'Sharp EL-531XT calculator, ACCESS Indigenous Skills4Success',
         'h1': 'Sharp EL-531XT calculator',
         'lede': 'A working Sharp EL-531XT on screen. Press its keys or type on your keyboard. ' + OFFLINE,
-        'desc': 'A working Sharp EL-531XT calculator for ACCESS Trades numeracy.'},
+        'desc': 'A working Sharp EL-531XT calculator for ACCESS Indigenous Skills4Success numeracy.'},
     'hp15c': {
-        'title': 'HP-15C calculator, ACCESS Trades',
+        'title': 'HP-15C calculator, ACCESS Indigenous Skills4Success',
         'h1': 'HP-15C calculator',
         'lede': 'A working HP-15C on screen, a calculator that uses RPN. Press its keys or type on your keyboard. ' + OFFLINE,
-        'desc': 'A working HP-15C RPN calculator for ACCESS Trades numeracy.'},
+        'desc': 'A working HP-15C RPN calculator for ACCESS Indigenous Skills4Success numeracy.'},
     None: {
-        'title': 'Calculators, ACCESS Trades',
+        'title': 'Calculators, ACCESS Indigenous Skills4Success',
         'h1': 'Calculators',
         'lede': ('Three working calculators in one file: the TI-30Xa, the Sharp EL-531XT and the HP-15C. Pick one below or with '
                  'the menu at the top of the calculator. Press its keys or type on your keyboard. ' + OFFLINE),
-        'desc': 'Working TI-30Xa, Sharp EL-531XT and HP-15C calculators for ACCESS Trades numeracy.'},
+        'desc': 'Working TI-30Xa, Sharp EL-531XT and HP-15C calculators for ACCESS Indigenous Skills4Success numeracy.'},
 }
 RUN = ('Run on calculator presses the keys one at a time, and the key being pressed lights up. '
        'Speed, Jog and Hide operations on the calculator change how a run plays.')
@@ -95,9 +95,8 @@ def page(model):
     out += '<style id="calckit-css">\n' + kit_css + '\n</style>\n'
     out += '<style>\n' + page_css + '</style>\n</head>\n'
     out += '<body class="%s">\n' % body_cls
-    out += logo_defs + '\n'
     out += ('<header class="site-head"><div class="wrap head-inner">' + LOCKUP +
-            '<div class="head-text"><p class="eyebrow">ACCESS Trades &#183; Skills for Success: Numeracy</p>'
+            '<div class="head-text"><p class="eyebrow">ACCESS Indigenous Skills4Success &#183; Skills for Success: Numeracy</p>'
             '<h1>%s</h1><p class="lede">%s</p></div></div></header>\n') % (html.escape(P['h1']), html.escape(P['lede']))
     out += bar + '\n'
     out += ('<main class="wrap layout">\n<div class="calc-col"><div id="calc-slot"></div></div>\n'

@@ -1,9 +1,9 @@
-# Source for the ACCESS Trades Numeracy books and calculators
+# Source for the ACCESS Indigenous Skills4Success Numeracy books and calculators
 
 The finished files are in the folders above this one:
 - `books/`: Textbook, Exercise Book and Answer Key (US Letter PDFs)
 - `calculators/`: offline TI-30Xa, Sharp EL-531XT and HP-15C calculator pages
-- `brand/`: ACCESS logo SVG files and brand notes
+- `brand/`: ACCESS logo SVG files, the ACCESS Indigenous Skills4Success (IS4S) badge and brand notes
 
 This folder holds what is needed to rebuild them.
 
@@ -19,4 +19,4 @@ This folder holds what is needed to rebuild them.
 Every calculator key sequence in the books is played on the TI-30Xa and Sharp EL-531XT emulators in `source/calc2` during the build, and the build stops if a stated answer does not match.
 
 ## Rebuild the calculators
-In `source/calculators`, run `python3 build.py`. It packs `source/calc2/calc-kit.js`, the fonts from `source/book/vendor` and the ACCESS logo into one offline file per calculator.
+In `source/calculators`, run `python3 build.py`. It packs `source/calc2/calc-kit.js`, the fonts from `source/book/vendor` and the IS4S badge into one offline file per calculator.

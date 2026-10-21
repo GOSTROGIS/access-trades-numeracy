@@ -68,7 +68,7 @@ async function main() {
           log.push('   counts ' + JSON.stringify(c))
           const html = await page.content()
           ok(!/paged\.polyfill|PagedConfig|<script[^>]+src=/i.test(html), book + ' no Paged.js in the web file')
-          ok(!/<link[^>]+href=|<script[^>]+src=|<img[^>]+src="http/i.test(fs.readFileSync(file, 'utf8')), book + ' no external stylesheet, script or image references')
+          ok(!/<link[^>]+href="(?!data:)|<script[^>]+src=|<img[^>]+src="http/i.test(fs.readFileSync(file, 'utf8')), book + ' no external stylesheet, script or image references')
         }
 
         /* sideways scroll: layout does not change with the theme, so it is checked once per viewport */

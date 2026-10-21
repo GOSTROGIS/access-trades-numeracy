@@ -15,9 +15,9 @@ fs.mkdirSync(OUT, { recursive: true });
 const WEB = args.includes('--web')
 
 const META = {
-  textbook: { title: 'ACCESS Trades Numeracy', kind: 'Textbook' },
-  exercise: { title: 'ACCESS Trades Numeracy', kind: 'Exercise Book' },
-  answers: { title: 'ACCESS Trades Numeracy', kind: 'Answer Key' }
+  textbook: { title: 'ACCESS Indigenous Skills4Success Numeracy', kind: 'Textbook' },
+  exercise: { title: 'ACCESS Indigenous Skills4Success Numeracy', kind: 'Exercise Book' },
+  answers: { title: 'ACCESS Indigenous Skills4Success Numeracy', kind: 'Answer Key' }
 };
 const B = new L.Book(META[bookKind]);
 B.kind = bookKind;

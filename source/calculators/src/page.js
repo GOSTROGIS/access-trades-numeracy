@@ -1,4 +1,4 @@
-/* ACCESS Trades standalone calculators: page script. Runs after calc-kit.js (the same TI-30Xa, Sharp EL-531XT and
+/* ACCESS Indigenous Skills4Success standalone calculators: page script. Runs after calc-kit.js (the same TI-30Xa, Sharp EL-531XT and
    HP-15C emulators as the Numeracy Hub). window.CALC_PAGE.model names the calculator of a single-model page.
    With no model (calculators.html) the switcher and the calculator's own menu choose it, saved per viewer in
    localStorage 'access-calc-model'. */

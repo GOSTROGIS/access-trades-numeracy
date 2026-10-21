@@ -4,11 +4,11 @@ module.exports = function (B, L, part) {
   const S = path.join(__dirname, '..', '..');
   const OUT = path.join(__dirname, '..', 'out');
   if (part === 'front') {
-    const lockup = fs.readFileSync(path.join(S, 'brand', 'access-lockup.svg'), 'utf8').replace(/width="410"/, 'width="100%"');
-    const cover = '<section class="cover"><div class="top"><div class="kicker">ACCESS Trades</div>' +
+    const badge = require('./brand.js').badge();
+    const cover = '<section class="cover"><div class="top"><div class="kicker">ACCESS Indigenous Skills4Success</div>' +
       '<h1>Trades <span>Numeracy</span><br>Answer Key</h1><div class="bar"></div>' +
       '<div class="sub">Answers to every Try it set and worksheet in the Trades Numeracy Textbook, and to every exercise in the Trades Numeracy Exercise Book, with working for the longer problems. For fabrication, pipe trades, millwright and carpentry pre-apprentices.</div></div>' +
-      '<div class="art"></div><div class="foot">' + lockup + '<div class="ed">Skills for Success: Numeracy</div></div></section>';
+      '<div class="art"></div><div class="foot">' + badge + '<div class="ed">Skills for Success: Numeracy</div></div></section>';
     const toc = '<section class="toc pbr"><h1>Contents</h1><!--TOC--></section>';
     const how = '<section class="front pbp"><h1 class="bm" style="font-size:20pt">How to use this key</h1>' +
       B.p('The key follows the books in order. For each chapter, Part 1 gives the answers to the textbook’s Try it sets and Shape Canvas worksheets, and Part 2 gives the answers to the Exercise Book sets A, B and C, and to any further sets in that chapter, such as the by-hand sets and the Carpentry and the BCBC sets.',

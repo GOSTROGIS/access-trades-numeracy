@@ -1,4 +1,4 @@
-/* ACCESS Trades Numeracy books: print styles (US Letter, mirrored margins for binding) */
+/* ACCESS Indigenous Skills4Success Numeracy books: print styles (US Letter, mirrored margins for binding) */
 :root{
   --red:#D2181F; --deep:#C60016; --deep8:#940010; --deep4:#DD6673; --gold:#FFBC00; --gold1:#FFF8E6; --gold2:#FFEBB2; --gold4:#FFD766;
   --red1:#FAE8E9; --red2:#F2BABC; --ink:#1A1A1A; --slate:#4A4E54; --mist:#F4F5F6; --line:#D9DCDF; --muted:#6B7076;
@@ -193,6 +193,8 @@ ol.how>li::before{ content:counter(how); position:absolute; left:0; top:0.5pt; w
 .cover .art{ flex:1; display:flex; align-items:center; justify-content:center }
 .cover .foot{ display:flex; align-items:flex-end; justify-content:space-between; border-top:1pt solid var(--line); padding-top:10pt }
 .cover .foot svg{ width:2.1in; height:auto }
+/* the IS4S badge (1800 x 1650) at the height of the 2.1 in ACCESS lockup it replaced */
+.cover .foot svg.is4s{ width:1.15in }
 .cover .foot .ed{ font-size:9pt; color:var(--slate); text-align:right }
 .howto .grid{ display:grid; grid-template-columns:1fr 1fr; gap:10pt 16pt }
 .bcbc-page h4{ font:700 11pt "Archivo",sans-serif; color:var(--deep); margin:10pt 0 3pt; break-after:avoid }

@@ -1,4 +1,4 @@
-/* ACCESS Trades standalone calculators: page styles. The calculator faceplates come from the CalcKit styles
+/* ACCESS Indigenous Skills4Success standalone calculators: page styles. The calculator faceplates come from the CalcKit styles
    (the same as the Numeracy Hub). Key caps keep their own colours in light and dark mode. */
 :root {
   --bg: #F7F4F1;
@@ -66,10 +66,10 @@ a:focus-visible, button:focus-visible, input:focus-visible, summary:focus-visibl
 .wrap { max-width: 1180px; margin-inline: auto; padding-inline: 16px; }
 h1, h2, h3 { font-family: var(--font-display); margin: 0; text-wrap: balance; }
 
-/* header: lockup over a 4px gold rule */
+/* header: the IS4S badge over a 4px gold rule. The white tile behind it in dark mode keeps the black feather readable. */
 .site-head { background: var(--surface); border-bottom: 4px solid var(--gold); }
 .head-inner { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 20px; padding-block: 16px 14px; }
-.lockup { width: 104px; height: auto; flex: none; background: var(--logo-tile); padding: 6px 8px; border-radius: var(--radius); box-sizing: content-box; }
+.lockup { height: 52px; width: auto; aspect-ratio: 1800 / 1650; flex: none; background: var(--logo-tile); padding: 6px 8px; border-radius: var(--radius); box-sizing: content-box; }
 .head-text { flex: 1 1 380px; min-width: 0; display: grid; gap: 4px; }
 .eyebrow { margin: 0; font: 600 13px/1.3 var(--font-display); letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
 h1 { font-weight: 700; font-size: clamp(26px, 4vw, 38px); line-height: 1.1; color: var(--red-text); letter-spacing: -0.01em; }
@@ -143,7 +143,7 @@ h1 { font-weight: 700; font-size: clamp(26px, 4vw, 38px); line-height: 1.1; colo
   .cite { white-space: normal; }
   .keyb { grid-template-columns: minmax(0, 1fr); gap: 0 0; }
   .keyb dd { margin-bottom: 6px; }
-  .lockup { width: 84px; }
+  .lockup { height: 42px; }
 }
 @media print {
   .site-head { border-bottom-color: var(--gold); }

@@ -27,12 +27,13 @@
  * Added Oct 2026 (all opt-in: without these options every call returns exactly what it returned before)
  *   opts.allAngles true    angle arcs and degree labels on every flat shape, 3D view and net (render, net)
  *   opts.moreDims true     a few extra derived sizes on the drawing (diagonals)
+ *   opts.derivedAngles     'show' | 'ask' | 'hide' for worked-out angles only (default: the same as opts.derived)
  *   opts.lenFormat(value, units, pow)   returns the text for a size label value (with its unit), or null for the usual text
  *   opts.labelSize px      label font size (default 15). opts.arrow px: arrowhead length (default 9)
  *   opts.arrowMax f        arrowheads at most f times the length of their dimension line (for small parts)
  *   opts.precision n       decimals in the SVG coordinates (default 2)
  *   opts.parts true        data-part on every drawn element: body, edge, hidden, aux, fold, derived, mark, right-angle, tick,
- *                          angle, dot, dim, dim-ext, dim-arrow, label-box, label
+ *                          angle, leader, dot, dim, dim-ext, dim-arrow, label-box, label
  *   ao.full true           calc returns every size that can be worked out, each item with a group (calcFull is the same)
  *   Shapes.list({all: true})          also lists the 3D equivalents added for the flat shapes (info(id).added is true)
  *   Shapes.solidsOf(flatId, params)   -> [{id, how, text, name, params, carried, added}] the 3D equivalents of a flat shape
@@ -55,26 +56,31 @@
   };
   var FONT = 'IBM Plex Sans, Segoe UI, Arial, sans-serif';
   var FS = 15, AH = 9, AW = 3.3;
-  /* drawing options for one render or net call (opts.labelSize, opts.arrow, opts.arrowMax, opts.precision, opts.parts), reset after it */
+  /* drawing options for one render or net call (opts.labelSize, opts.arrow, opts.arrowMax, opts.precision, opts.parts) */
   var P10 = 100, PARTS = false, AMAX = 0;
   var LAYER_PART = { fill: 'body', edge: 'edge', hid: 'hidden', aux: 'aux', ann: 'derived', mark: 'mark', dim: 'dim' };
   function withSty(o, f) {
     o = o || {};
     var keep = [FS, AH, AW, P10, PARTS, AMAX];
-    if (+o.labelSize > 0) FS = +o.labelSize;
-    if (+o.arrow > 0) { AH = +o.arrow; AW = 3.3 * AH / 9; }
-    if (o.precision != null && isFinite(o.precision) && o.precision >= 0) P10 = Math.pow(10, Math.min(6, Math.round(o.precision)));
-    PARTS = !!o.parts;
-    AMAX = +o.arrowMax > 0 ? +o.arrowMax : 0;
-    try { return f(); } finally { FS = keep[0]; AH = keep[1]; AW = keep[2]; P10 = keep[3]; PARTS = keep[4]; AMAX = keep[5]; }
+    try {
+      FS = +o.labelSize > 0 ? +o.labelSize : 15;
+      AH = +o.arrow > 0 ? +o.arrow : 9; AW = 3.3 * AH / 9;
+      P10 = o.precision != null && isFinite(o.precision) && o.precision >= 0 ? Math.pow(10, Math.min(6, Math.round(o.precision))) : 100;
+      PARTS = !!o.parts;
+      AMAX = +o.arrowMax > 0 ? +o.arrowMax : 0;
+      return f();
+    } finally { FS = keep[0]; AH = keep[1]; AW = keep[2]; P10 = keep[3]; PARTS = keep[4]; AMAX = keep[5]; }
   }
   function partAttr(layer, part) { return PARTS ? 'data-part="' + (part || LAYER_PART[layer] || layer) + '" ' : ''; }
+  function isAll(o) { return !!o && (o === 'all' || !!o.all); }
 
   /* ---------------- numbers and text ---------------- */
   function round2(n) { var r = Math.round(n * 100) / 100; return (r === 0) ? 0 : r; }
+  var NUMFMT = typeof Intl !== 'undefined' && Intl.NumberFormat ? new Intl.NumberFormat('en-CA', { maximumFractionDigits: 2 }) : null, NUMONLY = false;
   function fmt(n) {
+    if (NUMONLY) return '';
     if (!isFinite(n)) return '?';
-    return round2(n).toLocaleString('en-CA', { maximumFractionDigits: 2 });
+    return NUMFMT ? NUMFMT.format(round2(n)) : round2(n).toLocaleString('en-CA', { maximumFractionDigits: 2 });
   }
   function N(n) { var r = Math.round(n * P10) / P10; return String(r === 0 ? 0 : r); }
   function unitStr(u, pow) { return u + (pow === 2 ? '²' : pow === 3 ? '³' : ''); }
@@ -122,9 +128,10 @@
   }
   function labelText(l, o) {
     if (!l) return '';
-    if (l.derived && o.derived === 'hide') return null;
+    var dm = l.unit === '°' && o.derivedAngles ? o.derivedAngles : o.derived;
+    if (l.derived && dm === 'hide') return null;
     if (o.labels === 'none') return '';
-    var ask = l.derived && o.derived === 'ask';
+    var ask = l.derived && dm === 'ask';
     var val = l.unit === '°' ? fmt(l.value) + '°' : fmt(l.value) + ' ' + unitStr(o.units, l.pow);
     if (l.unit !== '°' && typeof o.lenFormat === 'function') { var fv = o.lenFormat(l.value, o.units, l.pow); if (fv != null && fv !== '') val = String(fv); }
     if (o.labels === 'letters') return l.letter;
@@ -137,6 +144,8 @@
     for (var k in o) if (o[k] !== undefined) d[k] = o[k];
     if (d.derived === true) d.derived = 'show';
     if (d.derived === false) d.derived = 'hide';
+    if (d.derivedAngles === true) d.derivedAngles = 'show';
+    if (d.derivedAngles === false) d.derivedAngles = 'hide';
     if (d.labels === 'plain') d.plain = true;
     if (d.thumb) d.plain = true;
     return d;
@@ -179,14 +188,15 @@
     var cx = c[0], cy = c[1], tries = [0, 1, -1, 2, -2, 3, -3, 4, 5];
     for (var i = 0; i < tries.length; i++) {
       var x = c[0] + nd[0] * tries[i] * step, y = c[1] + nd[1] * tries[i] * step, box = [x - w / 2, y - h / 2, w, h];
-      var hit = this.boxes.some(function (b) { return box[0] < b[0] + b[2] && b[0] < box[0] + box[2] && box[1] < b[1] + b[3] && b[1] < box[1] + box[3]; });
+      var hit = this.boxes.some(function (b) { return box[0] < b[0] + b[2] && b[0] < box[0] + box[2] && box[1] < b[1] + b[3] && b[1] < box[1] + box[3]; }) ||
+        !!(this.segs && this.segs.some(function (sg) { return segBlocksBox(sg, box); }));
       if (!hit) { cx = x; cy = y; break; }
     }
     var box = [cx - w / 2, cy - h / 2, w, h];
     this.boxes.push(box);
     this.ext(cx - w / 2, cy - h / 2); this.ext(cx + w / 2, cy + h / 2);
-    this.L.lab.push('<rect x="' + N(cx - w / 2) + '" y="' + N(cy - h / 2) + '" width="' + N(w) + '" height="' + N(h) + '" rx="2" fill="' + COL.white + '"/>' +
-      '<text x="' + N(cx) + '" y="' + N(cy + 0.35 * FS) + '" text-anchor="middle" font-family="' + FONT + '" font-size="' + FS + '" font-weight="600" fill="' + color + '">' + esc(text) + '</text>');
+    this.L.lab.push('<rect ' + partAttr('lab', 'label-box') + 'x="' + N(cx - w / 2) + '" y="' + N(cy - h / 2) + '" width="' + N(w) + '" height="' + N(h) + '" rx="2" fill="' + COL.white + '"/>' +
+      '<text ' + partAttr('lab', 'label') + 'x="' + N(cx) + '" y="' + N(cy + 0.35 * FS) + '" text-anchor="middle" font-family="' + FONT + '" font-size="' + FS + '" font-weight="600" fill="' + color + '">' + esc(text) + '</text>');
     return box;
   };
   /* glow layer (screen only): drawn last, never part of an export */
@@ -230,9 +240,9 @@
     }
     var z = o.zoom || 1, L = this.L;
     return '<svg xmlns="http://www.w3.org/2000/svg" width="' + N(w * z) + '" height="' + N(h * z) + '" viewBox="' + N(x) + ' ' + N(y) + ' ' + N(w) + ' ' + N(h) + '">' +
-      L.fill.join('') + L.hid.join('') + L.aux.join('') + L.ann.join('') + L.edge.join('') + (PARTS ? L.mark.join('').split('<circle ').join('<circle data-part="dot" ') : L.mark.join('')) + L.dim.join('') +
+      L.fill.join('') + L.hid.join('') + L.aux.join('') + L.ann.join('') + L.edge.join('') + L.mark.join('') + L.dim.join('') +
       /* glow sits over every line and fill of the drawing; the label boxes stay above it so the letters remain readable */
-      (L.hl.length ? '<g data-layer="glow">' + L.hl.join('') + '</g>' : '') + (PARTS ? L.lab.join('').split('<rect ').join('<rect data-part="label-box" ').split('<text ').join('<text data-part="label" ') : L.lab.join('')) + '</svg>';
+      (L.hl.length ? '<g data-layer="glow">' + L.hl.join('') + '</g>' : '') + L.lab.join('') + '</svg>';
   };
   var A_DIM = 'fill="none" stroke="' + COL.dim + '" stroke-width="1.25" stroke-linecap="round"';
   function attrsLine(color, w, dash) {
@@ -352,10 +362,12 @@
     prims.forEach(function (pr) { if (pr.t === 'shape' || pr.t === 'panel') pr.rings.forEach(function (r) { r.forEach(function (p) { sp.push(T(p)); }); }); });
     var cen = sp.reduce(function (a, p) { return [a[0] + p[0] / sp.length, a[1] + p[1] / sp.length]; }, [0, 0]);
     var bx0 = Infinity, by0 = Infinity, bx1 = -Infinity, by1 = -Infinity;
-    cv.cen = cen;
-    cv.angCorners = prims.filter(function (pr) { return pr.t === 'angle' || (pr.t === 'ra' && pr.lab); }).map(function (pr) { return T(pr.t === 'ra' ? pr.p : pr.c); });
-    cv.polyVerts = [];
-    prims.forEach(function (pr) { if ((pr.t === 'shape' || pr.t === 'panel') && pr.rings) pr.rings.forEach(function (r) { if (r.length <= 16) r.forEach(function (q) { cv.polyVerts.push(T(q)); }); }); });
+    if (prims.some(function (pr) { return pr.near || pr.fit; })) {
+      cv.cen = cen;
+      cv.angCorners = prims.filter(function (pr) { return pr.t === 'angle' || (pr.t === 'ra' && pr.lab); }).map(function (pr) { return T(pr.t === 'ra' ? pr.p : pr.c); });
+      cv.polyVerts = [];
+      prims.forEach(function (pr) { if ((pr.t === 'shape' || pr.t === 'panel') && pr.rings) pr.rings.forEach(function (r) { if (r.length <= 16) r.forEach(function (q) { cv.polyVerts.push(T(q)); }); }); });
+    }
 
     prims.forEach(function (pr) {
       var rings, txt, hp = null;
@@ -390,7 +402,7 @@
       if (plain) return;
       var letter = pr.lab ? pr.lab.letter : pr.hlLetter;
       if (H) hp = hlDim(o, letter, pr.t === 'angle' || (pr.t === 'ra' && pr.lab) ? 'ang' : 'dim');
-      var gone = (pr.derived && o.derived === 'hide');
+      var gone = (pr.derived && ((pr.t === 'angle' || pr.t === 'ra') && o.derivedAngles ? o.derivedAngles : o.derived) === 'hide');
       if (pr.lab) { txt = labelText(pr.lab, o); if (txt === null) gone = true; }
       var A, B, n, u, bxx;
       if (gone) {
@@ -441,7 +453,7 @@
           break;
         case 'dot':
           A = T(pr.p);
-          cv.L.mark.push('<circle cx="' + N(A[0]) + '" cy="' + N(A[1]) + '" r="2.75" fill="' + COL.edge + '"/>');
+          cv.L.mark.push('<circle ' + partAttr('mark', 'dot') + 'cx="' + N(A[0]) + '" cy="' + N(A[1]) + '" r="2.75" fill="' + COL.edge + '"/>');
           cv.ext(A[0], A[1]);
           break;
         case 'angle':
@@ -532,7 +544,7 @@
     return it;
   }
   function noKeys(it) { it.nokeys = true; return it; }
-  function aoOf(o) { o = o || {}; var on = !!o.angles; return { on: on, input: on && o.angleInput === 'angle' ? 'angle' : 'sides', all: !!o.allAngles }; }
+  function aoOf(o) { o = o || {}; var on = !!o.angles; return { on: on, input: on && o.angleInput === 'angle' ? 'angle' : 'sides', show: on || !!o.allAngles }; }
 
   /* ---------------- shape registry ---------------- */
   var DEF = {}, ORDER = [];
@@ -582,8 +594,8 @@
     draw: function (p, n, ao) {
       var A0 = aoOf(ao), byAng = A0.input === 'angle', q = byAng ? this.angIn.toSides(p) : p, b = q.b, h = q.h;
       var Cv = [0, 0], Av = [b, 0], Bv = [0, -h], out = [shape([Cv, Av, Bv]), dim(Cv, Av, lab('b', b)), dim(Cv, Bv, lab('h', h, 1, byAng)),
-        dim(Av, Bv, lab('c', Math.hypot(b, h), 1, true)), ra(Cv, [1, 0], [0, -1], (A0.on || A0.all) ? { lab: angLab('C', 90, false) } : null)];
-      if (A0.on || A0.all) {
+        dim(Av, Bv, lab('c', Math.hypot(b, h), 1, true)), ra(Cv, [1, 0], [0, -1], A0.show ? { lab: angLab('C', 90, false) } : null)];
+      if (A0.show) {
         var A = byAng ? p.A : Math.atan2(h, b) / D2R;
         out.push(angAt(Av, Cv, Bv, angLab('A', A, !byAng)), angAt(Bv, Av, Cv, angLab('B', 90 - A, true)));
       }
@@ -623,7 +635,7 @@
       var s = p.s, H = s * SQ3 / 2, pts = this.rings(p)[0];
       var out = [shape(pts), dim([0, 0], [s, 0], lab('s', s)), ann([s / 2, -H], [s / 2, 0], lab('h', H, 1, true), { dash: true }),
         ra([s / 2, 0], [1, 0], [0, -1], { derived: true })].concat(ticks(pts, 1));
-      if (aoOf(ao).on || aoOf(ao).all) out.push(angAt(pts[0], pts[1], pts[2], angLab('A', 60, false)), angAt(pts[1], pts[2], pts[0], angLab('B', 60, false)), angAt(pts[2], pts[0], pts[1], angLab('C', 60, false)));
+      if (aoOf(ao).show) out.push(angAt(pts[0], pts[1], pts[2], angLab('A', 60, false)), angAt(pts[1], pts[2], pts[0], angLab('B', 60, false)), angAt(pts[2], pts[0], pts[1], angLab('C', 60, false)));
       return out;
     },
     hl: { h: ['dim:h', 'dim:s'], A: ['fill', 'dim:s', 'dim:h'], P: ['outline', 'dim:s'], angA: ['ang:A', 'ang:B', 'ang:C'], angsum: ['ang:A', 'ang:B', 'ang:C'] },
@@ -647,7 +659,7 @@
       var Av = [0, 0], Bv = [b, 0], Cv = [b / 2, -h];
       var out = [shape([Av, Bv, Cv]), dim(Av, Bv, lab('b', b)), ann(Cv, [b / 2, 0], lab('h', h, 1, byAng), { dash: true }),
         ra([b / 2, 0], [1, 0], [0, -1]), dim(Bv, Cv, lab('a', a, 1, true)), tick(Av, Cv), tick(Bv, Cv)];
-      if (A0.on || A0.all) {
+      if (A0.show) {
         var A = byAng ? p.A : Math.atan2(h, b / 2) / D2R;
         out.push(angAt(Av, Bv, Cv, angLab('A', A, !byAng)), angAt(Bv, Cv, Av, angLab('B', A, true)), angAt(Cv, Av, Bv, angLab('C', 180 - 2 * A, true)));
       }
@@ -704,7 +716,7 @@
       if (F[0] < 0) { out.push(aux([0, 0], F, { derived: true }), ra(F, [1, 0], [0, -1], { derived: true })); }
       else if (F[0] > a) { out.push(aux([a, 0], F, { derived: true }), ra(F, [-1, 0], [0, -1], { derived: true })); }
       else out.push(ra(F, F[0] < a / 2 ? [1, 0] : [-1, 0], [0, -1], { derived: true }));
-      if (A0.on || A0.all) {
+      if (A0.show) {
         var A = byAng ? p.A : cosRule(a, q.b, q.c), B = cosRule(q.b, a, q.c);
         out.push(angAt(Q, Bv, Cv, angLab('A', A, !byAng)), angAt(Bv, Cv, Q, angLab('B', B, true)), angAt(Cv, Q, Bv, angLab('C', 180 - A - B, true)));
       }
@@ -2394,6 +2406,8 @@
   function lenI(name, sym, formula, substs, value, u, key) { return item(name, sym, formula, substs, value, u, 1, key); }
   function areaI(name, sym, formula, substs, value, u, key) { return item(name, sym, formula, substs, value, u, 2, key); }
   var CAPL = { mm: ['V ÷ 1000000', 1e-6, '÷ 1000000'], cm: ['V ÷ 1000', 1e-3, '÷ 1000'], m: ['V × 1000', 1000, '× 1000'], in: ['V × 0.016387064', 0.016387064, '× 0.016387064'], ft: ['V × 28.316846592', 28.316846592, '× 28.316846592'] };
+  /* capacity of the hollow inside (pipe, tube), lit on the inner surface */
+  function capInside(V, u) { return capItems(V, u, 'Vi').map(function (it) { it._hl = ['inner']; it.name = it.name.replace('Capacity', 'Capacity (inside)'); return it; }); }
   function capItems(V, u, vs) {
     vs = vs || 'V';
     var c = CAPL[u] || CAPL.cm, L = V * c[1], out = [], VV = v(V);
@@ -2423,8 +2437,8 @@
 
   /* ---------- full-calc extras for the shapes that existed before (appended after the original items) ---------- */
   var XC = {};
-  function rtSides(p, ao) { return aoOf(ao).input === 'angle' ? { b: p.b, h: p.b * Math.tan(p.A * D2R) } : p; }
-  function isoSides(p, ao) { return aoOf(ao).input === 'angle' ? { b: p.b, h: p.b / 2 * Math.tan(p.A * D2R) } : p; }
+  /* the drawing sizes of a triangle entered by angle (the shape's own angIn.toSides) */
+  function sidesOf(id, p, ao) { return aoOf(ao).input === 'angle' ? DEF[id].angIn.toSides(p) : p; }
   XC.square = function (p, u) {
     var s = p.s, d = SQ2 * s;
     return [H(['dim:corner'], angItem('Each corner angle (the 4 corners add to 360°)', '∠A', '360 ÷ 4', ['360 ÷ 4'], 90, 'angA')),
@@ -2443,7 +2457,7 @@
       H(['fill', 'dim:l'], cen('Centroid from the short side', 'x̄', 'l ÷ 2', [v(l) + ' ÷ 2'], l / 2, u, 'cx'))];
   };
   XC['right-triangle'] = function (p, u, ao) {
-    var q = rtSides(p, ao), b = q.b, h = q.h, c = Math.hypot(b, h);
+    var q = sidesOf('right-triangle', p, ao), b = q.b, h = q.h, c = Math.hypot(b, h);
     return [angT('Angle A (TOA: tan A = opposite ÷ adjacent)', '∠A', tan1('h', 'b', h, b), 'angA', ['ang:A', 'dim:h', 'dim:b']),
       H(['ang:C'], noKeys(angItem('Angle C (the square corner)', '∠C', '90', ['90'], 90, 'angC'))),
       H(['dim:b', 'dim:h', 'dim:c'], lenI('Height to the hypotenuse (from the square corner)', 'hc', '(b × h) ÷ c', ['(' + v(b) + ' × ' + v(h) + ') ÷ ' + v(c)], b * h / c, u)),
@@ -2464,7 +2478,7 @@
       H(['fill', 'dim:h'], cen('Centroid from any side', 'ȳ', 'h ÷ 3', [v(h) + ' ÷ 3'], h / 3, u, 'cy'))];
   };
   XC['isosceles-triangle'] = function (p, u, ao) {
-    var q = isoSides(p, ao), b = q.b, h = q.h, a = Math.hypot(b / 2, h);
+    var q = sidesOf('isosceles-triangle', p, ao), b = q.b, h = q.h, a = Math.hypot(b / 2, h);
     return [angT('Base angle A (TOA: tan A = opposite ÷ adjacent)', '∠A', { f: 'tan⁻¹(h ÷ (b ÷ 2))', s: 'tan⁻¹(' + v(h) + ' ÷ ' + v(b / 2) + ')', val: Math.atan2(h, b / 2) / D2R }, 'angA', ['ang:A', 'dim:h', 'dim:b']),
       H(['dim:b', 'dim:h', 'dim:a'], lenI('Height to an equal side', 'ha', '(b × h) ÷ a', ['(' + v(b) + ' × ' + v(h) + ') ÷ ' + v(a)], b * h / a, u)),
       H(['dim:b', 'dim:h', 'dim:a'], lenI('Radius of the circle that fits inside', 'ri', '(b × h) ÷ (b + 2 × a)', ['(' + v(b) + ' × ' + v(h) + ') ÷ (' + v(b) + ' + 2 × ' + v(a) + ')'], b * h / (b + 2 * a), u)),
@@ -2473,7 +2487,7 @@
       H(['fill', 'dim:h'], cen('Centroid from the base b', 'ȳ', 'h ÷ 3', [v(h) + ' ÷ 3'], h / 3, u, 'cy'))];
   };
   XC['scalene-triangle'] = function (p, u, ao) {
-    var q = aoOf(ao).input === 'angle' ? { a: sasSide(p), b: p.b, c: p.c } : p, a = q.a, b = q.b, c = q.c;
+    var q = sidesOf('scalene-triangle', p, ao), a = q.a, b = q.b, c = q.c;
     var s = (a + b + c) / 2, Ar = Math.sqrt(Math.max(0, s * (s - a) * (s - b) * (s - c))), A = cosRule(a, b, c), R = a / (2 * Math.sin(A * D2R));
     var med = function (x, y, z) { return 0.5 * Math.sqrt(Math.max(0, 2 * y * y + 2 * z * z - x * x)); };
     var medI = function (x, y, z, X, Y, Z, k) {
@@ -2660,7 +2674,7 @@
     var R = p.R, r = p.r, h = p.h;
     return [H(['dim:R', 'dim:r'], lenI('Wall thickness', 't', 'R − r', [v(R) + ' − ' + v(r)], R - r, u)),
       H(['dim:R'], lenI('Outside circumference', 'C', 'π × OD', ['π × ' + v(2 * R)], 2 * PI * R, u)),
-      H(['dim:r'], lenI('Inside circumference', 'c', 'π × ID', ['π × ' + v(2 * r)], 2 * PI * r, u))].concat(capItems(PI * r * r * h, u, 'Vi').map(function (it) { it._hl = ['inner']; it.name = it.name.replace('Capacity', 'Capacity (inside)'); return it; }));
+      H(['dim:r'], lenI('Inside circumference', 'c', 'π × ID', ['π × ' + v(2 * r)], 2 * PI * r, u))].concat(capInside(PI * r * r * h, u));
   };
   XC.cone = function (p, u) {
     var r = p.r, h = p.h, l = Math.hypot(r, h), al = Math.atan2(h, r) / D2R, ha = Math.atan2(r, h) / D2R;
@@ -2726,7 +2740,7 @@
   XC['spherical-cap'] = function (p, u) { return capItems(PI * p.h * (3 * p.a * p.a + p.h * p.h) / 6, u); };
   XC.capsule = function (p, u) { return capItems(PI * p.r * p.r * p.l + 4 * PI * p.r * p.r * p.r / 3, u); };
   XC['hss-tube'] = function (p, u) {
-    return capItems((p.B - 2 * p.t) * (p.H - 2 * p.t) * p.L, u, 'Vi').map(function (it) { it._hl = ['inner']; it.name = it.name.replace('Capacity', 'Capacity (inside)'); return it; });
+    return capInside((p.B - 2 * p.t) * (p.H - 2 * p.t) * p.L, u);
   };
   XC['polygon-prism'] = function (p, u) {
     var n = Math.round(p.n), s = p.s, ap = s / (2 * Math.tan(PI / n));
@@ -2831,12 +2845,20 @@
     var psi = Math.acos(Math.max(-1, Math.min(1, (p.R * p.R + p.r * p.r - p.e * p.e) / (2 * p.R * p.r)))) / D2R;
     return [angP(I, add(I, mul(t1, k)), add(I, mul(t2, k)), 'ψ', psi, true, { rp: 26 })];
   });
+  /* full calc working: a line that only repeats the line before it is dropped ("∠C = 90", "∠C = 90", "∠C = 90°" prints once) */
+  function tidyLines(lines) {
+    var out = [], bare = function (s) { return s.replace(/°$/, ''); };
+    (lines || []).forEach(function (s) { if (!out.length || bare(out[out.length - 1]) !== bare(s)) out.push(s); else out[out.length - 1] = s; });
+    return out;
+  }
+  /* a copy of a drawing prim with one more field */
+  function withFlag(q, k, val) { var o = {}, f; for (f in q) o[f] = q[f]; o[k] = val; return o; }
   function drawPrims(d, p, ao) {
     var pr = d.draw(p, undefined, ao);
-    if (ao && ao.allAngles && CORNERS[d.id]) pr = pr.map(function (q) { if (q.t !== 'ra' || q.lab || q.hlLetter) return q; var o = {}, k; for (k in q) o[k] = q[k]; o.hlLetter = 'corner'; return o; });
+    if (ao && ao.allAngles && CORNERS[d.id]) pr = pr.map(function (q) { return q.t !== 'ra' || q.lab || q.hlLetter ? q : withFlag(q, 'hlLetter', 'corner'); });
     if (ao && (ao.allAngles || ao.moreDims) && XA[d.id]) pr = pr.concat(XA[d.id](p, ao));
     /* with every angle marked, each angle label is kept beside its own arc (or joined to it by a leader) */
-    if (ao && ao.allAngles) pr = pr.map(function (q) { if (q.t !== 'angle' || q.near) return q; var o = {}, k; for (k in q) o[k] = q[k]; o.near = true; return o; });
+    if (ao && ao.allAngles) pr = pr.map(function (q) { return q.t !== 'angle' || q.near ? q : withFlag(q, 'near', true); });
     return pr;
   }
 
@@ -2895,6 +2917,25 @@
       return { angs: [{ v: vs[0], a: vs[1], b: vs[n - 1], lab: angLab('φ', PLATX[id][0], true) }] };
     };
   });
+  /* box solids: square-corner boxes on the four corners of the face toward the viewer and on one corner of the top face.
+     With moreDims (the space diagonal drawn) also the angle the diagonal makes with the base, along the base diagonal. */
+  function boxAngs(l, h, w, ctx) {
+    var X = l / 2, Z = w / 2, zf = ctx.facing([0, 0, 1]) ? Z : -Z, xs = ctx.facing([1, 0, 0]) ? X : -X, yt = ctx.facing([0, 1, 0]) ? h : 0;
+    var F = [[-X, 0, zf], [X, 0, zf], [X, h, zf], [-X, h, zf]], angs = [];
+    F.forEach(function (q, i) { angs.push({ v: q, a: F[(i + 1) % 4], b: F[(i + 3) % 4] }); });
+    angs.push({ v: [xs, yt, -zf], a: [-xs, yt, -zf], b: [xs, yt, zf] });
+    var out = { angs: angs, auxs: [] };
+    if (ctx.moreDims) {
+      /* the diagonal runs (-X, 0, -Z) to (X, h, Z). The angle is marked at its end on the face the viewer sees (top or bottom),
+         against that face's diagonal: the same angle either way */
+      var B0 = [-X, 0, -Z], T1 = [X, h, Z], up = ctx.facing([0, 1, 0]), Vd = up ? T1 : B0, Ed = up ? [-X, h, -Z] : [X, 0, Z];
+      out.auxs.push([Vd, Ed]);
+      out.angs.push({ v: Vd, a: Ed, b: up ? B0 : T1, lab: angLab('θ', Math.atan2(h, Math.hypot(l, w)) / D2R, true) });
+    }
+    return out;
+  }
+  A3.cube = function (p, ctx) { return boxAngs(p.s, p.s, p.s, ctx); };
+  A3['rectangular-prism'] = function (p, ctx) { return boxAngs(p.l, p.h, p.w, ctx); };
   /* extra sizes on 3D views (opts.moreDims) */
   var MD3 = {
     cube: function (p) { var X = p.s / 2; return [{ a: [-X, 0, -X], b: [X, p.s, X], lab: LB('d', SQ3 * p.s, 1, true), at: 0.6 }]; },
@@ -3072,14 +3113,13 @@
     for (k in pr) o[k] = pr[k];
     if (pr.t === 'angle') return mapAngle(pr, M);
     if (pr.t === 'shape' || pr.t === 'arclab' || pr.t === 'tick') return null;
-    ['a', 'b', 'p', 'c'].forEach(function (f) { if (pr[f] && typeof pr[f][0] === 'number' && pr.t !== 'angle') o[f] = M(pr[f]); });
+    ['a', 'b', 'p', 'c'].forEach(function (f) { if (pr[f] && typeof pr[f][0] === 'number') o[f] = M(pr[f]); });
     if (pr.pts) o.pts = pr.pts.map(M);
     if (pr.glow) o.glow = pr.glow.map(M);
     if (pr.t === 'ra') { o.u = D(pr.u); o.v = D(pr.v); }
     if (pr.t === 'text') o.dir = D(pr.dir);
     if (pr.side) o.side = D(pr.side);
     if (pr.offModel) o.offModel = false;
-    if (pr.t === 'arclab' || pr.t === 'tick') return null;
     return o;
   }
   function prismNet(S, L, flatPrims, lenLetter, Pval) {
@@ -3118,25 +3158,40 @@
     var fd = DEF[cfg.flat], lk = cfg.len.k, up = !!cfg.up, fname = cfg.endName || fd.name;
     var params = fd.params.map(function (q) { var c = {}, k; for (k in q) c[k] = q[k]; if (cfg.defs && cfg.defs[q.k] != null) c.def = cfg.defs[q.k]; return c; }).concat([cfg.len]);
     var fp = function (p) { var o = {}; fd.params.forEach(function (q) { o[q.k] = p[q.k]; }); return o; };
+    /* the default cross-section is the flat shape's own outline */
+    var secOf = cfg.sec || function (p) { return mkSec(rPoly(fd.rings(p)[0])); };
+    /* the flat drawing of the end, worked out once for a set of sizes and shared by the 3D view, the net, the angles and calc */
+    var memo = { key: null };
+    var flat = function (p) {
+      var f2 = fill(cfg.flat, fp(p)), key = JSON.stringify(f2);
+      if (memo.key !== key) memo = { key: key, f2: f2, base: fd.draw(f2, 96, {}), angs: null };
+      if (!memo.angs) memo.angs = newAngles(fd, f2, memo.base);
+      return memo;
+    };
+    /* end area A and perimeter P of the flat shape (and its calc result) */
+    var endAP = function (p, u, full) {
+      var r = calc(cfg.flat, fp(p), u, full ? { full: true } : {}), A = 0, P = 0;
+      r.items.forEach(function (it) { if (it.key === 'A') A = it.value; if (it.key === 'P') P = it.value; });
+      return { r: r, A: A, P: P };
+    };
+    /* an upright prism leaves the worked-out sizes off its top face, so their highlights fall back to the ends */
+    var gone = {};
+    if (up) fd.draw(fill(cfg.flat, {}), 96, {}).forEach(function (q) { if (q.lab && q.lab.derived && (q.t === 'dim' || q.t === 'ann')) gone['dim:' + q.lab.letter] = 1; });
+    var keepHl = function (list) { var f = list.filter(function (h) { return !gone[h]; }); return f.length || !list.length ? f : ['ends']; };
     var hl = { V: ['all'], LA: ['side', 'dim:' + lk], SA: ['all'], A: ['ends'], P: ['ends'], G: ['panels:lat', 'dim:P'], PA: ['panels:all'] };
     Object.keys(fd.hl || {}).forEach(function (k) { if (!hl[k]) hl[k] = convHl(fd.hl[k]); });
-    if (up) {
-      var gone0 = {};
-      fd.draw(fill(cfg.flat, {}), 96, {}).forEach(function (q) { if (q.lab && q.lab.derived && (q.t === 'dim' || q.t === 'ann')) gone0['dim:' + q.lab.letter] = 1; });
-      Object.keys(hl).forEach(function (k) { var f = hl[k].filter(function (h) { return !gone0[h]; }); hl[k] = f.length || !hl[k].length ? f : ['ends']; });
-    }
+    if (up) Object.keys(hl).forEach(function (k) { hl[k] = keepHl(hl[k]); });
     var d = {
       id: cfg.id, name: cfg.name, kind: 'solid', convex: !!cfg.convex, unusual: !!cfg.unusual, from: cfg.flat, how: 'prism', up: up,
       params: params, angleParam: fd.angleParam, rndOrder: fd.rndOrder ? fd.rndOrder.concat([lk]) : undefined,
       validate: function (p) { return fd.validate ? fd.validate(fill(cfg.flat, fp(p))) : null; },
-      sec: function (p, n) { return cfg.sec(p, n || 96); },
+      sec: function (p, n) { return secOf(p, n || 96); },
       mesh: function (p, res) { var S = this.sec(p, seg(res) * 1.5); return secMesh(S, placeOf(S, p[lk], up)); },
       annot: function (p, ctx) {
         var S = this.sec(p, 96), pl = placeOf(S, p[lk], up), t = up ? (ctx && ctx.facing([0, 1, 0]) ? 1 : 0) : (ctx && ctx.facing([0, 0, 1]) ? 1 : 0);
-        var P3 = function (q) { return pl.P(q, t); }, D3 = function (w) { return pl.N(w); }, out = emptyAnnot(), all = !!(ctx && ctx.allAngles);
-        var base = fd.draw(fill(cfg.flat, fp(p)), 96, {});
-        mapPrims(up ? base.filter(function (q) { return !(q.lab && q.lab.derived && (q.t === 'dim' || q.t === 'ann')); }) : base, P3, D3, out, false);
-        if (all) mapPrims(newAngles(fd, fill(cfg.flat, fp(p)), base), P3, D3, out, true);
+        var P3 = function (q) { return pl.P(q, t); }, D3 = function (w) { return pl.N(w); }, out = emptyAnnot(), all = !!(ctx && ctx.allAngles), fl = flat(p);
+        mapPrims(up ? fl.base.filter(function (q) { return !(q.lab && q.lab.derived && (q.t === 'dim' || q.t === 'ann')); }) : fl.base, P3, D3, out, false);
+        if (all) mapPrims(fl.angs, P3, D3, out, true);
         var R = S.ring, n = R.length, cands = [];
         R.forEach(function (q, i) {
           var sharp = S.smooth ? i % Math.max(1, Math.floor(n / 24)) === 0 : !(S.curve[(i + n - 1) % n] && S.curve[i] && S.runOf[(i + n - 1) % n] === S.runOf[i]);
@@ -3147,17 +3202,12 @@
       },
       hl: hl,
       calc: function (p, u, ao) {
-        var full = !!(ao && ao.full), L = p[lk], r = calc(cfg.flat, fp(p), u, full ? { full: true } : {}), A = 0, P = 0, out = [], gone = {};
-        /* an upright prism leaves the worked-out sizes off its top face, so their highlights fall back to the ends */
-        if (up) fd.draw(fill(cfg.flat, fp(p)), 96, {}).forEach(function (q) { if (q.lab && q.lab.derived && (q.t === 'dim' || q.t === 'ann')) gone['dim:' + q.lab.letter] = 1; });
-        r.items.forEach(function (it) {
-          if (it.key === 'A') A = it.value;
-          if (it.key === 'P') P = it.value;
+        var full = !!(ao && ao.full), L = p[lk], e = endAP(p, u, full), A = e.A, P = e.P, out = [];
+        e.r.items.forEach(function (it) {
           var c = {}, k;
           for (k in it) c[k] = it[k];
           c.name = fname + ': ' + it.name.charAt(0).toLowerCase() + it.name.slice(1);
-          c._hl = convHl(it.hl).filter(function (h) { return !gone[h]; });
-          if (it.hl.length && !c._hl.length) c._hl = ['ends'];
+          c._hl = keepHl(convHl(it.hl));
           delete c.hl;
           if (full) c.group = 'End shape: ' + (it.group || groupOf(it));
           out.push(c);
@@ -3175,45 +3225,31 @@
       },
       notes: fd.notes,
       layout: function (p, u) {
-        var r = calc(cfg.flat, fp(p), u), A = 0, P = 0, L = p[lk];
-        r.items.forEach(function (it) { if (it.key === 'A') A = it.value; if (it.key === 'P') P = it.value; });
+        var e = endAP(p, u), A = e.A, P = e.P, L = p[lk];
         return [item('Girth (stretch-out of the side strip, the perimeter of the end)', 'G', 'P', [v(P)], P, u, 1),
           item('Strip area (girth × ' + (up ? 'height' : 'length') + ')', 'LA', 'G × ' + lk, [v(P) + ' × ' + v(L)], P * L, u, 2),
           item('Pattern area (strip + 2 ends)', 'PA', 'G × ' + lk + ' + 2 × A', [v(P) + ' × ' + v(L) + ' + 2 × ' + v(A)], P * L + 2 * A, u, 2)];
       },
       layoutHl: { G: ['panels:lat', 'dim:P'], LA: ['panels:lat', 'dim:' + lk], PA: ['panels:all'] },
-      net: function (p, res) {
-        var S = this.sec(p, (res && res.circle) || 128), r = calc(cfg.flat, fp(p), 'cm'), P = 0;
-        r.items.forEach(function (it) { if (it.key === 'P') P = it.value; });
-        return prismNet(S, p[lk], fd.draw(fill(cfg.flat, fp(p)), 96, {}), lk, P);
-      }
+      net: function (p, res) { return prismNet(this.sec(p, (res && res.circle) || 128), p[lk], flat(p).base, lk, endAP(p, 'cm').P); }
     };
     NA[cfg.id] = function (p, nb) {
       if (!nb.map) return [];
-      var f2 = fill(cfg.flat, fp(p));
-      return newAngles(fd, f2, fd.draw(f2, 96, {})).map(function (q) { return q.t === 'ra' ? mapPrim2(q, nb.map.M, nb.map.D) : mapAngle(q, nb.map.M); });
+      return flat(p).angs.map(function (q) { return q.t === 'ra' ? mapPrim2(q, nb.map.M, nb.map.D) : mapAngle(q, nb.map.M); });
     };
     ADD(d);
   }
   var LEN = function (k, name, def, rnd) { return P(k, name, k, def, rnd); };
   prismOf({ id: 'right-triangle-prism', name: 'Right triangle prism (wedge)', flat: 'right-triangle', convex: true, len: LEN('l', 'Length', 10, [4, 20]), defs: { b: 6, h: 4 },
     sec: function (p) { return mkSec(rPoly([[0, 0], [p.b, 0], [0, -p.h]])); } });
-  prismOf({ id: 'equilateral-triangle-prism', name: 'Equilateral triangle prism', flat: 'equilateral-triangle', convex: true, len: LEN('l', 'Length', 10, [4, 20]), defs: { s: 6 },
-    sec: function (p) { return mkSec(rPoly(DEF['equilateral-triangle'].rings(p)[0])); } });
-  prismOf({ id: 'scalene-triangle-prism', name: 'Scalene triangle prism', flat: 'scalene-triangle', convex: true, len: LEN('l', 'Length', 12, [4, 20]), defs: { a: 7, b: 6.5, c: 7.5 },
-    sec: function (p) { return mkSec(rPoly(DEF['scalene-triangle'].rings(p)[0])); } });
-  prismOf({ id: 'parallelogram-prism', name: 'Parallelogram prism', flat: 'parallelogram', convex: true, len: LEN('l', 'Length', 10, [4, 20]), defs: { b: 8, h: 4, s: 5 },
-    sec: function (p) { return mkSec(rPoly(DEF.parallelogram.rings(p)[0])); } });
-  prismOf({ id: 'rhombus-prism', name: 'Rhombus prism', flat: 'rhombus', convex: true, up: true, endName: 'Rhombus base', len: LEN('h', 'Height', 3, [2, 12]), defs: { d1: 10, d2: 7 },
-    sec: function (p) { return mkSec(rPoly(DEF.rhombus.rings(p)[0])); } });
-  prismOf({ id: 'trapezoid-prism', name: 'Trapezoid prism', flat: 'trapezoid', convex: true, len: LEN('l', 'Length', 12, [4, 24]), defs: { a: 4, b: 10, h: 4 },
-    sec: function (p) { return mkSec(rPoly(DEF.trapezoid.rings(p)[0])); } });
-  prismOf({ id: 'kite-prism', name: 'Kite prism', flat: 'kite', convex: true, up: true, endName: 'Kite base', len: LEN('h', 'Height', 3, [2, 12]), defs: { d1: 12, d2: 10, p: 4 },
-    sec: function (p) { return mkSec(rPoly(DEF.kite.rings(p)[0])); } });
-  prismOf({ id: 'pentagonal-prism', name: 'Pentagonal prism', flat: 'pentagon', convex: true, up: true, endName: 'Pentagon base', len: LEN('h', 'Height', 10, [3, 20]), defs: { s: 4 },
-    sec: function (p) { return mkSec(rPoly(DEF.pentagon.rings(p)[0])); } });
-  prismOf({ id: 'octagonal-prism', name: 'Octagonal prism', flat: 'octagon', convex: true, up: true, endName: 'Octagon base', len: LEN('h', 'Height', 10, [3, 20]), defs: { s: 3 },
-    sec: function (p) { return mkSec(rPoly(DEF.octagon.rings(p)[0])); } });
+  prismOf({ id: 'equilateral-triangle-prism', name: 'Equilateral triangle prism', flat: 'equilateral-triangle', convex: true, len: LEN('l', 'Length', 10, [4, 20]), defs: { s: 6 } });
+  prismOf({ id: 'scalene-triangle-prism', name: 'Scalene triangle prism', flat: 'scalene-triangle', convex: true, len: LEN('l', 'Length', 12, [4, 20]), defs: { a: 7, b: 6.5, c: 7.5 } });
+  prismOf({ id: 'parallelogram-prism', name: 'Parallelogram prism', flat: 'parallelogram', convex: true, len: LEN('l', 'Length', 10, [4, 20]), defs: { b: 8, h: 4, s: 5 } });
+  prismOf({ id: 'rhombus-prism', name: 'Rhombus prism', flat: 'rhombus', convex: true, up: true, endName: 'Rhombus base', len: LEN('h', 'Height', 3, [2, 12]), defs: { d1: 10, d2: 7 } });
+  prismOf({ id: 'trapezoid-prism', name: 'Trapezoid prism', flat: 'trapezoid', convex: true, len: LEN('l', 'Length', 12, [4, 24]), defs: { a: 4, b: 10, h: 4 } });
+  prismOf({ id: 'kite-prism', name: 'Kite prism', flat: 'kite', convex: true, up: true, endName: 'Kite base', len: LEN('h', 'Height', 3, [2, 12]), defs: { d1: 12, d2: 10, p: 4 } });
+  prismOf({ id: 'pentagonal-prism', name: 'Pentagonal prism', flat: 'pentagon', convex: true, up: true, endName: 'Pentagon base', len: LEN('h', 'Height', 10, [3, 20]), defs: { s: 4 } });
+  prismOf({ id: 'octagonal-prism', name: 'Octagonal prism', flat: 'octagon', convex: true, up: true, endName: 'Octagon base', len: LEN('h', 'Height', 10, [3, 20]), defs: { s: 3 } });
   prismOf({ id: 'elliptic-cylinder', name: 'Elliptic cylinder (oval tank)', flat: 'ellipse', convex: true, up: true, endName: 'Ellipse base', len: LEN('h', 'Height', 10, [3, 20]), defs: { a: 6, b: 4 },
     sec: function (p, n) {
       var k = Math.max(48, Math.round(n)), pts = DEF.ellipse.rings(p, k)[0];
@@ -3317,7 +3353,7 @@
       }
     };
     NA[cfg.id] = function (p, nb) {
-      var nd = d.net(p), Pp = nd.fan.Pp, m = nd.fan.mI, O2 = [0, 0], a = Pp[m], b = Pp[m + 1];
+      var Pp = nb.fan.Pp, m = nb.fan.mI, O2 = [0, 0], a = Pp[m], b = Pp[m + 1];
       var A1 = Math.acos(Math.max(-1, Math.min(1, dot(nrm(sub(b, a)), nrm(sub(O2, a)))))) / D2R, phi = 180 - 2 * A1;
       return [angP(O2, a, b, 'φ', phi, true), angP(a, b, O2, 'ψ', A1, true), angP(b, O2, a, 'ψ', A1, true)];
     };
@@ -3427,11 +3463,42 @@
   }
 
   /* ---------- drawing the added 3D annotations: helper lines, labels at points, angle arcs ---------- */
+  /* obstacles for placing marks and labels: the canvas label boxes (looked up through a grid of 64 px cells, indexed as they
+     are added) and the leaders (one segment each). A leader blocks like a 3 px square at each of its inner sample points,
+     one every 6 px or less, which is what keeps later labels and arcs off it. */
+  var GRID = 64;
+  function gridOf(cv) {
+    var g = cv._grid || (cv._grid = { n: 0, cells: {} });
+    for (; g.n < cv.boxes.length; g.n++) {
+      var b = cv.boxes[g.n], i0 = Math.floor(b[0] / GRID), i1 = Math.floor((b[0] + b[2]) / GRID), j0 = Math.floor(b[1] / GRID), j1 = Math.floor((b[1] + b[3]) / GRID);
+      for (var i = i0; i <= i1; i++) for (var j = j0; j <= j1; j++) (g.cells[i + ',' + j] || (g.cells[i + ',' + j] = [])).push(b);
+    }
+    return g;
+  }
+  function boxesIn(cv, x0, y0, x1, y1) {
+    var g = gridOf(cv), seen = [], out = [];
+    for (var i = Math.floor(x0 / GRID); i <= Math.floor(x1 / GRID); i++) for (var j = Math.floor(y0 / GRID); j <= Math.floor(y1 / GRID); j++) {
+      (g.cells[i + ',' + j] || []).forEach(function (b) { if (seen.indexOf(b) < 0) { seen.push(b); out.push(b); } });
+    }
+    return out;
+  }
+  function segSamples(sg) { var out = []; for (var s = 1; s < sg.n; s++) { var c = lerp(sg.a, sg.b, s / sg.n); out.push([c[0] - 1.5, c[1] - 1.5, 3, 3]); } return out; }
+  function segBlocksBox(sg, b) {
+    if (Math.max(sg.a[0], sg.b[0]) + 1.5 <= b[0] || Math.min(sg.a[0], sg.b[0]) - 1.5 >= b[0] + b[2] || Math.max(sg.a[1], sg.b[1]) + 1.5 <= b[1] || Math.min(sg.a[1], sg.b[1]) - 1.5 >= b[1] + b[3]) return false;
+    return segSamples(sg).some(function (q) { return b[0] < q[0] + q[2] && q[0] < b[0] + b[2] && b[1] < q[1] + q[3] && q[1] < b[1] + b[3]; });
+  }
   function boxHit(cv, pts) {
-    return pts.some(function (q) { return cv.boxes.some(function (b) { return q[0] > b[0] - 1 && q[0] < b[0] + b[2] + 1 && q[1] > b[1] - 1 && q[1] < b[1] + b[3] + 1; }); });
+    /* bounding box of the arc first, then only the boxes near it, point by point */
+    var x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
+    pts.forEach(function (q) { if (q[0] < x0) x0 = q[0]; if (q[0] > x1) x1 = q[0]; if (q[1] < y0) y0 = q[1]; if (q[1] > y1) y1 = q[1]; });
+    var near = boxesIn(cv, x0 - 1, y0 - 1, x1 + 1, y1 + 1).filter(function (b) { return b[0] - 1 < x1 && b[0] + b[2] + 1 > x0 && b[1] - 1 < y1 && b[1] + b[3] + 1 > y0; });
+    (cv.segs || []).forEach(function (sg) { near = near.concat(segSamples(sg)); });
+    if (!near.length) return false;
+    return pts.some(function (q) { return near.some(function (b) { return q[0] > b[0] - 1 && q[0] < b[0] + b[2] + 1 && q[1] > b[1] - 1 && q[1] < b[1] + b[3] + 1; }); });
   }
   function ang3(an, K, o) {
-    var cv = K.cv, S = K.S, tv = K.toView, sc = K.sc, hp = K.H ? hlDim(o, an.lab && an.lab.letter, 'ang') : null, txt = labelText(an.lab, o);
+    /* an angle with no label (a plain square-corner box) is drawn whenever angles are */
+    var cv = K.cv, S = K.S, tv = K.toView, sc = K.sc, hp = K.H && an.lab ? hlDim(o, an.lab.letter, 'ang') : null, txt = an.lab ? labelText(an.lab, o) : '';
     if (txt === null && !hp) return;
     var V = an.v, u1 = nrm(sub(an.a, V)), u2 = nrm(sub(an.b, V)), c = Math.max(-1, Math.min(1, dot(u1, u2))), psi = Math.acos(c);
     var w = sub(u2, mul(u1, c));
@@ -3478,7 +3545,8 @@
     var boxAt = function (c) { return [c[0] - w / 2, c[1] - h / 2, w, h]; };
     var free = function (b) {
       if (fr && (b[0] < fr[0] || b[1] < fr[1] || b[0] + w > fr[0] + fr[2] || b[1] + h > fr[1] + fr[3])) return false;
-      return !cv.boxes.some(function (q) { return b[0] < q[0] + q[2] && q[0] < b[0] + w && b[1] < q[1] + q[3] && q[1] < b[1] + h; });
+      if (boxesIn(cv, b[0], b[1], b[0] + w, b[1] + h).some(function (q) { return b[0] < q[0] + q[2] && q[0] < b[0] + w && b[1] < q[1] + q[3] && q[1] < b[1] + h; })) return false;
+      return !(cv.segs || []).some(function (sg) { return segBlocksBox(sg, b); });
     };
     var foot = function (b, P) { return [Math.max(b[0], Math.min(P[0], b[0] + b[2])), Math.max(b[1], Math.min(P[1], b[1] + b[3]))]; };
     var gapOf = function (b) { var p = foot(b, Ms), q = foot(b, A); return Math.min(Math.hypot(Ms[0] - p[0], Ms[1] - p[1]), Math.hypot(A[0] - q[0], A[1] - q[1])); };
@@ -3487,7 +3555,11 @@
       /* clearly its own corner: every other corner at least a quarter further away */
       return !corners.some(function (v) { return Math.hypot(v[0] - A[0], v[1] - A[1]) > 2 && Math.hypot(c[0] - v[0], c[1] - v[1]) < 1.25 * dOwn; });
     };
-    var leaderClear = function (b) { var p = foot(b, Ms); return !cv.boxes.some(function (q) { return segHitsBox(p, Ms, q); }); };
+    var leaderClear = function (b) {
+      var p = foot(b, Ms), near = boxesIn(cv, Math.min(p[0], Ms[0]), Math.min(p[1], Ms[1]), Math.max(p[0], Ms[0]), Math.max(p[1], Ms[1]));
+      (cv.segs || []).forEach(function (sg) { near = near.concat(segSamples(sg)); });
+      return !near.some(function (q) { return segHitsBox(p, Ms, q); });
+    };
     var search = function (base, offs, steps, dist0, test) {
       for (var i = 0; i < steps.length; i++) for (var j = 0; j < offs.length; j++) {
         var dd = [Math.cos(base + offs[j]), Math.sin(base + offs[j])], half = Math.abs(dd[0]) * w / 2 + Math.abs(dd[1]) * h / 2;
@@ -3518,8 +3590,7 @@
         for (var k = 0; k < 12; k++) dot.push([Ms[0] + 2 * Math.cos(k * PI / 6), Ms[1] + 2 * Math.sin(k * PI / 6)]);
         cv.path('mark', dot, 'fill="' + COL.dim + '" stroke="none"', true, 'leader');
         /* keep later labels off the leader */
-        var nS = Math.max(1, Math.ceil(L / 6));
-        for (var s2 = 1; s2 < nS; s2++) { var q2 = lerp(p, Ms, s2 / nS); cv.boxes.push([q2[0] - 1.5, q2[1] - 1.5, 3, 3]); }
+        (cv.segs || (cv.segs = [])).push({ a: p, b: Ms, n: Math.max(1, Math.ceil(L / 6)) });
       }
     }
     return bx;
@@ -3557,7 +3628,6 @@
   }
 
   /* ---------- solving a shape from other known sizes ---------- */
-  function st(name, sym, formula, subs, val, u, pow, key) { return item(name, sym, formula, subs, val, u, pow, key); }
   var SOLVE = {};
   function sp(need, f) { return { need: need, f: f }; }
   function triSolve(K, u) {
@@ -3575,7 +3645,7 @@
       L.forEach(function (x) {
         if (s[x] != null) return;
         s[x] = s[known] * Math.sin(g[x] * D2R) / Math.sin(g[known] * D2R);
-        steps.push(st('Side ' + lo(x) + ' (law of sines)', lo(x), lo(known) + ' × sin ' + x + ' ÷ sin ' + known, [v(s[known]) + ' × sin ' + v(g[x]) + '° ÷ sin ' + v(g[known]) + '°'], s[x], u, 1, lo(x)));
+        steps.push(item('Side ' + lo(x) + ' (law of sines)', lo(x), lo(known) + ' × sin ' + x + ' ÷ sin ' + known, [v(s[known]) + ' × sin ' + v(g[x]) + '° ÷ sin ' + v(g[known]) + '°'], s[x], u, 1, lo(x)));
       });
     } else if (ns === 3) {
       /* SSS: nothing to work out */
@@ -3584,7 +3654,7 @@
       if (ga === ms) {
         var o3 = L.filter(function (x) { return x !== ga; });
         s[ga] = Math.sqrt(Math.max(0, s[o3[0]] * s[o3[0]] + s[o3[1]] * s[o3[1]] - 2 * s[o3[0]] * s[o3[1]] * Math.cos(g[ga] * D2R)));
-        steps.push(st('Side ' + lo(ga) + ' (law of cosines, two sides and the angle between them)', lo(ga), '√(' + lo(o3[0]) + '² + ' + lo(o3[1]) + '² − 2 × ' + lo(o3[0]) + ' × ' + lo(o3[1]) + ' × cos ' + ga + ')',
+        steps.push(item('Side ' + lo(ga) + ' (law of cosines, two sides and the angle between them)', lo(ga), '√(' + lo(o3[0]) + '² + ' + lo(o3[1]) + '² − 2 × ' + lo(o3[0]) + ' × ' + lo(o3[1]) + ' × cos ' + ga + ')',
           ['√(' + v(s[o3[0]]) + '² + ' + v(s[o3[1]]) + '² − 2 × ' + v(s[o3[0]]) + ' × ' + v(s[o3[1]]) + ' × cos ' + v(g[ga]) + '°)'], s[ga], u, 1, lo(ga)));
       } else {
         /* SSA: angle ga with its opposite side known, and one more side */
@@ -3602,105 +3672,118 @@
         g[other] = g1; g[third] = 180 - g[ga] - g1;
         steps.push(angItem('Angle ' + third + ' (the angles add to 180°)', '∠' + third, '180 − ∠' + ga + ' − ∠' + other, ['180 − ' + v(g[ga]) + ' − ' + v(g1)], g[third], 'ang' + third));
         s[third] = s[ga] * Math.sin(g[third] * D2R) / Math.sin(g[ga] * D2R);
-        steps.push(st('Side ' + lo(third) + ' (law of sines)', lo(third), lo(ga) + ' × sin ' + third + ' ÷ sin ' + ga, [v(s[ga]) + ' × sin ' + v(g[third]) + '° ÷ sin ' + v(g[ga]) + '°'], s[third], u, 1, lo(third)));
+        steps.push(item('Side ' + lo(third) + ' (law of sines)', lo(third), lo(ga) + ' × sin ' + third + ' ÷ sin ' + ga, [v(s[ga]) + ' × sin ' + v(g[third]) + '° ÷ sin ' + v(g[ga]) + '°'], s[third], u, 1, lo(third)));
       }
     } else return null; /* not a triangle-rule set of facts (for example two sides and the area): leave it to the trial method */
     return { p: { a: s.A, b: s.B, c: s.C }, steps: steps, alt: alt, note: alt ? 'Two different triangles fit these sizes (the ambiguous case). The other one has c = ' + fmt(alt.c) + '.' : null };
   }
-  SOLVE['scalene-triangle'] = [{ need: [], f: function (K, u) { return triSolve(K, u); } }];
+  SOLVE['scalene-triangle'] = [sp([], triSolve)];
   SOLVE['right-triangle'] = [
     sp(['b', 'h'], function (K) { return { p: { b: K.b, h: K.h }, steps: [] }; }),
-    sp(['b', 'c'], function (K, u) { var h = Math.sqrt(K.c * K.c - K.b * K.b); return { p: { b: K.b, h: h }, steps: [st('Height (Pythagoras)', 'h', '√(c² − b²)', ['√(' + v(K.c) + '² − ' + v(K.b) + '²)'], h, u, 1)] }; }),
-    sp(['h', 'c'], function (K, u) { var b = Math.sqrt(K.c * K.c - K.h * K.h); return { p: { b: b, h: K.h }, steps: [st('Base (Pythagoras)', 'b', '√(c² − h²)', ['√(' + v(K.c) + '² − ' + v(K.h) + '²)'], b, u, 1)] }; }),
-    sp(['b', 'angA'], function (K, u) { var h = K.b * Math.tan(K.angA * D2R); return { p: { b: K.b, h: h }, steps: [st('Height (TOA)', 'h', 'b × tan A', [v(K.b) + ' × tan ' + v(K.angA) + '°'], h, u, 1)] }; }),
-    sp(['h', 'angA'], function (K, u) { var b = K.h / Math.tan(K.angA * D2R); return { p: { b: b, h: K.h }, steps: [st('Base (TOA)', 'b', 'h ÷ tan A', [v(K.h) + ' ÷ tan ' + v(K.angA) + '°'], b, u, 1)] }; }),
-    sp(['c', 'angA'], function (K, u) { var b = K.c * Math.cos(K.angA * D2R), h = K.c * Math.sin(K.angA * D2R); return { p: { b: b, h: h }, steps: [st('Base (CAH)', 'b', 'c × cos A', [v(K.c) + ' × cos ' + v(K.angA) + '°'], b, u, 1), st('Height (SOH)', 'h', 'c × sin A', [v(K.c) + ' × sin ' + v(K.angA) + '°'], h, u, 1)] }; }),
-    sp(['A', 'b'], function (K, u) { var h = 2 * K.A / K.b; return { p: { b: K.b, h: h }, steps: [st('Height from the area', 'h', '2 × A ÷ b', ['2 × ' + v(K.A) + ' ÷ ' + v(K.b)], h, u, 1)] }; }),
-    sp(['A', 'h'], function (K, u) { var b = 2 * K.A / K.h; return { p: { b: b, h: K.h }, steps: [st('Base from the area', 'b', '2 × A ÷ h', ['2 × ' + v(K.A) + ' ÷ ' + v(K.h)], b, u, 1)] }; })];
+    sp(['b', 'c'], function (K, u) { var h = Math.sqrt(K.c * K.c - K.b * K.b); return { p: { b: K.b, h: h }, steps: [item('Height (Pythagoras)', 'h', '√(c² − b²)', ['√(' + v(K.c) + '² − ' + v(K.b) + '²)'], h, u, 1)] }; }),
+    sp(['h', 'c'], function (K, u) { var b = Math.sqrt(K.c * K.c - K.h * K.h); return { p: { b: b, h: K.h }, steps: [item('Base (Pythagoras)', 'b', '√(c² − h²)', ['√(' + v(K.c) + '² − ' + v(K.h) + '²)'], b, u, 1)] }; }),
+    sp(['b', 'angA'], function (K, u) { var h = K.b * Math.tan(K.angA * D2R); return { p: { b: K.b, h: h }, steps: [item('Height (TOA)', 'h', 'b × tan A', [v(K.b) + ' × tan ' + v(K.angA) + '°'], h, u, 1)] }; }),
+    sp(['h', 'angA'], function (K, u) { var b = K.h / Math.tan(K.angA * D2R); return { p: { b: b, h: K.h }, steps: [item('Base (TOA)', 'b', 'h ÷ tan A', [v(K.h) + ' ÷ tan ' + v(K.angA) + '°'], b, u, 1)] }; }),
+    sp(['c', 'angA'], function (K, u) { var b = K.c * Math.cos(K.angA * D2R), h = K.c * Math.sin(K.angA * D2R); return { p: { b: b, h: h }, steps: [item('Base (CAH)', 'b', 'c × cos A', [v(K.c) + ' × cos ' + v(K.angA) + '°'], b, u, 1), item('Height (SOH)', 'h', 'c × sin A', [v(K.c) + ' × sin ' + v(K.angA) + '°'], h, u, 1)] }; }),
+    sp(['A', 'b'], function (K, u) { var h = 2 * K.A / K.b; return { p: { b: K.b, h: h }, steps: [item('Height from the area', 'h', '2 × A ÷ b', ['2 × ' + v(K.A) + ' ÷ ' + v(K.b)], h, u, 1)] }; }),
+    sp(['A', 'h'], function (K, u) { var b = 2 * K.A / K.h; return { p: { b: b, h: K.h }, steps: [item('Base from the area', 'b', '2 × A ÷ h', ['2 × ' + v(K.A) + ' ÷ ' + v(K.h)], b, u, 1)] }; })];
   SOLVE['isosceles-triangle'] = [
     sp(['b', 'h'], function (K) { return { p: { b: K.b, h: K.h }, steps: [] }; }),
-    sp(['b', 'a'], function (K, u) { var h = Math.sqrt(K.a * K.a - K.b * K.b / 4); return { p: { b: K.b, h: h }, steps: [st('Height (Pythagoras on half the triangle)', 'h', '√(a² − (b ÷ 2)²)', ['√(' + v(K.a) + '² − ' + v(K.b / 2) + '²)'], h, u, 1)] }; }),
-    sp(['a', 'h'], function (K, u) { var b = 2 * Math.sqrt(K.a * K.a - K.h * K.h); return { p: { b: b, h: K.h }, steps: [st('Base (Pythagoras on half the triangle)', 'b', '2 × √(a² − h²)', ['2 × √(' + v(K.a) + '² − ' + v(K.h) + '²)'], b, u, 1)] }; }),
-    sp(['b', 'angA'], function (K, u) { var h = K.b / 2 * Math.tan(K.angA * D2R); return { p: { b: K.b, h: h }, steps: [st('Height (TOA)', 'h', '(b ÷ 2) × tan A', ['(' + v(K.b) + ' ÷ 2) × tan ' + v(K.angA) + '°'], h, u, 1)] }; }),
-    sp(['h', 'angA'], function (K, u) { var b = 2 * K.h / Math.tan(K.angA * D2R); return { p: { b: b, h: K.h }, steps: [st('Base (TOA)', 'b', '2 × h ÷ tan A', ['2 × ' + v(K.h) + ' ÷ tan ' + v(K.angA) + '°'], b, u, 1)] }; }),
-    sp(['a', 'angA'], function (K, u) { var b = 2 * K.a * Math.cos(K.angA * D2R), h = K.a * Math.sin(K.angA * D2R); return { p: { b: b, h: h }, steps: [st('Base (CAH)', 'b', '2 × a × cos A', ['2 × ' + v(K.a) + ' × cos ' + v(K.angA) + '°'], b, u, 1), st('Height (SOH)', 'h', 'a × sin A', [v(K.a) + ' × sin ' + v(K.angA) + '°'], h, u, 1)] }; }),
-    sp(['a', 'angC'], function (K, u) { var b = 2 * K.a * Math.sin(K.angC / 2 * D2R), h = K.a * Math.cos(K.angC / 2 * D2R); return { p: { b: b, h: h }, steps: [st('Base', 'b', '2 × a × sin(C ÷ 2)', ['2 × ' + v(K.a) + ' × sin ' + v(K.angC / 2) + '°'], b, u, 1), st('Height', 'h', 'a × cos(C ÷ 2)', [v(K.a) + ' × cos ' + v(K.angC / 2) + '°'], h, u, 1)] }; }),
-    sp(['b', 'angC'], function (K, u) { var h = K.b / 2 / Math.tan(K.angC / 2 * D2R); return { p: { b: K.b, h: h }, steps: [st('Height', 'h', '(b ÷ 2) ÷ tan(C ÷ 2)', ['(' + v(K.b) + ' ÷ 2) ÷ tan ' + v(K.angC / 2) + '°'], h, u, 1)] }; }),
-    sp(['h', 'angC'], function (K, u) { var b = 2 * K.h * Math.tan(K.angC / 2 * D2R); return { p: { b: b, h: K.h }, steps: [st('Base', 'b', '2 × h × tan(C ÷ 2)', ['2 × ' + v(K.h) + ' × tan ' + v(K.angC / 2) + '°'], b, u, 1)] }; })];
+    sp(['b', 'a'], function (K, u) { var h = Math.sqrt(K.a * K.a - K.b * K.b / 4); return { p: { b: K.b, h: h }, steps: [item('Height (Pythagoras on half the triangle)', 'h', '√(a² − (b ÷ 2)²)', ['√(' + v(K.a) + '² − ' + v(K.b / 2) + '²)'], h, u, 1)] }; }),
+    sp(['a', 'h'], function (K, u) { var b = 2 * Math.sqrt(K.a * K.a - K.h * K.h); return { p: { b: b, h: K.h }, steps: [item('Base (Pythagoras on half the triangle)', 'b', '2 × √(a² − h²)', ['2 × √(' + v(K.a) + '² − ' + v(K.h) + '²)'], b, u, 1)] }; }),
+    sp(['b', 'angA'], function (K, u) { var h = K.b / 2 * Math.tan(K.angA * D2R); return { p: { b: K.b, h: h }, steps: [item('Height (TOA)', 'h', '(b ÷ 2) × tan A', ['(' + v(K.b) + ' ÷ 2) × tan ' + v(K.angA) + '°'], h, u, 1)] }; }),
+    sp(['h', 'angA'], function (K, u) { var b = 2 * K.h / Math.tan(K.angA * D2R); return { p: { b: b, h: K.h }, steps: [item('Base (TOA)', 'b', '2 × h ÷ tan A', ['2 × ' + v(K.h) + ' ÷ tan ' + v(K.angA) + '°'], b, u, 1)] }; }),
+    sp(['a', 'angA'], function (K, u) { var b = 2 * K.a * Math.cos(K.angA * D2R), h = K.a * Math.sin(K.angA * D2R); return { p: { b: b, h: h }, steps: [item('Base (CAH)', 'b', '2 × a × cos A', ['2 × ' + v(K.a) + ' × cos ' + v(K.angA) + '°'], b, u, 1), item('Height (SOH)', 'h', 'a × sin A', [v(K.a) + ' × sin ' + v(K.angA) + '°'], h, u, 1)] }; }),
+    sp(['a', 'angC'], function (K, u) { var b = 2 * K.a * Math.sin(K.angC / 2 * D2R), h = K.a * Math.cos(K.angC / 2 * D2R); return { p: { b: b, h: h }, steps: [item('Base', 'b', '2 × a × sin(C ÷ 2)', ['2 × ' + v(K.a) + ' × sin ' + v(K.angC / 2) + '°'], b, u, 1), item('Height', 'h', 'a × cos(C ÷ 2)', [v(K.a) + ' × cos ' + v(K.angC / 2) + '°'], h, u, 1)] }; }),
+    sp(['b', 'angC'], function (K, u) { var h = K.b / 2 / Math.tan(K.angC / 2 * D2R); return { p: { b: K.b, h: h }, steps: [item('Height', 'h', '(b ÷ 2) ÷ tan(C ÷ 2)', ['(' + v(K.b) + ' ÷ 2) ÷ tan ' + v(K.angC / 2) + '°'], h, u, 1)] }; }),
+    sp(['h', 'angC'], function (K, u) { var b = 2 * K.h * Math.tan(K.angC / 2 * D2R); return { p: { b: b, h: K.h }, steps: [item('Base', 'b', '2 × h × tan(C ÷ 2)', ['2 × ' + v(K.h) + ' × tan ' + v(K.angC / 2) + '°'], b, u, 1)] }; })];
   SOLVE['equilateral-triangle'] = [
-    sp(['h'], function (K, u) { var s = 2 * K.h / SQ3; return { p: { s: s }, steps: [st('Side from the height', 's', '2 × h ÷ √3', ['2 × ' + v(K.h) + ' ÷ √3'], s, u, 1)] }; }),
-    sp(['P'], function (K, u) { var s = K.P / 3; return { p: { s: s }, steps: [st('Side from the perimeter', 's', 'P ÷ 3', [v(K.P) + ' ÷ 3'], s, u, 1)] }; }),
-    sp(['A'], function (K, u) { var s = Math.sqrt(4 * K.A / SQ3); return { p: { s: s }, steps: [st('Side from the area', 's', '√(4 × A ÷ √3)', ['√(4 × ' + v(K.A) + ' ÷ √3)'], s, u, 1)] }; })];
+    sp(['h'], function (K, u) { var s = 2 * K.h / SQ3; return { p: { s: s }, steps: [item('Side from the height', 's', '2 × h ÷ √3', ['2 × ' + v(K.h) + ' ÷ √3'], s, u, 1)] }; }),
+    sp(['P'], function (K, u) { var s = K.P / 3; return { p: { s: s }, steps: [item('Side from the perimeter', 's', 'P ÷ 3', [v(K.P) + ' ÷ 3'], s, u, 1)] }; }),
+    sp(['A'], function (K, u) { var s = Math.sqrt(4 * K.A / SQ3); return { p: { s: s }, steps: [item('Side from the area', 's', '√(4 × A ÷ √3)', ['√(4 × ' + v(K.A) + ' ÷ √3)'], s, u, 1)] }; })];
   SOLVE.square = [
-    sp(['A'], function (K, u) { var s = Math.sqrt(K.A); return { p: { s: s }, steps: [st('Side from the area', 's', '√A', ['√' + v(K.A)], s, u, 1)] }; }),
-    sp(['P'], function (K, u) { var s = K.P / 4; return { p: { s: s }, steps: [st('Side from the perimeter', 's', 'P ÷ 4', [v(K.P) + ' ÷ 4'], s, u, 1)] }; }),
-    sp(['d'], function (K, u) { var s = K.d / SQ2; return { p: { s: s }, steps: [st('Side from the diagonal', 's', 'd ÷ √2', [v(K.d) + ' ÷ √2'], s, u, 1)] }; })];
+    sp(['A'], function (K, u) { var s = Math.sqrt(K.A); return { p: { s: s }, steps: [item('Side from the area', 's', '√A', ['√' + v(K.A)], s, u, 1)] }; }),
+    sp(['P'], function (K, u) { var s = K.P / 4; return { p: { s: s }, steps: [item('Side from the perimeter', 's', 'P ÷ 4', [v(K.P) + ' ÷ 4'], s, u, 1)] }; }),
+    sp(['d'], function (K, u) { var s = K.d / SQ2; return { p: { s: s }, steps: [item('Side from the diagonal', 's', 'd ÷ √2', [v(K.d) + ' ÷ √2'], s, u, 1)] }; })];
   SOLVE.rectangle = [
-    sp(['A', 'l'], function (K, u) { var w = K.A / K.l; return { p: { l: K.l, w: w }, steps: [st('Width from the area', 'w', 'A ÷ l', [v(K.A) + ' ÷ ' + v(K.l)], w, u, 1)] }; }),
-    sp(['A', 'w'], function (K, u) { var l = K.A / K.w; return { p: { l: l, w: K.w }, steps: [st('Length from the area', 'l', 'A ÷ w', [v(K.A) + ' ÷ ' + v(K.w)], l, u, 1)] }; }),
-    sp(['P', 'l'], function (K, u) { var w = K.P / 2 - K.l; return { p: { l: K.l, w: w }, steps: [st('Width from the perimeter', 'w', 'P ÷ 2 − l', [v(K.P) + ' ÷ 2 − ' + v(K.l)], w, u, 1)] }; }),
-    sp(['P', 'w'], function (K, u) { var l = K.P / 2 - K.w; return { p: { l: l, w: K.w }, steps: [st('Length from the perimeter', 'l', 'P ÷ 2 − w', [v(K.P) + ' ÷ 2 − ' + v(K.w)], l, u, 1)] }; }),
-    sp(['d', 'l'], function (K, u) { var w = Math.sqrt(K.d * K.d - K.l * K.l); return { p: { l: K.l, w: w }, steps: [st('Width (Pythagoras)', 'w', '√(d² − l²)', ['√(' + v(K.d) + '² − ' + v(K.l) + '²)'], w, u, 1)] }; }),
-    sp(['d', 'w'], function (K, u) { var l = Math.sqrt(K.d * K.d - K.w * K.w); return { p: { l: l, w: K.w }, steps: [st('Length (Pythagoras)', 'l', '√(d² − w²)', ['√(' + v(K.d) + '² − ' + v(K.w) + '²)'], l, u, 1)] }; })];
+    sp(['A', 'l'], function (K, u) { var w = K.A / K.l; return { p: { l: K.l, w: w }, steps: [item('Width from the area', 'w', 'A ÷ l', [v(K.A) + ' ÷ ' + v(K.l)], w, u, 1)] }; }),
+    sp(['A', 'w'], function (K, u) { var l = K.A / K.w; return { p: { l: l, w: K.w }, steps: [item('Length from the area', 'l', 'A ÷ w', [v(K.A) + ' ÷ ' + v(K.w)], l, u, 1)] }; }),
+    sp(['P', 'l'], function (K, u) { var w = K.P / 2 - K.l; return { p: { l: K.l, w: w }, steps: [item('Width from the perimeter', 'w', 'P ÷ 2 − l', [v(K.P) + ' ÷ 2 − ' + v(K.l)], w, u, 1)] }; }),
+    sp(['P', 'w'], function (K, u) { var l = K.P / 2 - K.w; return { p: { l: l, w: K.w }, steps: [item('Length from the perimeter', 'l', 'P ÷ 2 − w', [v(K.P) + ' ÷ 2 − ' + v(K.w)], l, u, 1)] }; }),
+    sp(['d', 'l'], function (K, u) { var w = Math.sqrt(K.d * K.d - K.l * K.l); return { p: { l: K.l, w: w }, steps: [item('Width (Pythagoras)', 'w', '√(d² − l²)', ['√(' + v(K.d) + '² − ' + v(K.l) + '²)'], w, u, 1)] }; }),
+    sp(['d', 'w'], function (K, u) { var l = Math.sqrt(K.d * K.d - K.w * K.w); return { p: { l: l, w: K.w }, steps: [item('Length (Pythagoras)', 'l', '√(d² − w²)', ['√(' + v(K.d) + '² − ' + v(K.w) + '²)'], l, u, 1)] }; })];
   SOLVE.circle = [
-    sp(['D'], function (K, u) { var r = K.D / 2; return { p: { r: r }, steps: [st('Radius from the diameter', 'r', 'D ÷ 2', [v(K.D) + ' ÷ 2'], r, u, 1)] }; }),
-    sp(['C'], function (K, u) { var r = K.C / (2 * PI); return { p: { r: r }, steps: [st('Radius from the circumference', 'r', 'C ÷ (2 × π)', [v(K.C) + ' ÷ (2 × π)'], r, u, 1)] }; }),
-    sp(['A'], function (K, u) { var r = Math.sqrt(K.A / PI); return { p: { r: r }, steps: [st('Radius from the area', 'r', '√(A ÷ π)', ['√(' + v(K.A) + ' ÷ π)'], r, u, 1)] }; })];
+    sp(['D'], function (K, u) { var r = K.D / 2; return { p: { r: r }, steps: [item('Radius from the diameter', 'r', 'D ÷ 2', [v(K.D) + ' ÷ 2'], r, u, 1)] }; }),
+    sp(['C'], function (K, u) { var r = K.C / (2 * PI); return { p: { r: r }, steps: [item('Radius from the circumference', 'r', 'C ÷ (2 × π)', [v(K.C) + ' ÷ (2 × π)'], r, u, 1)] }; }),
+    sp(['A'], function (K, u) { var r = Math.sqrt(K.A / PI); return { p: { r: r }, steps: [item('Radius from the area', 'r', '√(A ÷ π)', ['√(' + v(K.A) + ' ÷ π)'], r, u, 1)] }; })];
   function regSolve(n) {
     var tf = Math.tan(PI / n), sf = Math.sin(PI / n), f = v(180 / n);
     var odd = n % 2 ? [
-      sp(['d'], function (K, u) { var s = 2 * K.d / (1 + Math.sqrt(5)); return { p: { s: s }, steps: [st('Side from the diagonal (the diagonal is the golden ratio φ times the side)', 's', 'd ÷ φ = 2 × d ÷ (1 + √5)', ['2 × ' + v(K.d) + ' ÷ (1 + √5)'], s, u, 1)] }; }),
-      sp(['Ht'], function (K, u) { var k = 1 / (2 * sf) + 1 / (2 * tf), s = K.Ht / k; return { p: { s: s }, steps: [st('Side from the height (height = R + a)', 's', 'Ht ÷ (1 ÷ (2 × sin ' + f + '°) + 1 ÷ (2 × tan ' + f + '°))', [v(K.Ht) + ' ÷ (1 ÷ (2 × sin ' + f + '°) + 1 ÷ (2 × tan ' + f + '°))'], s, u, 1)] }; })] : [
-      sp(['AF'], function (K, u) { var s = K.AF * tf; return { p: { s: s }, steps: [st('Side from across flats', 's', 'AF × tan(180° ÷ ' + n + ')', [v(K.AF) + ' × tan ' + f + '°'], s, u, 1)] }; }),
-      sp(['AC'], function (K, u) { var s = K.AC * sf; return { p: { s: s }, steps: [st('Side from across corners', 's', 'AC × sin(180° ÷ ' + n + ')', [v(K.AC) + ' × sin ' + f + '°'], s, u, 1)] }; })];
-    return [sp(['P'], function (K, u) { var s = K.P / n; return { p: { s: s }, steps: [st('Side from the perimeter', 's', 'P ÷ ' + n, [v(K.P) + ' ÷ ' + n], s, u, 1)] }; }),
-      sp(['a'], function (K, u) { var s = 2 * K.a * tf; return { p: { s: s }, steps: [st('Side from the apothem', 's', '2 × a × tan(180° ÷ ' + n + ')', ['2 × ' + v(K.a) + ' × tan ' + f + '°'], s, u, 1)] }; }),
-      sp(['R'], function (K, u) { var s = 2 * K.R * sf; return { p: { s: s }, steps: [st('Side from the radius to a corner', 's', '2 × R × sin(180° ÷ ' + n + ')', ['2 × ' + v(K.R) + ' × sin ' + f + '°'], s, u, 1)] }; }),
-      sp(['A'], function (K, u) { var s = Math.sqrt(4 * K.A * tf / n); return { p: { s: s }, steps: [st('Side from the area', 's', '√(4 × A × tan(180° ÷ ' + n + ') ÷ ' + n + ')', ['√(4 × ' + v(K.A) + ' × tan ' + f + '° ÷ ' + n + ')'], s, u, 1)] }; })].concat(odd);
+      sp(['d'], function (K, u) { var s = 2 * K.d / (1 + Math.sqrt(5)); return { p: { s: s }, steps: [item('Side from the diagonal (the diagonal is the golden ratio φ times the side)', 's', 'd ÷ φ = 2 × d ÷ (1 + √5)', ['2 × ' + v(K.d) + ' ÷ (1 + √5)'], s, u, 1)] }; }),
+      sp(['Ht'], function (K, u) { var k = 1 / (2 * sf) + 1 / (2 * tf), s = K.Ht / k; return { p: { s: s }, steps: [item('Side from the height (height = R + a)', 's', 'Ht ÷ (1 ÷ (2 × sin ' + f + '°) + 1 ÷ (2 × tan ' + f + '°))', [v(K.Ht) + ' ÷ (1 ÷ (2 × sin ' + f + '°) + 1 ÷ (2 × tan ' + f + '°))'], s, u, 1)] }; })] : [
+      sp(['AF'], function (K, u) { var s = K.AF * tf; return { p: { s: s }, steps: [item('Side from across flats', 's', 'AF × tan(180° ÷ ' + n + ')', [v(K.AF) + ' × tan ' + f + '°'], s, u, 1)] }; }),
+      sp(['AC'], function (K, u) { var s = K.AC * sf; return { p: { s: s }, steps: [item('Side from across corners', 's', 'AC × sin(180° ÷ ' + n + ')', [v(K.AC) + ' × sin ' + f + '°'], s, u, 1)] }; })];
+    return [sp(['P'], function (K, u) { var s = K.P / n; return { p: { s: s }, steps: [item('Side from the perimeter', 's', 'P ÷ ' + n, [v(K.P) + ' ÷ ' + n], s, u, 1)] }; }),
+      sp(['a'], function (K, u) { var s = 2 * K.a * tf; return { p: { s: s }, steps: [item('Side from the apothem', 's', '2 × a × tan(180° ÷ ' + n + ')', ['2 × ' + v(K.a) + ' × tan ' + f + '°'], s, u, 1)] }; }),
+      sp(['R'], function (K, u) { var s = 2 * K.R * sf; return { p: { s: s }, steps: [item('Side from the radius to a corner', 's', '2 × R × sin(180° ÷ ' + n + ')', ['2 × ' + v(K.R) + ' × sin ' + f + '°'], s, u, 1)] }; }),
+      sp(['A'], function (K, u) { var s = Math.sqrt(4 * K.A * tf / n); return { p: { s: s }, steps: [item('Side from the area', 's', '√(4 × A × tan(180° ÷ ' + n + ') ÷ ' + n + ')', ['√(4 × ' + v(K.A) + ' × tan ' + f + '° ÷ ' + n + ')'], s, u, 1)] }; })].concat(odd);
   }
   SOLVE.pentagon = regSolve(5); SOLVE.hexagon = regSolve(6); SOLVE.octagon = regSolve(8);
   SOLVE.cube = [
-    sp(['V'], function (K, u) { var s = Math.cbrt(K.V); return { p: { s: s }, steps: [st('Side from the volume', 's', '∛V', ['∛' + v(K.V)], s, u, 1)] }; }),
-    sp(['SA'], function (K, u) { var s = Math.sqrt(K.SA / 6); return { p: { s: s }, steps: [st('Side from the surface area', 's', '√(SA ÷ 6)', ['√(' + v(K.SA) + ' ÷ 6)'], s, u, 1)] }; }),
-    sp(['d'], function (K, u) { var s = K.d / SQ3; return { p: { s: s }, steps: [st('Side from the space diagonal', 's', 'd ÷ √3', [v(K.d) + ' ÷ √3'], s, u, 1)] }; })];
+    sp(['V'], function (K, u) { var s = Math.cbrt(K.V); return { p: { s: s }, steps: [item('Side from the volume', 's', '∛V', ['∛' + v(K.V)], s, u, 1)] }; }),
+    sp(['SA'], function (K, u) { var s = Math.sqrt(K.SA / 6); return { p: { s: s }, steps: [item('Side from the surface area', 's', '√(SA ÷ 6)', ['√(' + v(K.SA) + ' ÷ 6)'], s, u, 1)] }; }),
+    sp(['d'], function (K, u) { var s = K.d / SQ3; return { p: { s: s }, steps: [item('Side from the space diagonal', 's', 'd ÷ √3', [v(K.d) + ' ÷ √3'], s, u, 1)] }; })];
   function boxSolve(a, b, c) {
-    return sp(['V', a, b], function (K, u) { var x = K.V / (K[a] * K[b]), p = {}; p[a] = K[a]; p[b] = K[b]; p[c] = x; return { p: p, steps: [st('Third side from the volume', c, 'V ÷ (' + a + ' × ' + b + ')', [v(K.V) + ' ÷ (' + v(K[a]) + ' × ' + v(K[b]) + ')'], x, u, 1)] }; });
+    return sp(['V', a, b], function (K, u) { var x = K.V / (K[a] * K[b]), p = {}; p[a] = K[a]; p[b] = K[b]; p[c] = x; return { p: p, steps: [item('Third side from the volume', c, 'V ÷ (' + a + ' × ' + b + ')', [v(K.V) + ' ÷ (' + v(K[a]) + ' × ' + v(K[b]) + ')'], x, u, 1)] }; });
   }
   SOLVE['rectangular-prism'] = [boxSolve('l', 'w', 'h'), boxSolve('l', 'h', 'w'), boxSolve('w', 'h', 'l'),
-    sp(['d', 'l', 'w'], function (K, u) { var h = Math.sqrt(K.d * K.d - K.l * K.l - K.w * K.w); return { p: { l: K.l, w: K.w, h: h }, steps: [st('Height from the space diagonal', 'h', '√(d² − l² − w²)', ['√(' + v(K.d) + '² − ' + v(K.l) + '² − ' + v(K.w) + '²)'], h, u, 1)] }; })];
+    sp(['d', 'l', 'w'], function (K, u) { var h = Math.sqrt(K.d * K.d - K.l * K.l - K.w * K.w); return { p: { l: K.l, w: K.w, h: h }, steps: [item('Height from the space diagonal', 'h', '√(d² − l² − w²)', ['√(' + v(K.d) + '² − ' + v(K.l) + '² − ' + v(K.w) + '²)'], h, u, 1)] }; })];
   SOLVE.cylinder = [
-    sp(['V', 'r'], function (K, u) { var h = K.V / (PI * K.r * K.r); return { p: { r: K.r, h: h }, steps: [st('Height from the volume', 'h', 'V ÷ (π × r²)', [v(K.V) + ' ÷ (π × ' + v(K.r) + '²)'], h, u, 1)] }; }),
-    sp(['V', 'h'], function (K, u) { var r = Math.sqrt(K.V / (PI * K.h)); return { p: { r: r, h: K.h }, steps: [st('Radius from the volume', 'r', '√(V ÷ (π × h))', ['√(' + v(K.V) + ' ÷ (π × ' + v(K.h) + '))'], r, u, 1)] }; }),
-    sp(['V', 'D'], function (K, u) { var r = K.D / 2, h = K.V / (PI * r * r); return { p: { r: r, h: h }, steps: [st('Height from the volume', 'h', 'V ÷ (π × (D ÷ 2)²)', [v(K.V) + ' ÷ (π × ' + v(r) + '²)'], h, u, 1)] }; }),
-    sp(['LA', 'r'], function (K, u) { var h = K.LA / (2 * PI * K.r); return { p: { r: K.r, h: h }, steps: [st('Height from the lateral area', 'h', 'LA ÷ (2 × π × r)', [v(K.LA) + ' ÷ (2 × π × ' + v(K.r) + ')'], h, u, 1)] }; })];
+    sp(['V', 'r'], function (K, u) { var h = K.V / (PI * K.r * K.r); return { p: { r: K.r, h: h }, steps: [item('Height from the volume', 'h', 'V ÷ (π × r²)', [v(K.V) + ' ÷ (π × ' + v(K.r) + '²)'], h, u, 1)] }; }),
+    sp(['V', 'h'], function (K, u) { var r = Math.sqrt(K.V / (PI * K.h)); return { p: { r: r, h: K.h }, steps: [item('Radius from the volume', 'r', '√(V ÷ (π × h))', ['√(' + v(K.V) + ' ÷ (π × ' + v(K.h) + '))'], r, u, 1)] }; }),
+    sp(['V', 'D'], function (K, u) { var r = K.D / 2, h = K.V / (PI * r * r); return { p: { r: r, h: h }, steps: [item('Height from the volume', 'h', 'V ÷ (π × (D ÷ 2)²)', [v(K.V) + ' ÷ (π × ' + v(r) + '²)'], h, u, 1)] }; }),
+    sp(['LA', 'r'], function (K, u) { var h = K.LA / (2 * PI * K.r); return { p: { r: K.r, h: h }, steps: [item('Height from the lateral area', 'h', 'LA ÷ (2 × π × r)', [v(K.LA) + ' ÷ (2 × π × ' + v(K.r) + ')'], h, u, 1)] }; })];
   SOLVE.cone = [
-    sp(['r', 'l'], function (K, u) { var h = Math.sqrt(K.l * K.l - K.r * K.r); return { p: { r: K.r, h: h }, steps: [st('Height (Pythagoras)', 'h', '√(l² − r²)', ['√(' + v(K.l) + '² − ' + v(K.r) + '²)'], h, u, 1)] }; }),
-    sp(['h', 'l'], function (K, u) { var r = Math.sqrt(K.l * K.l - K.h * K.h); return { p: { r: r, h: K.h }, steps: [st('Radius (Pythagoras)', 'r', '√(l² − h²)', ['√(' + v(K.l) + '² − ' + v(K.h) + '²)'], r, u, 1)] }; }),
-    sp(['V', 'r'], function (K, u) { var h = 3 * K.V / (PI * K.r * K.r); return { p: { r: K.r, h: h }, steps: [st('Height from the volume', 'h', '3 × V ÷ (π × r²)', ['3 × ' + v(K.V) + ' ÷ (π × ' + v(K.r) + '²)'], h, u, 1)] }; }),
-    sp(['V', 'h'], function (K, u) { var r = Math.sqrt(3 * K.V / (PI * K.h)); return { p: { r: r, h: K.h }, steps: [st('Radius from the volume', 'r', '√(3 × V ÷ (π × h))', ['√(3 × ' + v(K.V) + ' ÷ (π × ' + v(K.h) + '))'], r, u, 1)] }; }),
-    sp(['alpha', 'r'], function (K, u) { var h = K.r * Math.tan(K.alpha * D2R); return { p: { r: K.r, h: h }, steps: [st('Height from the slope angle', 'h', 'r × tan α', [v(K.r) + ' × tan ' + v(K.alpha) + '°'], h, u, 1)] }; }),
-    sp(['alpha', 'h'], function (K, u) { var r = K.h / Math.tan(K.alpha * D2R); return { p: { r: r, h: K.h }, steps: [st('Radius from the slope angle', 'r', 'h ÷ tan α', [v(K.h) + ' ÷ tan ' + v(K.alpha) + '°'], r, u, 1)] }; })];
+    sp(['r', 'l'], function (K, u) { var h = Math.sqrt(K.l * K.l - K.r * K.r); return { p: { r: K.r, h: h }, steps: [item('Height (Pythagoras)', 'h', '√(l² − r²)', ['√(' + v(K.l) + '² − ' + v(K.r) + '²)'], h, u, 1)] }; }),
+    sp(['h', 'l'], function (K, u) { var r = Math.sqrt(K.l * K.l - K.h * K.h); return { p: { r: r, h: K.h }, steps: [item('Radius (Pythagoras)', 'r', '√(l² − h²)', ['√(' + v(K.l) + '² − ' + v(K.h) + '²)'], r, u, 1)] }; }),
+    sp(['V', 'r'], function (K, u) { var h = 3 * K.V / (PI * K.r * K.r); return { p: { r: K.r, h: h }, steps: [item('Height from the volume', 'h', '3 × V ÷ (π × r²)', ['3 × ' + v(K.V) + ' ÷ (π × ' + v(K.r) + '²)'], h, u, 1)] }; }),
+    sp(['V', 'h'], function (K, u) { var r = Math.sqrt(3 * K.V / (PI * K.h)); return { p: { r: r, h: K.h }, steps: [item('Radius from the volume', 'r', '√(3 × V ÷ (π × h))', ['√(3 × ' + v(K.V) + ' ÷ (π × ' + v(K.h) + '))'], r, u, 1)] }; }),
+    sp(['alpha', 'r'], function (K, u) { var h = K.r * Math.tan(K.alpha * D2R); return { p: { r: K.r, h: h }, steps: [item('Height from the slope angle', 'h', 'r × tan α', [v(K.r) + ' × tan ' + v(K.alpha) + '°'], h, u, 1)] }; }),
+    sp(['alpha', 'h'], function (K, u) { var r = K.h / Math.tan(K.alpha * D2R); return { p: { r: r, h: K.h }, steps: [item('Radius from the slope angle', 'r', 'h ÷ tan α', [v(K.h) + ' ÷ tan ' + v(K.alpha) + '°'], r, u, 1)] }; })];
   SOLVE.sphere = [
-    sp(['V'], function (K, u) { var r = Math.cbrt(3 * K.V / (4 * PI)); return { p: { r: r }, steps: [st('Radius from the volume', 'r', '∛(3 × V ÷ (4 × π))', ['∛(3 × ' + v(K.V) + ' ÷ (4 × π))'], r, u, 1)] }; }),
-    sp(['SA'], function (K, u) { var r = Math.sqrt(K.SA / (4 * PI)); return { p: { r: r }, steps: [st('Radius from the surface area', 'r', '√(SA ÷ (4 × π))', ['√(' + v(K.SA) + ' ÷ (4 × π))'], r, u, 1)] }; }),
-    sp(['D'], function (K, u) { return { p: { r: K.D / 2 }, steps: [st('Radius from the diameter', 'r', 'D ÷ 2', [v(K.D) + ' ÷ 2'], K.D / 2, u, 1)] }; })];
+    sp(['V'], function (K, u) { var r = Math.cbrt(3 * K.V / (4 * PI)); return { p: { r: r }, steps: [item('Radius from the volume', 'r', '∛(3 × V ÷ (4 × π))', ['∛(3 × ' + v(K.V) + ' ÷ (4 × π))'], r, u, 1)] }; }),
+    sp(['SA'], function (K, u) { var r = Math.sqrt(K.SA / (4 * PI)); return { p: { r: r }, steps: [item('Radius from the surface area', 'r', '√(SA ÷ (4 × π))', ['√(' + v(K.SA) + ' ÷ (4 × π))'], r, u, 1)] }; }),
+    sp(['D'], function (K, u) { return { p: { r: K.D / 2 }, steps: [item('Radius from the diameter', 'r', 'D ÷ 2', [v(K.D) + ' ÷ 2'], K.D / 2, u, 1)] }; })];
   SOLVE['square-pyramid'] = [
-    sp(['b', 'l'], function (K, u) { var h = Math.sqrt(K.l * K.l - K.b * K.b / 4); return { p: { b: K.b, h: h }, steps: [st('Height (Pythagoras)', 'h', '√(l² − (b ÷ 2)²)', ['√(' + v(K.l) + '² − ' + v(K.b / 2) + '²)'], h, u, 1)] }; }),
-    sp(['b', 'e'], function (K, u) { var h = Math.sqrt(K.e * K.e - K.b * K.b / 2); return { p: { b: K.b, h: h }, steps: [st('Height from the sloped edge', 'h', '√(e² − b² ÷ 2)', ['√(' + v(K.e) + '² − ' + v(K.b) + '² ÷ 2)'], h, u, 1)] }; }),
-    sp(['V', 'b'], function (K, u) { var h = 3 * K.V / (K.b * K.b); return { p: { b: K.b, h: h }, steps: [st('Height from the volume', 'h', '3 × V ÷ b²', ['3 × ' + v(K.V) + ' ÷ ' + v(K.b) + '²'], h, u, 1)] }; }),
-    sp(['alpha', 'b'], function (K, u) { var h = K.b / 2 * Math.tan(K.alpha * D2R); return { p: { b: K.b, h: h }, steps: [st('Height from the face slope', 'h', '(b ÷ 2) × tan α', ['(' + v(K.b) + ' ÷ 2) × tan ' + v(K.alpha) + '°'], h, u, 1)] }; })];
+    sp(['b', 'l'], function (K, u) { var h = Math.sqrt(K.l * K.l - K.b * K.b / 4); return { p: { b: K.b, h: h }, steps: [item('Height (Pythagoras)', 'h', '√(l² − (b ÷ 2)²)', ['√(' + v(K.l) + '² − ' + v(K.b / 2) + '²)'], h, u, 1)] }; }),
+    sp(['b', 'e'], function (K, u) { var h = Math.sqrt(K.e * K.e - K.b * K.b / 2); return { p: { b: K.b, h: h }, steps: [item('Height from the sloped edge', 'h', '√(e² − b² ÷ 2)', ['√(' + v(K.e) + '² − ' + v(K.b) + '² ÷ 2)'], h, u, 1)] }; }),
+    sp(['V', 'b'], function (K, u) { var h = 3 * K.V / (K.b * K.b); return { p: { b: K.b, h: h }, steps: [item('Height from the volume', 'h', '3 × V ÷ b²', ['3 × ' + v(K.V) + ' ÷ ' + v(K.b) + '²'], h, u, 1)] }; }),
+    sp(['alpha', 'b'], function (K, u) { var h = K.b / 2 * Math.tan(K.alpha * D2R); return { p: { b: K.b, h: h }, steps: [item('Height from the face slope', 'h', '(b ÷ 2) × tan α', ['(' + v(K.b) + ' ÷ 2) × tan ' + v(K.alpha) + '°'], h, u, 1)] }; })];
   SOLVE['triangular-prism'] = [
-    sp(['V', 'b', 'h'], function (K, u) { var l = K.V / (K.b * K.h / 2); return { p: { b: K.b, h: K.h, l: l }, steps: [st('Length from the volume', 'l', 'V ÷ (½ × b × h)', [v(K.V) + ' ÷ (½ × ' + v(K.b) + ' × ' + v(K.h) + ')'], l, u, 1)] }; }),
-    sp(['b', 's', 'l'], function (K, u) { var h = Math.sqrt(K.s * K.s - K.b * K.b / 4); return { p: { b: K.b, h: h, l: K.l }, steps: [st('Triangle height (Pythagoras)', 'h', '√(s² − (b ÷ 2)²)', ['√(' + v(K.s) + '² − ' + v(K.b / 2) + '²)'], h, u, 1)] }; })];
+    sp(['V', 'b', 'h'], function (K, u) { var l = K.V / (K.b * K.h / 2); return { p: { b: K.b, h: K.h, l: l }, steps: [item('Length from the volume', 'l', 'V ÷ (½ × b × h)', [v(K.V) + ' ÷ (½ × ' + v(K.b) + ' × ' + v(K.h) + ')'], l, u, 1)] }; }),
+    sp(['b', 's', 'l'], function (K, u) { var h = Math.sqrt(K.s * K.s - K.b * K.b / 4); return { p: { b: K.b, h: h, l: K.l }, steps: [item('Triangle height (Pythagoras)', 'h', '√(s² − (b ÷ 2)²)', ['√(' + v(K.s) + '² − ' + v(K.b / 2) + '²)'], h, u, 1)] }; })];
   /* numeric fallback: Newton's method on the full calc values */
   function numSolve(id, K, u, ao) {
     var d = get(id), pl = plist(d, ao), unk = pl.filter(function (q) { return K[q.k] == null; }).map(function (q) { return q.k; });
     var eqs = Object.keys(K).filter(function (k) { return !pl.some(function (q) { return q.k === k; }); });
     if (!unk.length) { var p0 = {}; pl.forEach(function (q) { p0[q.k] = K[q.k]; }); return { p: p0, steps: [] }; }
     if (eqs.length < unk.length) return { err: 'Give ' + unk.length + ' more size' + (unk.length > 1 ? 's' : '') + ' to fix this shape.' };
-    var vals = function (p) { var m = {}; try { calc(id, p, u, { full: true, angles: ao && ao.angles, angleInput: ao && ao.angleInput }).items.forEach(function (it) { m[it.key] = it.value; }); } catch (e) { return null; } return m; };
+    /* values only: the shape's own calc items and the full-calc extras, first of each key, no highlights, groups or notes */
+    var ao2 = { full: true, angles: ao && ao.angles, angleInput: ao && ao.angleInput };
+    if (TRI4[id]) { ao2.angles = true; ao2.angleInput = aoOf(ao2).input; }
+    var vals = function (p) {
+      var m = {};
+      NUMONLY = true;
+      try {
+        var f2 = fill(id, p, ao2);
+        d.calc(f2, u, ao2).forEach(function (it) { if (!(it.key in m)) m[it.key] = it.value; });
+        if (XC[id]) XC[id](f2, u, ao2).forEach(function (it) { if (!(it.key in m)) m[it.key] = it.value; });
+      } catch (e) { return null; } finally { NUMONLY = false; }
+      return m;
+    };
+    var copy = function (p) { var q = {}, k; for (k in p) q[k] = p[k]; return q; };
     var bestP = null, bestE = Infinity, R0 = seeded0(7);
-    for (var start = 0; start < 12 && bestE > 1e-20; start++) {
+    for (var start = 0; start < 6 && bestE > 1e-20; start++) {
       var p = start === 0 ? defaults(id, ao) : random(id, 'tenth', R0, ao);
       pl.forEach(function (q) { if (K[q.k] != null) p[q.k] = K[q.k]; });
       for (var it = 0; it < 80; it++) {
@@ -3708,10 +3791,10 @@
         if (!m) break;
         var r = eqs.map(function (k) { return (m[k] - K[k]) / Math.max(1e-9, Math.abs(K[k])); }), E = r.reduce(function (s, x) { return s + x * x; }, 0);
         if (!isFinite(E)) break;
-        if (E < bestE && !validate(id, p, ao)) { bestE = E; bestP = JSON.parse(JSON.stringify(p)); }
+        if (E < bestE && !validate(id, p, ao)) { bestE = E; bestP = copy(p); }
         if (E < 1e-24) break;
         var J = eqs.map(function () { return []; });
-        unk.forEach(function (k, j) { var q = JSON.parse(JSON.stringify(p)), dl = Math.max(1e-7, Math.abs(p[k]) * 1e-6); q[k] = p[k] + dl; var m2 = vals(q); eqs.forEach(function (e, i) { J[i][j] = m2 ? ((m2[e] - m[e]) / Math.max(1e-9, Math.abs(K[e]))) / dl : 0; }); });
+        unk.forEach(function (k, j) { var q = copy(p), dl = Math.max(1e-7, Math.abs(p[k]) * 1e-6); q[k] = p[k] + dl; var m2 = vals(q); eqs.forEach(function (e, i) { J[i][j] = m2 ? ((m2[e] - m[e]) / Math.max(1e-9, Math.abs(K[e]))) / dl : 0; }); });
         var JT = unk.map(function (k, j) { return eqs.map(function (e, i) { return J[i][j]; }); });
         var M2 = JT.map(function (row) { return unk.map(function (k, j2) { return row.reduce(function (s, x, i) { return s + x * J[i][j2]; }, 0); }); });
         var g = JT.map(function (row) { return row.reduce(function (s, x, i) { return s + x * r[i]; }, 0); });
@@ -3719,7 +3802,7 @@
         if (!dx) break;
         var lam = 1, moved = false;
         for (var ls = 0; ls < 20; ls++) {
-          var q2 = JSON.parse(JSON.stringify(p));
+          var q2 = copy(p);
           unk.forEach(function (k, j) { q2[k] = Math.max(1e-9, p[k] - lam * dx[j]); });
           var m3 = validate(id, q2, ao) ? null : vals(q2);
           if (m3) { var E2 = eqs.reduce(function (s, k) { var x = (m3[k] - K[k]) / Math.max(1e-9, Math.abs(K[k])); return s + x * x; }, 0); if (E2 < E) { p = q2; moved = true; break; } }
@@ -3731,7 +3814,7 @@
     if (!bestP || bestE > 1e-12) return { err: 'No shape of this kind matches those sizes.' };
     /* a size the givens do not depend on cannot be found from them (for example the slant side of a parallelogram from its base, height and area) */
     var m0 = vals(bestP), free = unk.filter(function (k) {
-      var q = JSON.parse(JSON.stringify(bestP)); q[k] = bestP[k] * (1 + 1e-4);
+      var q = copy(bestP); q[k] = bestP[k] * (1 + 1e-4);
       if (validate(id, q, ao)) { q[k] = bestP[k] * (1 - 1e-4); if (validate(id, q, ao)) return false; }
       var m1 = vals(q);
       return m1 && eqs.every(function (e) { return Math.abs(m1[e] - m0[e]) <= 1e-10 * Math.max(1, Math.abs(m0[e])); });
@@ -4053,7 +4136,7 @@
       if (hp) cv.hlLine(hp, [gw.pts ? gw.pts.map(function (q) { return S(toView(q)); }) : [S(toView(gw.a)), S(toView(gw.b))]], !!gw.closed);
     });
     (A.ras || []).forEach(function (r) {
-      if (r.derived && o.derived === 'hide') return;
+      if (r.derived && (o.derivedAngles || o.derived) === 'hide') return;
       var u = r.uFrom ? dirs[r.uFrom] : r.u;
       if (!u) return;
       var k = 11 / sc, Pv = toView(r.p), Uv = sub(toView(add(r.p, mul(u, k))), Pv), Vv = sub(toView(add(r.p, mul(r.v, k))), Pv);
@@ -4062,7 +4145,7 @@
     });
     (A.dots || []).forEach(function (d) {
       var q = S(toView(d));
-      cv.L.mark.push('<circle cx="' + N(q[0]) + '" cy="' + N(q[1]) + '" r="2.75" fill="' + COL.edge + '"/>');
+      cv.L.mark.push('<circle ' + partAttr('mark', 'dot') + 'cx="' + N(q[0]) + '" cy="' + N(q[1]) + '" r="2.75" fill="' + COL.edge + '"/>');
     });
     (A.dims || []).forEach(function (dm) {
       var txt = labelText(dm.lab, o), hp = H ? hlDim(o, dm.lab && dm.lab.letter) : null;
@@ -4075,8 +4158,12 @@
       var X3 = { auxs: (A.auxs || []).slice(), lines: [], texts: (A.texts || []).slice(), angs: (A.angs || []).slice() };
       if (o.allAngles && A3[def.id]) { var a3 = A3[def.id](p, ctx3); X3.auxs = X3.auxs.concat(a3.auxs || []); X3.angs = X3.angs.concat(a3.angs || []); }
       if (o.moreDims && MD3[def.id]) X3.lines = MD3[def.id](p);
-      var cen3 = [0, 0];
-      m.v.forEach(function (q) { var t3 = S(toView(q)); cen3[0] += t3[0] / m.v.length; cen3[1] += t3[1] / m.v.length; });
+      var cen3 = null;
+      if (X3.angs.length) {
+        /* the middle of the drawing, for labels that have to go outside the shape */
+        cen3 = [0, 0];
+        m.v.forEach(function (q) { var t3 = S(toView(q)); cen3[0] += t3[0] / m.v.length; cen3[1] += t3[1] / m.v.length; });
+      }
       extra3D(X3, { cv: cv, S: S, toView: toView, sc: sc, occluded: occluded, pieces: pieces, emit: emit, H: H, cen: cen3 }, o);
     }
     return cv.svg(o);
@@ -4304,13 +4391,14 @@
       hl: function () { return []; } }
   };
   /* longest phrases first, so "slant height" wins over "height" and "sector angle" over "sector" */
-  var TERM_RE = Object.keys(TERMS).map(function (k) { return { k: k, re: new RegExp('(^|[^A-Za-z])(' + TERMS[k].m + ')(?![A-Za-z])', TERMS[k].cs ? 'g' : 'gi'), n: TERMS[k].m.length }; });
+  function termRe(keys) { return keys.map(function (k) { return { k: k, re: new RegExp('(^|[^A-Za-z])(' + TERMS[k].m + ')(?![A-Za-z])', TERMS[k].cs ? 'g' : 'gi'), n: TERMS[k].m.length }; }); }
+  var TERM_RE = termRe(Object.keys(TERMS));
   var OLD_TERMS = Object.keys(TERMS);
   addTerms();
-  var TERM_RE_ALL = Object.keys(TERMS).map(function (k) { return { k: k, re: new RegExp('(^|[^A-Za-z])(' + TERMS[k].m + ')(?![A-Za-z])', TERMS[k].cs ? 'g' : 'gi'), n: TERMS[k].m.length }; });
+  var TERM_RE_ALL = termRe(Object.keys(TERMS));
   function findTerms(text, fo) {
     var hits = [];
-    (fo && (fo === 'all' || fo.all) ? TERM_RE_ALL : TERM_RE).forEach(function (t) {
+    (isAll(fo) ? TERM_RE_ALL : TERM_RE).forEach(function (t) {
       t.re.lastIndex = 0;
       var m;
       while ((m = t.re.exec(text))) {
@@ -4429,9 +4517,16 @@
   function calc(id, params, units, ao) {
     var d = get(id), p = fill(id, params, ao), u = units || 'cm', byAng = d.angIn && aoOf(ao).input === 'angle';
     if (ao && ao.full) return calcFull(d, p, u, ao, byAng);
-    var items = d.calc(p, u, ao);
-    items.forEach(function (it) { it.hl = ((byAng && d.hlByAng && d.hlByAng[it.key]) || (d.hl && d.hl[it.key]) || it._hl || []).slice(); if (it._hl) delete it._hl; });
-    return finish(items, d.notes);
+    return finish(assignHl(d, d.calc(p, u, ao), byAng, false), d.notes);
+  }
+  /* the highlight parts of each item (the shape's tables first, then the item's own), and its group in the full calc */
+  function assignHl(d, items, byAng, grouped) {
+    items.forEach(function (it) {
+      it.hl = ((byAng && d.hlByAng && d.hlByAng[it.key]) || (d.hl && d.hl[it.key]) || it._hl || []).slice();
+      if (it._hl) delete it._hl;
+      if (grouped) { it.group = groupOf(it); if (it.lines) it.lines = tidyLines(it.lines); }
+    });
+    return items;
   }
   function calcFull(d, p, u, ao, byAng) {
     var ao2 = {}, k;
@@ -4440,12 +4535,7 @@
     var items = d.calc(p, u, ao2), have = {};
     items.forEach(function (it) { have[it.key] = true; });
     if (XC[d.id]) XC[d.id](p, u, ao2).forEach(function (it) { if (!have[it.key]) { have[it.key] = true; items.push(it); } });
-    items.forEach(function (it) {
-      it.hl = ((byAng && d.hlByAng && d.hlByAng[it.key]) || (d.hl && d.hl[it.key]) || it._hl || []).slice();
-      if (it._hl) delete it._hl;
-      it.group = groupOf(it);
-    });
-    return finish(items, d.notes);
+    return finish(assignHl(d, items, byAng, true), d.notes);
   }
   function layout(id, params, units) {
     var d = get(id);
@@ -4455,10 +4545,10 @@
     return finish(items, d.layoutNotes);
   }
 
-  return {
+  var api = {
     version: '1.0.0',
     colors: COL,
-    list: function (lo) { var all = lo && (lo === 'all' || lo.all); return ORDER.filter(function (id) { return all || !DEF[id].added; }).map(function (id) { return infoOf(DEF[id]); }); },
+    list: function (lo) { var all = isAll(lo); return ORDER.filter(function (id) { return all || !DEF[id].added; }).map(function (id) { return infoOf(DEF[id]); }); },
     info: function (id) { return infoOf(get(id)); },
     defaults: defaults,
     validate: validate,
@@ -4469,7 +4559,7 @@
     layout: layout,
     terms: function (to) {
       var o = {};
-      (to && (to === 'all' || to.all) ? Object.keys(TERMS) : OLD_TERMS).forEach(function (k) {
+      (isAll(to) ? Object.keys(TERMS) : OLD_TERMS).forEach(function (k) {
         o[k] = { label: TERMS[k].label, def: TERMS[k].def, hl: (function (key) { return function (id, params, view, opts) { var q = {}, j; for (j in (opts || {})) q[j] = opts[j]; q.view = view; return termParts(key, id, params, q); }; })(k) };
       });
       return o;
@@ -4485,11 +4575,18 @@
     flatOf: flatOf,
     solve: solve,
     solvePaths: solvePaths,
-    features: ['allAngles', 'moreDims', 'full', 'solidsOf', 'solve', 'lenFormat', 'labelSize', 'arrow', 'arrowMax', 'precision', 'parts'],
+    features: ['allAngles', 'moreDims', 'derivedAngles', 'full', 'solidsOf', 'solve', 'lenFormat', 'labelSize', 'arrow', 'arrowMax', 'precision', 'parts'],
     /* test hooks */
     _rings: function (id, p, n, ao) { return get(id).rings(fill(id, p, ao), n, ao); },
     _draw: function (id, p, ao) { return ao && (ao.allAngles || ao.moreDims) ? drawPrims(get(id), fill(id, p, ao), ao) : get(id).draw(fill(id, p, ao), undefined, ao); },
     _mesh: function (id, p, res) { return get(id).mesh(fill(id, p), res); },
     _net: function (id, p, res) { var d = get(id); return d.net ? netBuild(d, fill(id, p), res) : null; }
   };
+  /* render and net set the drawing options themselves (drawnParts, termParts and the terms() highlighters all draw through them).
+     The test hooks that build drawing data directly run with the default options. withSty restores the options even on a throw. */
+  ['_draw', '_net', '_mesh'].forEach(function (k) {
+    var f = api[k];
+    api[k] = function () { var a = arguments; return withSty(null, function () { return f.apply(api, a); }); };
+  });
+  return api;
 });

@@ -1,4 +1,4 @@
-/* ACCESS Trades Numeracy books: screen edition (build.js --web). Loaded after book.css, only in the web files.
+/* ACCESS Indigenous Skills4Success Numeracy books: screen edition (build.js --web). Loaded after book.css, only in the web files.
    One reading column, a sticky contents menu, light and dark themes (system setting plus a toggle), and phone
    layouts down to 390 px with no sideways scroll. Print still works: the menu and bar are hidden and the light
    theme is used. Drawings keep their print colours, so in dark mode they sit on a white plate. */
@@ -57,6 +57,8 @@ ol.how>li::before{ background:var(--w-tag); color:#FFFFFF }
 .paper svg:not(.ui){ box-sizing:border-box; background:var(--w-figbg); padding:var(--w-figpad); border-radius:6px; color:#1A1A1A }
 .canvas svg:not(.ui){ background:transparent; padding:0 }
 .cover .foot svg{ background:var(--w-figbg) }
+/* the IS4S badge keeps its own white circle on every theme, with no plate behind it */
+.cover .foot svg.is4s{ background:none; padding:0 }
 
 /* ---------- screen layout ---------- */
 @media screen{

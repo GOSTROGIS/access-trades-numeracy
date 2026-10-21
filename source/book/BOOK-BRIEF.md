@@ -1,4 +1,4 @@
-# ACCESS Trades Numeracy Textbook: author brief
+# ACCESS Indigenous Skills4Success Numeracy Textbook: author brief
 
 Book folder: /tmp/claude-0/-home-claude/5f677e4b-ee1b-5d37-90f5-16af2f24aca2/scratchpad/book (call it $BK)
 Scratch root: /tmp/claude-0/-home-claude/5f677e4b-ee1b-5d37-90f5-16af2f24aca2/scratchpad (call it $S)
@@ -8,7 +8,7 @@ Scratch root: /tmp/claude-0/-home-claude/5f677e4b-ee1b-5d37-90f5-16af2f24aca2/sc
 Follow-up: about 200 pages with lots of visuals and examples, US Letter print-ready, metric and imperial units.
 
 ## Who reads it
-Adult pre-apprentices at ACCESS Trades (an urban Indigenous trades-training organization in BC): fabrication, pipe trades and millwright. Many have been away from math for years. Plain, warm, direct language. Short sentences. Every new word is defined where it first appears. Numeracy for Skills for Success.
+Adult pre-apprentices at ACCESS Indigenous Skills4Success (an urban Indigenous trades-training organization in BC): fabrication, pipe trades and millwright. Many have been away from math for years. Plain, warm, direct language. Short sentences. Every new word is defined where it first appears. Numeracy for Skills for Success.
 
 ## Hard rules (the instructor calls breaking these a critical failure)
 1. Never fabricate or assume. Every number, formula, key press and fact must be correct and verifiable. Math is verified by the engine (see below). A real-world claim (a standard size, a code rule, how a tool or calculator behaves) is allowed only if you checked it in a source you actually read in this workspace or on the web, and you list it in your report with the source. When in doubt, write it as problem data ("A bar is 6,000 mm long") instead of a claim about the world ("Bars come in 6 m lengths").

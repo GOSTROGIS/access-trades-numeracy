@@ -180,13 +180,13 @@ module.exports = function (o) {
   const css = fontsInline(root) + '\n' + fs.readFileSync(path.join(root, 'styles', 'book.css'), 'utf8') + '\n' + fs.readFileSync(path.join(root, 'styles', 'web.css'), 'utf8')
   const title = meta.title + ' ' + meta.kind
   const desc = {
-    textbook: 'Trades numeracy for ACCESS Trades pre-apprentices: whole numbers to trigonometry, with TI-30Xa and Sharp EL-531XT key steps.',
-    exercise: 'Practice sets for every chapter of the ACCESS Trades Numeracy Textbook.',
-    answers: 'Answers to the ACCESS Trades Numeracy Textbook and Exercise Book.'
+    textbook: 'Trades numeracy for ACCESS Indigenous Skills4Success pre-apprentices: whole numbers to trigonometry, with TI-30Xa and Sharp EL-531XT key steps.',
+    exercise: 'Practice sets for every chapter of the ACCESS Indigenous Skills4Success Numeracy Textbook.',
+    answers: 'Answers to the ACCESS Indigenous Skills4Success Numeracy Textbook and Exercise Book.'
   }[kind] || title
   const bar = '<header class="wbar">' +
     '<button class="wbtn navbtn" type="button" aria-controls="wnav" aria-expanded="false">' + icon('menu') + '<span class="lbl">Contents</span></button>' +
-    '<a class="wbrand" href="#main"><span class="k">ACCESS Trades</span><span class="t">Numeracy ' + meta.kind + '</span></a>' +
+    '<a class="wbrand" href="#main"><span class="k">ACCESS Indigenous Skills4Success</span><span class="t">Numeracy ' + meta.kind + '</span></a>' +
     '<span class="wsp"></span>' +
     '<button class="wbtn printbtn" type="button" aria-label="Print this book">' + icon('print') + '<span class="lbl">Print</span></button>' +
     '<button class="wbtn themebtn" type="button" aria-pressed="false" aria-label="Switch to dark mode">' + icon('moon', 'i-moon') + icon('sun', 'i-sun') + '<span class="lbl">Dark</span></button>' +
@@ -200,6 +200,7 @@ module.exports = function (o) {
     '<meta name="color-scheme" content="light dark">' +
     '<meta name="description" content="' + desc + '">' +
     '<title>' + title + '</title>' +
+    '<link rel="icon" type="image/svg+xml" href="' + require('./brand.js').badgeUri() + '">' +
     '<script>(' + themeInit.toString() + ')()</script>' +
     '<style>' + css + '</style></head>' +
     '<body class="wb wb-' + kind + '"><a class="skip" href="#main">Skip to the book</a>' + bar +

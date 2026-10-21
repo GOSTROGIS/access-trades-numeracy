@@ -1,4 +1,4 @@
-# ACCESS Trades design system (from the "ACCESS Trades Brand Identity" canvas, Sept 2026)
+# ACCESS Indigenous Skills4Success design system (from the ACCESS brand identity canvas, Sept 2026)
 
 ## Colour (sampled from the ACCESS logo file; contrast measured)
 - ACCESS Red #D2181F (--acc-red): wordmark, headings, primary actions. White text on it 5.40:1 AA.
@@ -28,3 +28,12 @@
 ## Teaching context
 - ACCESS = Aboriginal Community Career Employment Services Society (urban Indigenous labour-market/training org). Program framing: "Essential Skills for Aboriginal Futures". Current framework: the 9 Skills for Success (Reading, Writing, Numeracy, Digital, Problem Solving, Communication, Collaboration, Adaptability, Creativity and Innovation). Focus: NUMERACY — "find, understand, use and report mathematical information presented through words, numbers, symbols and graphics."
 - Exercises are tagged with a Skills for Success complexity level 1–3.
+
+## IS4S badge (ACCESS Indigenous Skills4Success)
+- Files: is4s-badge.svg (full colour, white circle fill, transparent outside the circle) and is4s-badge-mono.svg (one colour black, no fill, lower feather knocked back from the upper one so both read in one ink). PNG renders with transparent background: is4s-badge-256/512/1024/2048.png and is4s-badge-mono-256/512/1024/2048.png (number = width in px).
+- Rebuilt Oct 2026 from the only available copy, a 180 x 165 px PNG. viewBox 0 0 1800 1650, all text converted to outlines, no fonts or external files needed. Ids are prefixed is4s-.
+- Type identified by outline matching: Raleway ExtraBold (800) for INDIGENOUS, Raleway Bold (700) for SKILLS4SUCCESS with the lining 4, both tracked about 0.2 em.
+- The ACCESS logo uses the vector paths from access-logo-defs.svg at the standard lockup proportions. In the badge the figure is ACCESS Red, not Deep Red.
+- Colours: ACCESS Red for the figure, wordmark, the I and both S. ACCESS Gold for the arcs, the 4 and the lower feather. Pure black #000000 for the ring, the remaining text and the upper feather.
+- Use it on IS4S program material (books, slide decks, Word documents, teaching tools). Keep the ACCESS lockup for ACCESS-wide items. Use the SVG wherever it is accepted (web, Microsoft 365 Insert Pictures), the 1024 or 2048 PNG for older Office or Google Docs, the 256 or 512 PNG for on-screen headers. Use the mono version for faxes, rubber stamps, photocopies and single-colour print.
+- Suggested minimum size 25 mm (1 in) wide in print or 120 px on screen, so SKILLS4SUCCESS stays legible. Never recolour (other than mono), stretch, retype the text or separate the feathers from the ring.

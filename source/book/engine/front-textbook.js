@@ -4,16 +4,16 @@ module.exports = function (B, L, part) {
   const S = path.join(__dirname, '..', '..');
   const F = require('./figs.js');
   if (part === 'front') {
-    const lockup = fs.readFileSync(path.join(S, 'brand', 'access-lockup.svg'), 'utf8').replace(/width="410"/, 'width="100%"');
+    const badge = require('./brand.js').badge();
     const art = '<div style="display:flex;gap:18pt;align-items:flex-end;justify-content:center">' +
       B.shape('cylinder', { r: 60, h: 140 }, { labels: 'none', width: '1.6in' }) +
       B.net('cylinder', { r: 60, h: 140 }, { labels: 'none', width: '2.2in' }) +
       B.shape('right-triangle', { b: 120, h: 90 }, { labels: 'none', width: '1.7in' }) + '</div>';
-    const cover = '<section class="cover"><div class="top"><div class="kicker">ACCESS Trades</div>' +
+    const cover = '<section class="cover"><div class="top"><div class="kicker">ACCESS Indigenous Skills4Success</div>' +
       '<h1>Trades <span>Numeracy</span><br>Textbook</h1><div class="bar"></div>' +
       '<div class="sub">Whole numbers to trigonometry, with key-by-key calculator steps for the TI-30Xa and the Sharp EL-531XT. For fabrication, pipe trades, millwright and carpentry pre-apprentices.</div></div>' +
       '<div class="art">' + art + '</div>' +
-      '<div class="foot">' + lockup + '<div class="ed">Skills for Success: Numeracy<br>Metric and imperial</div></div></section>';
+      '<div class="foot">' + badge + '<div class="ed">Skills for Success: Numeracy<br>Metric and imperial</div></div></section>';
     const about = '<section class="front pbp">' +
       '<h1 class="bm" style="font-size:20pt">About this book</h1>' +
       B.p('This textbook covers the mathematics a pre-apprentice uses every day in the shop: whole numbers, fractions and decimals, percent and ratio, measurement and unit conversion, formulas and how to rearrange them, perimeter, area, volume, right triangles and trigonometry.',
@@ -66,7 +66,7 @@ module.exports = function (B, L, part) {
       B.keyidea('A quote, read from the code text', 'Except for stairs serving areas only used as service rooms or service spaces, the rise, measured as the vertical nosing-to-nosing distance, must comply with Table ' + a1.num + '. For a private stair the table gives a maximum rise of 200 mm and a minimum rise of 125 mm. Source: BCBC 2024, Division B, Sentence ' + a1.num + '.(1) and Table ' + a1.num + '. (page ' + a1.page + ').') +
       '<h4>The plates are teaching drawings</h4>' + plateFig +
       B.p('The drawings with a BCBC source line under them are <b>ACCESS teaching plates</b>. Each one shows a Part 9 Article. They were drawn from the code text to help you see the math, but a plate is not the code. The book prints the drawing part of a plate and writes the requirement under it, with each value quoted from the code text. <b>The code text governs.</b> If a plate and the code ever seem to disagree, follow the code text.',
-        'The full set of ' + (nPlates ? nPlates + ' ' : '') + 'plates is in the <b>bcbc</b> folder of the ACCESS Trades Numeracy site, the same site as the Numeracy Hub. There is one folder for each Section of Part 9 and one file for each Article, named with the Article number and title, for example “' + a1.num + ' ' + a1.title + '”.') +
+        'The full set of ' + (nPlates ? nPlates + ' ' : '') + 'plates is in the <b>bcbc</b> folder of the ACCESS Indigenous Skills4Success Numeracy site, the same site as the Numeracy Hub. There is one folder for each Section of Part 9 and one file for each Article, named with the Article number and title, for example “' + a1.num + ' ' + a1.title + '”.') +
       B.watch('Check the code that applies to your job', 'BCBC 2024 took effect on March 8, 2024. The order that set it up lets some work carry on under the 2018 code, for example work under a building permit applied for before that date. Before you rely on a value on the job, check which code applies to your project.') +
       '</section>'
     return cover + about + toc + howto + bcbc;
