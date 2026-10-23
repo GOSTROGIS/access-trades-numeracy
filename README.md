@@ -27,3 +27,6 @@ Your progress in the hub is saved in the browser you use. Using a different brow
 
 - [PowerPoint slides with speaker notes](carpentry/intake-142/PowerPoint/)
 - [PDF slides](carpentry/intake-142/PDF/)
+- [After-lecture quiz game](carpentry/intake-142/Quizzes/index.html) — 50 lecture boards with random questions, worked solutions, team play and original quiz-show music.
+- [Fillable lecture quizzes](carpentry/intake-142/Quizzes/PDF/) — 15 questions per lecture; 12 for the readiness check. Type answers and working, then save a filled copy.
+- [Instructor quiz answer key](carpentry/intake-142/Quizzes/Instructor/Answer-Key.pdf)
