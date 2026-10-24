@@ -188,3 +188,152 @@ test('damaged or blocked storage is never overwritten automatically', () => {
   assert.equal(W.loadLibrary({ getItem: () => null }).ok, true);
   assert.throws(() => W.importLibrary('x'.repeat(W.limits.bytes + 1)), /size/);
 });
+
+const sequence = () => ({ version: 1, steps: [
+  { id: 'rough', label: 'Rough the pocket', operation: { ...operation, kind: 'pocket', depthMm: 4 } },
+  { id: 'finish', label: 'Finish the edge', operation: { ...operation, toolDiameterMm: 4 } }
+] });
+function millComparison(p) {
+  const settings = W.getComparison(p);
+  return { version: 1, machine: 'mill', ...settings, resolutionMm: .5, status: 'needs-work',
+    metrics: { sampleCount: 1000, desiredVolumeMm3: 40000, actualVolumeMm3: 42000, missingVolumeMm3: 0, excessVolumeMm3: 2000, maxUndercutMm: 0, maxExcessMm: 2, mismatchedPercent: 5 },
+    observations: ['Some material remains outside the target.'], limitations: ['Sampled simulator material is not physical inspection.'],
+    overlay: { kind: 'mill-map', columns: 2, rows: 2, widthMm: 90, heightMm: 60, cells: '0023' } };
+}
+
+test('legacy fingerprints and captured evidence remain readable until sequence opt-in', () => {
+  const fixture = D.create('plate'); fixture.id = 'legacy-fixture';
+  assert.equal(W.fingerprint(fixture), 'design-v1-2f5f06e3');
+  let p = W.setOperation(fixture, operation);
+  p = W.recordResult(p, { id: 'legacy-result', capturedAt: at, accepted: true });
+  const oldHash = W.fingerprint(p), oldResult = p.workflow.results[0];
+  assert.equal(W.resultStatus(W.ensure(p), oldResult).status, 'current');
+  const resolved = W.getSequence(p);
+  assert.equal(resolved.steps[0].id, 'legacy-operation'); assert.deepEqual(resolved.steps[0].operation, operation);
+  resolved.steps[0].label = 'Changed detached label'; assert.equal(W.fingerprint(p), oldHash);
+  const migrated = W.setSequence(p, W.getSequence(p));
+  assert.match(W.fingerprint(migrated), /^design-v2-/);
+  assert.equal(W.resultStatus(migrated, oldResult).status, 'stale');
+  assert.equal(p.workflow.sequence, undefined);
+});
+
+test('ordered sequence survives project/library export and invalidates evidence on order or tool edits', () => {
+  let p = W.setSequence(plate(), sequence());
+  assert.equal(p.workflow.operation.kind, 'pocket');
+  p = W.recordResult(p, { operationKind: 'sequence', operationCount: 2, accepted: true, capturedAt: at });
+  const capture = p.workflow.results[0], hash = W.fingerprint(p);
+  assert.equal(W.resultStatus(p, capture).stale, false);
+  const reordered = W.getSequence(p); reordered.steps.reverse();
+  const otherOrder = W.setSequence(p, reordered);
+  assert.notEqual(W.fingerprint(otherOrder), hash); assert.equal(W.resultStatus(otherOrder, capture).stale, true);
+  const toolChange = W.getSequence(p); toolChange.steps[1].operation.toolDiameterMm += 1;
+  assert.notEqual(W.fingerprint(W.setSequence(p, toolChange)), hash);
+  const relabel = W.getSequence(p); relabel.steps[0].label = 'Revised plan'; assert.notEqual(W.fingerprint(W.setSequence(p, relabel)), hash);
+  const lib = W.importLibrary(W.exportLibrary(W.upsert(W.createLibrary(), p, 'Two stages', at)));
+  assert.deepEqual(W.getSequence(W.open(lib, p.id)), sequence());
+  assert.equal(W.open(lib, p.id).workflow.results[0].operationCount, 2);
+  assert.equal(W.setOperation(p, operation).workflow.sequence, undefined);
+  const empty = W.setSequence(p, { version: 1, steps: [] }); assert.equal(empty.workflow.operation, null); assert.equal(W.getSequence(empty).steps.length, 0);
+});
+
+test('sequence validates bounded IDs, operations and structure without executing getters', () => {
+  const s = sequence(); s.steps.push(copy(s.steps[0])); assert.throws(() => W.validateSequence(s), /Duplicate/);
+  const excessive = { version: 1, steps: Array.from({ length: 13 }, (_, i) => ({ id: String(i), label: 'Operation', operation })) };
+  assert.throws(() => W.validateSequence(excessive), /at most 12/);
+  assert.throws(() => W.validateSequence({ ...sequence(), version: 2 }), /version/);
+  const invalid = sequence(); invalid.steps[0].operation = null; assert.throws(() => W.validateSequence(invalid), /needs an operation/);
+  const getter = sequence(); Object.defineProperty(getter.steps[0], 'label', { enumerable: true, get() { throw Error('must not execute'); } }); assert.throws(() => W.validateSequence(getter), /Unexpected/);
+  assert.equal(W.validateOperation({ ...operation, kind: 'clear-outside' }).kind, 'clear-outside');
+});
+
+test('comparison settings are explicit physical targets and invalidate only manufacturing evidence', () => {
+  const p = W.setSequence(plate(), sequence()), f = W.fingerprint(p), g = W.geometryFingerprint(p);
+  assert.deepEqual(W.getComparison(p), { mode: 'pocket', depthMm: 2, toleranceMm: .1 });
+  const changed = W.setComparison(p, { mode: 'pocket', depthMm: 4, toleranceMm: .25 });
+  assert.notEqual(W.fingerprint(changed), f); assert.equal(W.geometryFingerprint(changed), g);
+  assert.equal(p.workflow.comparison, undefined);
+  const tolerance = W.setComparison(changed, { ...W.getComparison(changed), toleranceMm: .3 }); assert.notEqual(W.fingerprint(tolerance), W.fingerprint(changed));
+  assert.throws(() => W.setComparison(p, { mode: 'pocket', depthMm: 11, toleranceMm: .1 }), /stock depth/);
+  assert.throws(() => W.setComparison(p, { mode: 'pocket', depthMm: null, toleranceMm: .1 }), /stock depth/);
+  const shaft = D.create('shaft'); assert.deepEqual(W.getComparison(shaft), { mode: 'retained-solid', depthMm: null, toleranceMm: .1 });
+  assert.throws(() => W.setComparison(shaft, { mode: 'pocket', depthMm: 2, toleranceMm: .1 }), /cylinder/);
+});
+
+test('captured comparison retains bounded scalar evidence and compact map through submission and library', () => {
+  let p = W.setComparison(W.setSequence(plate(), sequence()), { mode: 'pocket', depthMm: 4, toleranceMm: .2 });
+  const comparison = millComparison(p);
+  p = W.recordResult(p, { operationKind: 'sequence', operationCount: 2, comparison, accepted: true, capturedAt: at });
+  const r = p.workflow.results[0]; assert.deepEqual(r.comparison, comparison);
+  comparison.overlay.cells = '1111'; assert.equal(r.comparison.overlay.cells, '0023');
+  assert.equal(W.submission(p, at).project.workflow.results[0].comparison.metrics.excessVolumeMm3, 2000);
+  const reopened = W.open(W.importLibrary(W.exportLibrary(W.upsert(W.createLibrary(), p))), p.id);
+  assert.deepEqual(reopened.workflow.results[0].comparison, r.comparison);
+  assert.equal(W.resultStatus(reopened, r).status, 'current');
+  const changed = W.setComparison(p, { ...W.getComparison(p), toleranceMm: .3 }); assert.equal(W.resultStatus(changed, r).status, 'stale');
+  const reflection = copy(p); reflection.reflection = 'I need another finishing pass.'; assert.equal(W.resultStatus(reflection, r).status, 'current');
+  assert.throws(() => W.recordResult(changed, { comparison: r.comparison }), /current target/);
+});
+
+test('comparison evidence rejects raw fields, oversized maps, invalid metrics and incompatible context', () => {
+  const p = plate(), result = millComparison(p);
+  assert.throws(() => W.validateComparisonResult({ ...result, rawHeightfield: [] }), /Unexpected/);
+  const bad = copy(result); bad.overlay.cells = '002'; assert.throws(() => W.validateComparisonResult(bad), /dimensions/);
+  bad.overlay.cells = '002X'; assert.throws(() => W.validateComparisonResult(bad), /dimensions/);
+  bad.overlay.columns = 49; assert.throws(() => W.validateComparisonResult(bad), /columns/);
+  const invalid = copy(result); invalid.metrics.mismatchedPercent = 101; assert.throws(() => W.validateComparisonResult(invalid), /percentage/);
+  invalid.metrics.mismatchedPercent = 3; invalid.metrics.sampleCount = 1.5; assert.throws(() => W.validateComparisonResult(invalid), /samples/);
+  assert.throws(() => W.validateComparisonResult({ ...result, observations: Array(9).fill('Long record') }), /at most 8/);
+  assert.throws(() => W.validateComparisonResult({ ...result, resolutionMm: 0 }), /resolution/);
+  assert.equal(W.validateComparisonResult({ ...result, status: 'incomplete', resolutionMm: 0, overlay: null }).status, 'incomplete');
+  assert.throws(() => W.recordResult(p, { operationCount: 13 }), /operation count/);
+});
+
+test('lathe comparison charts preserve bounded physical diameter samples and reject reversed order', () => {
+  const p = D.create('shaft'), r = { ...millComparison(plate()), machine: 'lathe', depthMm: null, mode: 'retained-solid',
+    overlay: { kind: 'lathe-chart', lengthMm: 100, targetDiameterMm: 30, samples: [{ zMm: 0, diameterMm: 32 }, { zMm: 100, diameterMm: 30 }] } };
+  const saved = W.recordResult(p, { comparison: r, operationKind: 'turn', operationCount: 1 });
+  assert.equal(saved.workflow.results[0].comparison.overlay.samples.length, 2);
+  const reversed = copy(r); reversed.overlay.samples.reverse(); assert.throws(() => W.validateComparisonResult(reversed), /ordered/);
+  const tooMany = copy(r); tooMany.overlay.samples = Array.from({ length: 193 }, (_, i) => ({ zMm: i / 2, diameterMm: 30 })); assert.throws(() => W.validateComparisonResult(tooMany), /at most 192/);
+  const outside = copy(r); outside.overlay.samples[1].zMm = 101; assert.throws(() => W.validateComparisonResult(outside), /position/);
+  const wrong = copy(r); wrong.machine = 'mill'; wrong.depthMm = 2; assert.throws(() => W.validateComparisonResult(wrong), /lathe chart/);
+});
+
+test('stock and machine changes retain old targets for undo but resolve usable current comparison controls', () => {
+  let p = W.setComparison(plate(), { mode: 'pocket', depthMm: 8, toleranceMm: .2 });
+  p = W.recordResult(p, { comparison: millComparison(p), accepted: true });
+  const old = p.workflow.results[0], shallower = copy(p); shallower.stock.depth = 3;
+  assert.equal(D.validate(shallower).stock.depth, 3);
+  assert.deepEqual(W.getComparison(shallower), { mode: 'pocket', depthMm: 3, toleranceMm: .2 });
+  assert.equal(W.comparisonState(shallower).adjusted, true);
+  assert.equal(shallower.workflow.comparison.depthMm, 8); assert.equal(W.resultStatus(shallower, old).status, 'stale');
+  const cylinder = D.create('shaft'); cylinder.id = p.id; cylinder.workflow = copy(p.workflow);
+  assert.deepEqual(W.getComparison(cylinder), { mode: 'retained-solid', depthMm: null, toleranceMm: .2 });
+  assert.equal(cylinder.workflow.comparison.mode, 'pocket'); assert.equal(W.resultStatus(cylinder, old).status, 'stale');
+  const saved = W.setComparison(cylinder, W.getComparison(cylinder)); assert.equal(W.comparisonState(saved).adjusted, false);
+  const back = plate(); back.workflow = copy(saved.workflow); assert.equal(W.getComparison(back).depthMm, back.stock.depth);
+});
+
+test('comparison evidence with an earlier implicit goal cannot be revalidated by a legacy source hash', () => {
+  const p = plate(), result = W.recordResult(p, { comparison: millComparison(p), accepted: true }).workflow.results[0];
+  assert.equal(W.resultStatus(p, result).status, 'current');
+  const earlierGoal = copy(result); earlierGoal.comparison.mode = 'retained-solid'; earlierGoal.comparison.depthMm = p.stock.depth;
+  assert.equal(earlierGoal.sourceFingerprint, W.fingerprint(p));
+  assert.equal(W.resultStatus(p, earlierGoal).status, 'stale');
+  assert.equal(W.resultStatus(p, { ...result, comparison: { ...result.comparison, toleranceMm: .5 } }).status, 'stale');
+});
+
+test('a near-limit library backup remains within the same import size budget', () => {
+  const lib = W.createLibrary();
+  for (let i = 0; i < 3; i++) {
+    const p = plate(); p.id = 'large-backup-' + i; p.workflow.revision = 12;
+    p.workflow.checkpoints = Array.from({ length: 25 }, (_, j) => ({ id: 'calculation-' + j, label: 'Calculation', unit: 'mm2', estimate: 100, actual: 101, tolerance: 1, working: 'x'.repeat(4000), sourceFingerprint: W.geometryFingerprint(p) }));
+    const revisions = Array.from({ length: 12 }, (_, j) => { const saved = copy(p); saved.workflow.revision = j + 1; return { number: j + 1, label: 'Saved edit', at, project: saved }; });
+    lib.entries.push({ id: p.id, project: p, updatedAt: at, revisions });
+  }
+  lib.activeId = lib.entries[0].id;
+  const valid = W.validateLibrary(lib), exported = W.exportLibrary(valid);
+  assert.ok(Buffer.byteLength(exported) <= W.limits.bytes);
+  assert.ok(Buffer.byteLength(JSON.stringify(valid, null, 2)) > W.limits.bytes, 'fixture exposes pretty-print growth above the import limit');
+  const restored = W.importLibrary(exported); assert.equal(restored.entries.length, 3); assert.equal(restored.entries[0].revisions.length, 12);
+});

@@ -5,9 +5,9 @@
 })(typeof globalThis!=='undefined'?globalThis:this,function(D,W,CAD,CAM,E){
   'use strict';
   const MM=25.4, TAU=Math.PI*2;
-  const labels={'profile-out':'Profile outside the target','profile-in':'Finish the inside hole',pocket:'Pocket inside the boundary',drill:'Drill the circular hole',turn:'Rough and finish the shaft'};
+  const labels={'clear-outside':'Clear around the shape','profile-out':'Profile outside the target','profile-in':'Finish the inside hole',pocket:'Pocket inside the boundary',drill:'Drill the circular hole',turn:'Rough and finish the shaft'};
   const plain=s=>String(s).replace(/[^\x20-\x7e]/g,' ').replace(/[()%]/g,'').slice(0,60);
-  function kinds(project){const p=D.validate(project),id=p.geometry.shapeId;return(id==='cylinder'?['turn']:id==='annulus'?['profile-out','profile-in','pocket','drill']:id==='circle'?['profile-out','pocket','drill']:['profile-out','pocket']).map(kind=>({kind,label:labels[kind]}));}
+  function kinds(project){const p=D.validate(project),id=p.geometry.shapeId;return(id==='cylinder'?['turn']:id==='annulus'?['clear-outside','profile-out','profile-in','pocket','drill']:id==='circle'?['clear-outside','profile-out','pocket','drill']:['clear-outside','profile-out','pocket']).map(kind=>({kind,label:labels[kind]}));}
   function defaults(project){const p=D.validate(project),depth=p.machine==='lathe'?p.geometry.params.h:Math.min(2,p.stock.depth*.2);return{kind:p.machine==='lathe'?'turn':'pocket',toolDiameterMm:p.machine==='lathe'?3:6,depthMm:depth,stepDownMm:Math.min(1,depth),feedMmPerMin:p.machine==='lathe'?80:120,spindleRpm:p.machine==='lathe'?1200:1800};}
   function finite(n,min,max,label){if(typeof n!=='number'||!Number.isFinite(n)||n<min||n>max)throw Error(label+' must be between '+min+' and '+max+'.');return n;}
   function planProject(raw,plan){
@@ -37,6 +37,8 @@
     return CAD.chain(items);
   }
   function generate(raw,plan){
+    if(plan===undefined&&raw.workflow&&raw.workflow.sequence)return generateSequence(raw,raw.workflow.sequence);
+    if(plan===undefined)plan=raw.workflow&&raw.workflow.operation||defaults(raw);
     const project=planProject(raw,plan),p=project,lathe=p.machine==='lathe',lib={},feed=plan.feedMmPerMin/MM;
     let layers=layersFor(p),out;
     const mat={label:'Student practice settings',face:[plan.spindleRpm,feed],em:[plan.spindleRpm,feed,feed*.4],spot:[plan.spindleRpm,feed*.4],drill:[plan.spindleRpm,feed],rough:[plan.spindleRpm,feed/plan.spindleRpm],finish:[plan.spindleRpm,feed/plan.spindleRpm],part:[plan.spindleRpm,feed/plan.spindleRpm]};
@@ -49,8 +51,8 @@
       const drill=plan.kind==='drill';lib[1]={name:drill?'Practice drill':'Practice flat end mill',type:drill?'drill':'endmill',shape:'flat',dia:plan.toolDiameterMm/MM,len:100/MM,ang:118,color:'#D2181F'};
       const op={tool:1,depth:plan.depthMm/MM,step:plan.stepDownMm/MM,stepover:40,finish:true};let ops;
       if(drill){const layer=p.geometry.shapeId==='annulus'?'HOLE':'OUTER';const diameter=(p.geometry.shapeId==='annulus'?p.geometry.params.r:p.geometry.params.r)*2;if(Math.abs(diameter-plan.toolDiameterMm)>.001)throw Error('For this drilling operation, set the drill diameter to the target hole diameter ('+diameter+' mm).');ops=[{...op,op:'drill',layer}];}
-      else if(plan.kind==='pocket'){
-        layers={TARGET:{name:'TARGET',contours:Object.values(layers).flatMap(l=>l.contours),circles:[],points:[]}};ops=[{...op,op:'pocket',layer:'TARGET'}];
+      else if(plan.kind==='pocket'||plan.kind==='clear-outside'){
+        layers={TARGET:{name:'TARGET',contours:(plan.kind==='clear-outside'?stockOutline(p,plan.toolDiameterMm/2+.1):[]).concat(Object.values(layers).flatMap(l=>l.contours)),circles:[],points:[]}};ops=[{...op,op:'pocket',layer:'TARGET'}];
       }else ops=Object.keys(layers).filter(name=>plan.kind!=='profile-in'||name.startsWith('HOLE')).map(layer=>({...op,op:layer.startsWith('HOLE')?'profile-in':'profile-out',layer}));
       out=CAM.genMill({layers,ops,file:'SHARED DESIGN',title:plain(p.title),progNo:9201,zero:'stock',margin:0,thick:p.stock.depth/MM,stock:{x:p.stock.width/MM,y:p.stock.height/MM,z:p.stock.depth/MM},keepStockOrigin:true,faceTool:'',faceDepth:0,mat,lib,maxRpm:plan.spindleRpm,cutting:{rpm:plan.spindleRpm,feed,plunge:feed*.4}});
     }
@@ -61,9 +63,54 @@
     const training={id:lathe?'CNC-992':'CNC-991',machine:p.machine,gen:'classic',title:p.title+' · '+labels[plan.kind],text:out.text,stock:out.stock,tools:lib,showToolpath:true,setup:lathe?{method:'chuck3',params:{}}:{method:'vise',params:{grip:Math.max(.05,Math.min(p.stock.depth/MM*.25,.5)),parallels:'jaws'}}};
     return{project,plan:project.workflow.operation,training,warnings,sourceFingerprint:W.fingerprint(project),programNumber:lathe?9202:9201,lineCount:out.text.split('\n').length};
   }
-  function record(project,generation,result,simulated){
+  function stockOutline(p,paddingMm=0){
+    const w=p.stock.width/MM,h=p.stock.height/MM,pad=paddingMm/MM,points=[[-pad,-pad],[w+pad,-pad],[w+pad,h+pad],[-pad,h+pad]];
+    return CAD.chain(points.map((a,i)=>({layer:'STOCK',seg:{t:'L',a:{x:a[0],y:a[1]},b:{x:points[(i+1)%4][0],y:points[(i+1)%4][1]}}}))).STOCK.contours;
+  }
+  function generateSequence(raw,sequence){
+    const project=D.validate(W.setSequence(raw,sequence)),p=project,steps=p.workflow.sequence.steps,lathe=p.machine==='lathe';
+    if(!steps.length)throw Error('Add at least one operation to the sequence.');
+    steps.forEach((s,i)=>{try{planProject(p,s.operation);}catch(error){throw Error('Step '+(i+1)+' ('+s.label+'): '+error.message);}});
+    const lib={},warnings=[],baseLayers=layersFor(p),allLayers={...baseLayers},ops=[];
+    allLayers.TARGET={name:'TARGET',contours:Object.values(baseLayers).flatMap(l=>l.contours),circles:[],points:[]};
+    const material=plan=>{const feed=plan.feedMmPerMin/MM;return{label:'Student sequence settings',face:[plan.spindleRpm,feed],em:[plan.spindleRpm,feed,feed*.4],spot:[plan.spindleRpm,feed*.4],drill:[plan.spindleRpm,feed],rough:[plan.spindleRpm,feed/plan.spindleRpm],finish:[plan.spindleRpm,feed/plan.spindleRpm],part:[plan.spindleRpm,feed/plan.spindleRpm]};};
+    steps.forEach((s,i)=>{const plan=s.operation,tn=i+1,drill=plan.kind==='drill';
+      lib[tn]=lathe?{name:'Step '+tn+' turning insert',type:'turn',dia:0,len:0,width:plan.toolDiameterMm/MM,color:'#D2181F'}:{name:'Step '+tn+' '+(drill?'drill':'flat end mill'),type:drill?'drill':'endmill',shape:'flat',dia:plan.toolDiameterMm/MM,len:100/MM,ang:118,color:'#D2181F'};
+      if(lathe)return;
+      const feed=plan.feedMmPerMin/MM,common={tool:tn,depth:plan.depthMm/MM,step:plan.stepDownMm/MM,stepover:40,finish:true,stepId:s.id,stepLabel:'STEP '+tn+': '+plain(s.label),cutting:{rpm:plan.spindleRpm,feed,plunge:feed*.4}};
+      if(drill){const diameter=p.geometry.params.r*2;if(Math.abs(diameter-plan.toolDiameterMm)>.001)throw Error('Step '+tn+': set the drill diameter to the target hole diameter ('+diameter+' mm).');ops.push({...common,op:'drill',layer:p.geometry.shapeId==='annulus'?'HOLE':'OUTER'});}
+      else if(plan.kind==='pocket'||plan.kind==='clear-outside'){
+        const layer=plan.kind==='clear-outside'?'CLEAR_OUTSIDE_'+tn:'TARGET';
+        if(plan.kind==='clear-outside')allLayers[layer]={name:layer,contours:stockOutline(p,plan.toolDiameterMm/2+.1).concat(allLayers.TARGET.contours),circles:[],points:[]};
+        ops.push({...common,op:'pocket',layer});
+      }
+      else Object.keys(baseLayers).filter(name=>plan.kind!=='profile-in'||name.startsWith('HOLE')).forEach(layer=>ops.push({...common,op:layer.startsWith('HOLE')?'profile-in':'profile-out',layer}));
+    });
+    let out;
+    if(lathe){
+      const lines=['%','O09202 ('+plain(p.title)+' - ORDERED SEQUENCE)'];
+      steps.forEach((s,i)=>{const plan=s.operation,tn=i+1,layers=CAD.chain([{layer:'TARGET',seg:{t:'L',a:{x:plan.depthMm/MM,y:p.geometry.params.r/MM},b:{x:0,y:p.geometry.params.r/MM}}}]);
+        const part=CAM.genLathe({layers,layer:'TARGET',file:'SHARED DESIGN',title:plain(p.title),progNo:9202,face:false,rough:tn,finish:tn,part:'',groove:'',mat:material(plan),lib,maxRpm:plan.spindleRpm,gen:'classic',rpm:plan.spindleRpm,stepDown:plan.stepDownMm/MM,profileStart:100+i*200,profileEnd:200+i*200,stock:{dia:p.stock.diameter/MM,stickout:p.stock.length/MM,extra:0}});
+        if(part.error)throw Error('Step '+tn+': '+part.error);
+        warnings.push(...(part.warnings||[]).map(message=>({level:'warning',message:'Step '+tn+': '+message})));
+        lines.push('(STEP '+tn+': '+plain(s.label)+')',...part.text.split('\n').filter(line=>line!=='%'&&!/^O\d/.test(line)&&line!=='M30'),'M09','M05');
+      });
+      lines.push('M30','%');out={text:lines.join('\n'),stock:{dia:p.stock.diameter/MM,stickout:p.stock.length/MM,extra:0}};
+    }else{
+      out=CAM.genMill({layers:allLayers,ops,file:'SHARED DESIGN SEQUENCE',title:plain(p.title),progNo:9201,zero:'stock',margin:0,thick:p.stock.depth/MM,stock:{x:p.stock.width/MM,y:p.stock.height/MM,z:p.stock.depth/MM},keepStockOrigin:true,faceTool:'',faceDepth:0,mat:material(steps[0].operation),lib,maxRpm:Math.max(...steps.map(s=>s.operation.spindleRpm))});
+      if(out.error)throw Error(out.error);warnings.push(...(out.warnings||[]).map(message=>({level:'warning',message})));
+    }
+    const lineCount=out.text.split('\n').length;if(lineCount>20000)throw Error('The sequence exceeds 20,000 program lines. Reduce the passes or simplify the outline.');
+    const training={id:lathe?'CNC-992':'CNC-991',machine:p.machine,gen:'classic',title:p.title+' · '+steps.length+' ordered steps',text:out.text,stock:out.stock,tools:lib,showToolpath:true,setup:lathe?{method:'chuck3',params:{}}:{method:'vise',params:{grip:Math.max(.05,Math.min(p.stock.depth/MM*.25,.5)),parallels:'jaws'}}};
+    return{project,plan:steps[0].operation,sequence:p.workflow.sequence,steps:steps.map((s,i)=>({...s,toolNumber:i+1})),training,warnings,sourceFingerprint:W.fingerprint(p),programNumber:lathe?9202:9201,lineCount};
+  }
+  function record(project,generation,result,simulated,comparison){
     if(W.fingerprint(project)!==generation.sourceFingerprint)throw Error('The design or operation changed. Generate and check the program again before capturing a result.');
-    return D.validate(W.recordResult(project,{kind:simulated?'simulation':'check',operationKind:generation.plan.kind,programNumber:generation.programNumber,programLineCount:generation.lineCount,actionCount:0,accepted:!!result.accepted,removedVolumeMm3:Math.max(0,Number(result.removedVolumeIn3)||0)*Math.pow(MM,3),diagnostics:[...generation.warnings,...(result.diagnostics||[])].map(d=>({level:['info','warning','error'].includes(d.level)?d.level:'info',message:String(d.message||d).slice(0,1000)})).slice(0,50),summary:(simulated?'Completed simulator preview':'Program preflight only; not played')+'. '+labels[generation.plan.kind]+'. Removal is a simulator estimate; target dimensions have not been measured.'}));
+    if(comparison&&!simulated)throw Error('A preflight check cannot capture a completed simulation comparison. Simulate and compare the current program first.');
+    const input={kind:simulated?'simulation':'check',operationKind:generation.sequence?'sequence':generation.plan.kind,programNumber:generation.programNumber,programLineCount:generation.lineCount,actionCount:0,accepted:!!result.accepted,removedVolumeMm3:Math.max(0,Number(result.removedVolumeIn3)||0)*Math.pow(MM,3),diagnostics:[...generation.warnings,...(result.diagnostics||[])].map(d=>({level:['info','warning','error'].includes(d.level)?d.level:'info',message:String(d.message||d).slice(0,1000)})).slice(0,50),summary:(simulated?'Completed simulator preview':'Program preflight only; not played')+'. '+(generation.sequence?'Ordered sequence of '+generation.sequence.steps.length+' steps':labels[generation.plan.kind])+'. Removal is a simulator estimate; target dimensions have not been measured.'};
+    if(generation.sequence)input.operationCount=generation.sequence.steps.length;if(comparison)input.comparison=comparison;
+    if(comparison)input.summary=input.summary.replace('target dimensions have not been measured.','includes a sampled material comparison; physical dimensions still require inspection.');
+    return D.validate(W.recordResult(project,input));
   }
   function importDrawing(text,format,options={}){
     if(typeof text!=='string'||text.length>2*1024*1024)throw Error('Choose a drawing smaller than 2 MB.');
@@ -131,5 +178,5 @@
     });if(pts.length&&Math.hypot(pts[0][0]-pts.at(-1)[0],pts[0][1]-pts.at(-1)[1])<.001)pts.pop();rings.push(pts);});});
     return D.fromProfile({rings,units:'mm',title:options.title||'Imported drawing'});
   }
-  return Object.freeze({kinds,defaults,generate,record,importDrawing});
+  return Object.freeze({kinds,defaults,generate,generateSequence,record,importDrawing});
 });

@@ -8,6 +8,7 @@
   const get = () => app.getProject();
   const meta = p => W.ensure(p).workflow;
   let library = W.createLibrary(), libraryWritable = true, lastSaved = '', selectedProject = '', selectedRevision = '', profileSignature = '', rubricSignature = '', lastUnits = get().units, storedLibraryText = null, removedLibrary = null;
+  let comparisonOriginal = null, comparisonValues = {};
   try { const loaded = W.loadLibrary(localStorage); storedLibraryText = localStorage.getItem(W.storageKey); library = loaded.library; libraryWritable = loaded.ok; $('library-message').textContent = loaded.message; }
   catch (_) { libraryWritable = false; $('library-message').textContent = 'Browser saving is unavailable. Download your project or library to keep your work.'; }
   function attempt(action) { try { action(); } catch (error) { app.notify(error.message); } }
@@ -75,11 +76,51 @@
       state.stale ? 'The drawing changed. Measure the revised dimension again.' : ''], state.status); });
   }
   function renderResults(p) {
-    const m = meta(p); $('operation-summary').textContent = m.operation ? 'Planned operation: ' + m.operation.kind.replaceAll('-', ' ') + ' · tool ' + fmt(m.operation.toolDiameterMm / factor(p)) + ' ' + p.units + ' · depth ' + fmt(m.operation.depthMm / factor(p)) + ' ' + p.units + '. Edit the plan and generate its program in CNC practice.' : 'In CNC practice, choose an operation, review the tool and cutting values, generate a program, then capture its checks before returning here.';
+    const m = meta(p), f = factor(p), sequence = W.getSequence(p), goal = W.getComparison(p), lathe = p.machine === 'lathe';
+    $('comparison-mode').value = goal.mode; $('comparison-mode').disabled = lathe;
+    $('comparison-depth-field').hidden = lathe; $('comparison-depth').disabled = lathe;
+    $('comparison-depth').value = goal.depthMm === null ? '' : Number((goal.depthMm / f).toFixed(8));
+    $('comparison-depth').max = String(p.stock.depth / f);
+    $('comparison-tolerance').value = Number((goal.toleranceMm / f).toFixed(8));
+    comparisonOriginal = goal; comparisonValues = { depth: $('comparison-depth').value, tolerance: $('comparison-tolerance').value };
+    const goalState = W.comparisonState(p); $('comparison-adjusted').hidden = !goalState.adjusted; $('comparison-confirm').hidden = !goalState.adjusted; $('comparison-adjusted').textContent = goalState.message;
+    document.querySelectorAll('.comparison-unit').forEach(el => { el.textContent = p.units; });
+    $('comparison-goal-help').textContent = lathe
+      ? 'Compare the turned diameter along the shaft’s design length. Stock held in the chuck is outside this comparison.'
+      : goal.mode === 'pocket'
+        ? 'Remove material inside the outline to the target depth. Keep the surrounding stock and any islands inside holes in the drawing.'
+        : 'Keep the outlined shape at the stock surface and clear the surrounding material and holes to the target depth. A shallow depth makes a raised shape; the full stock depth makes a cut-out target. Tracing only the edge leaves extra material to clear.';
+    $('operation-summary').textContent = sequence.steps.length ? sequence.steps.length + ' ordered step' + (sequence.steps.length === 1 ? '' : 's') + ' on the same stock. Edit, reorder and simulate the complete sequence in CNC practice, then bring the comparison back here.' : 'In CNC practice, add the first operation, choose its tool and cutting values, then add any next steps. Simulate the complete sequence and capture the comparison before returning here.';
+    $('operation-sequence').replaceChildren();
+    sequence.steps.forEach(s => { const item = element('li'); item.append(element('strong', s.label), element('p', operationText(s.operation, p), 'help')); $('operation-sequence').append(item); });
+    $('operation-sequence').hidden = !sequence.steps.length;
     $('machine-results').replaceChildren();
-    m.results.slice().reverse().forEach(r => { const state = W.resultStatus(p, r); card($('machine-results'), (state.stale ? 'Earlier design · review required' : 'Current design') + ' · ' + r.kind, [r.summary, r.programLineCount + ' program lines · ' + (r.accepted ? 'Checks accepted' : 'Checks need review'),
+    m.results.slice().reverse().forEach(r => { const state = W.resultStatus(p, r); let container = $('machine-results');
+      if (state.stale) { const history = element('details', undefined, 'comparison-history'); history.append(element('summary', 'Earlier design · ' + r.kind + ' · review required')); container.append(history); container = history; }
+      const box = card(container, (state.stale ? 'Earlier design · review required' : 'Current design') + ' · ' + r.kind, [r.summary, (r.operationCount ? r.operationCount + ' operation' + (r.operationCount === 1 ? '' : 's') + ' · ' : '') + r.programLineCount + ' program lines · ' + (r.accepted ? 'Checks accepted' : 'Checks need review'),
       'Estimated removed volume: ' + fmt(r.removedVolumeMm3 / Math.pow(factor(p), 3)) + ' ' + p.units + '³',
-      ...r.diagnostics.map(d => d.level + ': ' + d.message), state.stale ? 'The geometry, setup or operation changed after this capture. Generate and check the current plan again.' : 'Captured ' + new Date(r.capturedAt).toLocaleString()], state.status); });
+      ...r.diagnostics.map(d => d.level + ': ' + d.message), state.stale ? 'The geometry, setup, sequence or comparison goal changed after this capture. Generate and check the current plan again.' : 'Captured ' + new Date(r.capturedAt).toLocaleString()], state.stale ? 'stale' : !r.accepted || r.comparison && r.comparison.status !== 'within-sample-tolerance' ? 'outside-tolerance' : 'current');
+      if (r.comparison) appendComparison(box, r.comparison, p, state.stale);
+      else box.append(element('p', 'No material-to-design comparison was captured with this record. Simulate the current sequence to add one.'));
+    });
+  }
+  function operationText(operation, p) {
+    const labels = { 'profile-out': 'Outside profile', 'profile-in': 'Inside profile', pocket: 'Pocket', 'clear-outside': 'Clear around the shape', drill: 'Drill', turn: 'Turn shaft' }, f = factor(p);
+    return (labels[operation.kind] || operation.kind) + ' · tool ' + fmt(operation.toolDiameterMm / f) + ' ' + p.units + ' · ' + (operation.kind === 'turn' ? 'length ' : 'depth ') + fmt(operation.depthMm / f) + ' ' + p.units;
+  }
+  function comparisonLabel(c) {
+    return { 'within-sample-tolerance': 'Sampled material matches the goal', 'needs-work': 'The part needs another look', 'resolution-limited': 'Sampling cannot confirm this result', unsupported: 'This goal cannot be compared', incomplete: 'Complete the simulation to compare' }[c.status] || c.status;
+  }
+  function appendComparison(target, c, p, stale) {
+    const section = element('section', undefined, 'comparison-evidence'), f = factor(p), metrics = c.metrics;
+    section.append(element('h4', comparisonLabel(c)));
+    if (stale) section.append(element('p', 'This map belongs to the goal at the time of capture. It does not assess the current drawing.', 'help'));
+    section.append(element('p', (c.mode === 'pocket' ? 'Pocket target' : 'Retained shape target') + (c.depthMm === null ? '' : ' · depth ' + fmt(c.depthMm / f) + ' ' + p.units) + ' · tolerance ' + fmt(c.toleranceMm / f) + ' ' + p.units));
+    if (metrics.sampleCount) section.append(element('p', 'Largest sampled extra material: ' + fmt(metrics.maxExcessMm / f) + ' ' + p.units + ' · largest sampled overcut: ' + fmt(metrics.maxUndercutMm / f) + ' ' + p.units + (c.machine === 'lathe' ? ' (diameter differences)' : ' (depth differences)')));
+    if (window.AccessDesignComparison && c.overlay) { const figure = element('figure', undefined, 'comparison-figure'); figure.innerHTML = window.AccessDesignComparison.renderSVG(c, p.units); figure.append(element('figcaption', c.machine === 'mill' ? 'Red: overcut. Blue: extra material. Purple: both in one map cell. Grey: within the sampled tolerance.' : 'Blue: simulated diameter. Dashed line: design diameter. Above the line is extra material; below it is overcut.')); section.append(figure); }
+    c.observations.forEach(line => section.append(element('p', line)));
+    if (c.limitations.length) { const details = element('details'); details.append(element('summary', 'What this comparison can tell you')); c.limitations.forEach(line => details.append(element('p', line))); section.append(details); }
+    target.append(section);
   }
   function renderAssessment(p) {
     const m = meta(p), a = W.assessment(p); $('assessment-summary').replaceChildren();
@@ -118,10 +159,14 @@
     const target = $('print-summary'), m = meta(p), heading = text => target.append(element('h3', text)), para = text => target.append(element('p', text));
     if (m.checkpoints.length) { heading('Numeracy comparisons'); m.checkpoints.forEach(c => para(c.label + ': estimate ' + c.estimate + ', calculated ' + c.actual + ' ' + c.unit + ' · ' + W.checkpointStatus(p, c).status + '. ' + c.working)); }
     if (m.inspections.length) { heading('Inspection'); m.inspections.forEach(i => para(i.label + ': target ' + fmt(i.nominalMm) + ' mm, measured ' + (i.measuredMm === null ? 'pending' : fmt(i.measuredMm) + ' mm') + ' · ' + W.inspectionStatus(p, i).status + '. ' + i.instrument)); }
-    if (m.results.length) { heading('CNC learning evidence'); m.results.forEach(r => para(W.resultStatus(p, r).status + ': ' + r.summary + ' · ' + (r.accepted ? 'checks accepted' : 'review required'))); }
+    const sequence = W.getSequence(p);
+    if (sequence.steps.length) { heading('Machining sequence'); sequence.steps.forEach((s, i) => para((i + 1) + '. ' + s.label + ': ' + operationText(s.operation, p))); }
+    if (m.results.length) { heading('CNC learning evidence'); m.results.forEach(r => { const state = W.resultStatus(p, r); para(state.status + ': ' + r.summary + ' · ' + (r.accepted ? 'checks accepted' : 'review required')); if (r.comparison) appendComparison(target, r.comparison, p, state.stale); }); }
     if (m.assignment) { heading('Assignment: ' + m.assignment.title); W.assessment(p).criteria.forEach(c => para(c.title + ': ' + (c.score === null ? 'not reviewed' : c.score + '/' + c.maxScore) + ' ' + c.comment)); }
   }
   $('workflow-mode').onchange = e => mutate(p => { p = W.ensure(p); p.workflow.mode = e.target.value; return p; });
+  ['comparison-mode', 'comparison-depth', 'comparison-tolerance'].forEach(id => { $(id).onchange = () => { mutate(p => { const value = (field, key) => $('comparison-' + field).value === comparisonValues[field] ? comparisonOriginal[key] : $('comparison-' + field).valueAsNumber * factor(p); return W.setComparison(p, { mode: p.machine === 'lathe' ? 'retained-solid' : $('comparison-mode').value, depthMm: p.machine === 'lathe' ? null : value('depth', 'depthMm'), toleranceMm: value('tolerance', 'toleranceMm') }); }); renderResults(get()); }; });
+  $('comparison-confirm').onclick = () => mutate(p => W.setComparison(p, W.getComparison(p)));
   $('shape-choice').onchange = e => mutate(p => { const starter = D.create(e.target.value); p.geometry = starter.geometry; p.machine = starter.machine; return p; });
   $('profile-apply').onclick = () => mutate(p => { const rings = $('profile-points').value.trim().split(/\n\s*\n/).map(group => group.split(/\n/).map(line => { const parts = line.trim().split(/\s*,\s*/); if (parts.length !== 2 || parts.some(x => x.trim() === '')) throw Error('Each outline point needs two numbers: X, Y.'); return parts.map(Number); })); p.geometry = D.fromProfile({ rings, units: p.units, title: p.title }).geometry; return p; });
   function transformProfile(map) { mutate(p => { if (p.geometry.shapeId !== 'profile') throw Error('Open a measured outline first.'); p.geometry = D.fromProfile({ rings: p.geometry.rings.map(r => r.map(map)), units: 'mm', title: p.title }).geometry; return p; }); }

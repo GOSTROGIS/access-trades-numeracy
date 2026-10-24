@@ -5113,6 +5113,27 @@ const Scene3D = (() => {
     M.stock.refresh();
   }
 
+  /* Detached measurements of the stock actually changed by playback. These arrays
+     are never reconstructed from a toolpath, expected geometry or removed volume. */
+  function materialSnapshot(meta) {
+    if (!M || !M.stock) throw Error('There is no simulated stock to measure.');
+    const s = M.stock, mm = 25.4;
+    const copy = values => Array.from(values, n => Number(n) * mm);
+    const common = {format:'access-simulated-material',version:1,source:'scene-stock',units:'mm',machine:M.type,
+      complete:!!meta.complete,alarm:meta.alarm || null,program:String(meta.program || '')};
+    if (M.type === 'mill') {
+      if (!Number.isInteger(s.nx) || !Number.isInteger(s.ny) || s.nx*s.ny > 100000) throw Error('The simulated stock exceeds the material snapshot limit.');
+      return Object.assign(common,{stock:{widthMm:s.sx*mm,heightMm:s.sy*mm,depthMm:s.sz*mm},
+        data:{kind:'heightfield',nx:s.nx,ny:s.ny,dxMm:s.dx*mm,dyMm:s.dy*mm,topMm:copy(s.h),bottomMm:copy(s.b)}});
+    }
+    if (M.type === 'lathe') {
+      if (!Number.isInteger(s.n) || s.n > 100000) throw Error('The simulated stock exceeds the material snapshot limit.');
+      return Object.assign(common,{stock:{diameterMm:s.R*2*mm,lengthMm:M.setup.stock.stickout*mm},
+        data:{kind:'radial-profile',z0Mm:s.z0*mm,dzMm:s.dz*mm,frontZMm:M.setup.stock.stickout*mm,radiiMm:copy(s.r),detachedParts:s.parts.length}});
+    }
+    throw Error('This simulator does not expose measurable stock for this machine.');
+  }
+
   /* Exact-resolution, detached stock check for manual program previews. */
   function validateMaterialPath(ctx) {
     const isMill = ctx.machine === 'mill', s = ctx.setup.stock;
@@ -5168,7 +5189,7 @@ const Scene3D = (() => {
     return { diagnostics, removedVolumeIn3:Math.max(0, initialVolume-volume()-separatedVolume), volumeApproximate:true };
   }
 
-  return { captureManualScene, restoreManualScene, validateMaterialPath, init, buildMill, buildLathe, highlight, setTool, setPath, setPathProgress, setPose, setCoolant, view, render, setDoors, setPathVisible, get M() { return M; } };
+  return { captureManualScene, restoreManualScene, materialSnapshot, validateMaterialPath, init, buildMill, buildLathe, highlight, setTool, setPath, setPathProgress, setPose, setCoolant, view, render, setDoors, setPathVisible, get M() { return M; } };
 })();
 
 /* ===================================================================
@@ -6080,7 +6101,7 @@ const Scene3D = (() => {
     const snapshot = window.Trainer.trainingSnapshot(), frame = S.wcsCtl[54];
     const workPositionInches = S.machine === 'mill' ? {x:snapshot.position.x,y:snapshot.position.y,z:snapshot.position.z}
       : {x:S.pos.x-frame.x,z:S.pos.z-frame.z,radius:(S.pos.x-frame.x)/2};
-    return Object.assign(verified.public,{snapshot,workPositionInches,sceneReused:!!reusable,spindleRpm:S.rpm,coolant:S.coolant});
+    return Object.assign(verified.public,{snapshot,materialSnapshot:window.Trainer.simulatedMaterial(),workPositionInches,sceneReused:!!reusable,spindleRpm:S.rpm,coolant:S.coolant});
     } catch (error) {
       const current=LIB.findIndex(p=>p.key===manualProgramKey);
       if(oldEntry) LIB[current]=oldEntry; else if(current>=0) LIB.splice(current,1);
@@ -6102,6 +6123,7 @@ const Scene3D = (() => {
     validateManual: project => checkManual(project).public,
     previewManual,
     replayManual: previewManual,
+    simulatedMaterial: () => Scene3D.materialSnapshot({complete:S.finished&&!S.alarm,alarm:S.alarm,program:S.progKey}),
 
     loadTrainingProject(e) {
       if (!e || !/^CNC-\d{3}$/.test(e.id) || !['mill','lathe'].includes(e.machine) || !e.tools || !e.stock || typeof e.text !== 'string') throw Error('Invalid training project');
@@ -6725,6 +6747,7 @@ const Scene3D = (() => {
 <script src="../design/design-model.js"></script>
 <script src="../../source/canvas/src/vendor/shapes-engine.js"></script>
 <script src="design-cam.js"></script>
+<script src="design-comparison.js"></script>
 <script src="design-bridge.js"></script>
 </body>
 </html>

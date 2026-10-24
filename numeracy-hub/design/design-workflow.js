@@ -10,19 +10,19 @@
 })(typeof globalThis !== 'undefined' ? globalThis : this, function (root) {
   'use strict';
   var KEY = 'access-design-library-v1', MAX_PROJECTS = 20, MAX_REVISIONS = 12, MAX_BYTES = 4 * 1024 * 1024;
-  var META_KEYS = ['version', 'revision', 'mode', 'checkpoints', 'inspections', 'assignment', 'reviews', 'operation', 'results'];
+  var META_KEYS = ['version', 'revision', 'mode', 'checkpoints', 'inspections', 'assignment', 'reviews', 'operation', 'results', 'sequence', 'comparison'];
   var OP_KEYS = ['kind', 'toolDiameterMm', 'depthMm', 'stepDownMm', 'feedMmPerMin', 'spindleRpm'];
-  var RESULT_KEYS = ['id', 'kind', 'capturedAt', 'sourceFingerprint', 'operationKind', 'programNumber', 'programLineCount', 'actionCount', 'accepted', 'removedVolumeMm3', 'diagnostics', 'summary'];
+  var RESULT_KEYS = ['id', 'kind', 'capturedAt', 'sourceFingerprint', 'operationKind', 'programNumber', 'programLineCount', 'actionCount', 'accepted', 'removedVolumeMm3', 'diagnostics', 'summary', 'operationCount', 'comparison'];
   var INSPECTION_KEYS = ['id', 'key', 'label', 'nominalMm', 'measuredMm', 'toleranceMinusMm', 'tolerancePlusMm', 'resolutionMm', 'instrument', 'notes', 'sourceFingerprint', 'recordedAt'];
   function fail(message) { throw Error(message); }
   function own(o, k) { return Object.prototype.hasOwnProperty.call(o, k); }
-  function record(o, keys, label) {
+  function record(o, keys, label, optional) {
     if (!o || typeof o !== 'object' || Array.isArray(o) || ![Object.prototype, null].includes(Object.getPrototypeOf(o))) fail(label + ' must be a plain object.');
     Reflect.ownKeys(o).forEach(function (k) {
       var d = Object.getOwnPropertyDescriptor(o, k);
       if (typeof k !== 'string' || !keys.includes(k) || !d.enumerable || !own(d, 'value')) fail('Unexpected field in ' + label + ': ' + String(k));
     });
-    keys.forEach(function (k) { if (!own(o, k)) fail('Missing ' + label + '.' + k); });
+    keys.forEach(function (k) { if (!own(o, k) && !(optional || []).includes(k)) fail('Missing ' + label + '.' + k); });
     return o;
   }
   function str(v, max, label, required) {
@@ -52,11 +52,65 @@
   function validateOperation(o) {
     if (o === null) return null;
     record(o, OP_KEYS, 'operation');
-    var result = { kind: choice(o.kind, ['profile-out', 'profile-in', 'pocket', 'drill', 'turn'], 'operation kind') };
+    var result = { kind: choice(o.kind, ['profile-out', 'profile-in', 'pocket', 'drill', 'turn', 'clear-outside'], 'operation kind') };
     ['toolDiameterMm', 'depthMm', 'stepDownMm', 'feedMmPerMin'].forEach(function (k) { result[k] = number(o[k], 0.000001, 1000000, k); });
     result.spindleRpm = number(o.spindleRpm, 1, 100000, 'spindle RPM', true);
     if (result.stepDownMm > result.depthMm) fail('Step down must not exceed the total depth.');
     return result;
+  }
+  function validateSequence(s) {
+    record(s, ['version', 'steps'], 'sequence');
+    if (s.version !== 1) fail('Unsupported machining sequence version.');
+    return { version: 1, steps: list(s.steps, 12, function (step) {
+      record(step, ['id', 'label', 'operation'], 'sequence step');
+      var operation = validateOperation(step.operation);
+      if (!operation) fail('Each sequence step needs an operation.');
+      return { id: str(step.id, 100, 'sequence step ID', true), label: str(step.label, 160, 'sequence step label', true), operation: operation };
+    }, 'sequence steps') };
+  }
+  function validateComparison(c) {
+    record(c, ['mode', 'depthMm', 'toleranceMm'], 'comparison settings');
+    return { mode: choice(c.mode, ['retained-solid', 'pocket'], 'comparison target mode'), depthMm: nullableNumber(c.depthMm, 0.000001, 1000000, 'comparison depth'), toleranceMm: number(c.toleranceMm, 0, 1000000, 'comparison tolerance') };
+  }
+  function validateComparisonResult(c) {
+    record(c, ['version', 'machine', 'mode', 'depthMm', 'toleranceMm', 'resolutionMm', 'status', 'metrics', 'observations', 'limitations', 'overlay'], 'comparison result');
+    if (c.version !== 1) fail('Unsupported comparison result version.');
+    var settings = validateComparison({ mode: c.mode, depthMm: c.depthMm, toleranceMm: c.toleranceMm });
+    var status = choice(c.status, ['within-sample-tolerance', 'needs-work', 'resolution-limited', 'unsupported', 'incomplete'], 'comparison status');
+    var machine = choice(c.machine, ['mill', 'lathe'], 'comparison machine');
+    if (machine === 'lathe' && (settings.mode !== 'retained-solid' || settings.depthMm !== null)) fail('Lathe comparison needs the retained-solid target and no milling depth.');
+    if (machine === 'mill' && settings.depthMm === null) fail('Mill comparison needs an explicit target depth.');
+    var metricKeys = ['sampleCount', 'desiredVolumeMm3', 'actualVolumeMm3', 'missingVolumeMm3', 'excessVolumeMm3', 'maxUndercutMm', 'maxExcessMm', 'mismatchedPercent'];
+    record(c.metrics, metricKeys, 'comparison metrics');
+    var metrics = { sampleCount: number(c.metrics.sampleCount, 0, 10000000, 'comparison samples', true) };
+    ['desiredVolumeMm3', 'actualVolumeMm3', 'missingVolumeMm3', 'excessVolumeMm3'].forEach(function (key) { metrics[key] = number(c.metrics[key], 0, 1e18, key); });
+    ['maxUndercutMm', 'maxExcessMm'].forEach(function (key) { metrics[key] = number(c.metrics[key], 0, 1000000, key); });
+    metrics.mismatchedPercent = number(c.metrics.mismatchedPercent, 0, 100, 'mismatched sample percentage');
+    var overlay = null;
+    if (c.overlay !== null) {
+      if (c.overlay && c.overlay.kind === 'mill-map') {
+        record(c.overlay, ['kind', 'columns', 'rows', 'widthMm', 'heightMm', 'cells'], 'comparison map');
+        var columns = number(c.overlay.columns, 1, 48, 'map columns', true), rows = number(c.overlay.rows, 1, 48, 'map rows', true);
+        var cells = str(c.overlay.cells, 2304, 'map cells', true);
+        if (machine !== 'mill' || cells.length !== columns * rows || /[^0-3]/.test(cells)) fail('Comparison map cells do not match its dimensions or machine.');
+        overlay = { kind: 'mill-map', columns: columns, rows: rows, widthMm: number(c.overlay.widthMm, 0.000001, 1000000, 'map width'), heightMm: number(c.overlay.heightMm, 0.000001, 1000000, 'map height'), cells: cells };
+      } else if (c.overlay && c.overlay.kind === 'lathe-chart') {
+        record(c.overlay, ['kind', 'lengthMm', 'targetDiameterMm', 'samples'], 'comparison chart');
+        if (machine !== 'lathe') fail('A lathe chart cannot describe a mill comparison.');
+        var length = number(c.overlay.lengthMm, 0.000001, 1000000, 'chart length'), lastZ = -1;
+        var samples = list(c.overlay.samples, 192, function (sample) {
+          record(sample, ['zMm', 'diameterMm'], 'chart sample');
+          var z = number(sample.zMm, 0, length, 'sample position');
+          if (z < lastZ) fail('Lathe chart samples must be ordered along the part.'); lastZ = z;
+          return { zMm: z, diameterMm: number(sample.diameterMm, 0, 1000000, 'sample diameter') };
+        }, 'chart samples');
+        overlay = { kind: 'lathe-chart', lengthMm: length, targetDiameterMm: number(c.overlay.targetDiameterMm, 0.000001, 1000000, 'target diameter'), samples: samples };
+      } else fail('Unsupported comparison overlay.');
+    }
+    return { version: 1, machine: machine, mode: settings.mode, depthMm: settings.depthMm, toleranceMm: settings.toleranceMm,
+      resolutionMm: number(c.resolutionMm, ['unsupported', 'incomplete'].includes(status) ? 0 : 0.000001, 1000000, 'comparison resolution'), status: status, metrics: metrics,
+      observations: list(c.observations, 8, function (v) { return str(v, 600, 'comparison observation', true); }, 'comparison observations'),
+      limitations: list(c.limitations, 8, function (v) { return str(v, 600, 'comparison limitation', true); }, 'comparison limitations'), overlay: overlay };
   }
   function validateCheckpoint(c) {
     record(c, ['id', 'label', 'unit', 'estimate', 'actual', 'tolerance', 'working', 'sourceFingerprint'], 'checkpoint');
@@ -73,14 +127,17 @@
       sourceFingerprint: str(i.sourceFingerprint, 100, 'inspection fingerprint', true), recordedAt: date(i.recordedAt, 'inspection date') };
   }
   function validateResult(r) {
-    record(r, RESULT_KEYS, 'result');
+    record(r, RESULT_KEYS, 'result', ['operationCount', 'comparison']);
     if (typeof r.accepted !== 'boolean') fail('Result accepted must be true or false.');
-    return { id: str(r.id, 100, 'result ID', true), kind: choice(r.kind, ['simulation', 'check', 'inspection'], 'result kind'), capturedAt: date(r.capturedAt, 'result date'),
-      sourceFingerprint: str(r.sourceFingerprint, 100, 'result fingerprint', true), operationKind: choice(r.operationKind, ['', 'profile-out', 'profile-in', 'pocket', 'drill', 'turn'], 'result operation'),
+    var result = { id: str(r.id, 100, 'result ID', true), kind: choice(r.kind, ['simulation', 'check', 'inspection'], 'result kind'), capturedAt: date(r.capturedAt, 'result date'),
+      sourceFingerprint: str(r.sourceFingerprint, 100, 'result fingerprint', true), operationKind: choice(r.operationKind, ['', 'profile-out', 'profile-in', 'pocket', 'drill', 'turn', 'clear-outside', 'sequence'], 'result operation'),
       programNumber: number(r.programNumber, 0, 99999, 'program number', true), programLineCount: number(r.programLineCount, 0, 1000000, 'program lines', true),
       actionCount: number(r.actionCount, 0, 1000000, 'action count', true), accepted: r.accepted, removedVolumeMm3: number(r.removedVolumeMm3, 0, 1e18, 'removed volume'),
       diagnostics: list(r.diagnostics, 100, function (d) { record(d, ['level', 'message'], 'diagnostic'); return { level: choice(d.level, ['info', 'warning', 'error'], 'diagnostic level'), message: str(d.message, 1000, 'diagnostic message', true) }; }, 'diagnostics'),
       summary: str(r.summary, 4000, 'result summary') };
+    if (own(r, 'operationCount')) result.operationCount = number(r.operationCount, 0, 12, 'captured operation count', true);
+    if (own(r, 'comparison')) result.comparison = validateComparisonResult(r.comparison);
+    return result;
   }
   function validateAssignment(a) {
     record(a, ['format', 'version', 'id', 'title', 'brief', 'starter', 'criteria', 'requirements', 'reflectionPrompts', 'teacherNotes'], 'assignment');
@@ -95,7 +152,7 @@
     return out;
   }
   function validateMetadata(m) {
-    record(m, META_KEYS, 'workflow');
+    record(m, META_KEYS, 'workflow', ['sequence', 'comparison']);
     if (m.version !== 1) fail('Unsupported workflow version.');
     var assignment = m.assignment === null ? null : validateAssignment(m.assignment);
     var reviews = list(m.reviews, 20, function (r) {
@@ -108,6 +165,8 @@
     var clean = { version: 1, revision: number(m.revision, 1, 1000000000, 'revision', true), mode: choice(m.mode, ['guided', 'advanced'], 'workflow mode'),
       checkpoints: list(m.checkpoints, 30, validateCheckpoint, 'checkpoints'), inspections: list(m.inspections, 50, validateInspection, 'inspections'), assignment: assignment,
       reviews: reviews, operation: validateOperation(m.operation), results: list(m.results, 20, validateResult, 'results') };
+    if (own(m, 'sequence')) clean.sequence = validateSequence(m.sequence);
+    if (own(m, 'comparison')) clean.comparison = validateComparison(m.comparison);
     if (bytes(JSON.stringify(clean)) > 256 * 1024) fail('Learning records exceed 256 KB. Export the submission and remove older records before adding more.');
     return clean;
   }
@@ -117,8 +176,15 @@
     if (value && typeof value === 'object') return '{' + Object.keys(value).sort().map(function (k) { return JSON.stringify(k) + ':' + stable(value[k]); }).join(',') + '}';
     return JSON.stringify(value);
   }
-  function hash(value) { var s = stable(value), h = 2166136261; for (var i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 16777619); } return 'design-v1-' + (h >>> 0).toString(16).padStart(8, '0'); }
-  function fingerprint(raw) { var p = project(raw); return hash({ id: p.id, geometry: p.geometry, stock: p.stock, placement: p.placement, units: p.units, machine: p.machine, operation: metadata(p).operation }); }
+  function hash(value, prefix) { var s = stable(value), h = 2166136261; for (var i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 16777619); } return (prefix || 'design-v1-') + (h >>> 0).toString(16).padStart(8, '0'); }
+  function fingerprint(raw) {
+    var p = project(raw), m = metadata(p), value = { id: p.id, geometry: p.geometry, stock: p.stock, placement: p.placement, units: p.units, machine: p.machine, operation: m.operation };
+    // Preserve exact old fingerprints until a project opts into the new contract.
+    if (own(m, 'sequence')) value.sequence = m.sequence;
+    if (own(m, 'comparison')) value.comparison = m.comparison;
+    if (own(m, 'sequence') || own(m, 'comparison')) return hash(value, 'design-v2-');
+    return hash(value);
+  }
   function geometryFingerprint(raw) { var p = project(raw); return hash({ id: p.id, geometry: p.geometry }); }
   function withMetadata(raw) { var p = project(raw); p.workflow = metadata(p); return p; }
   function syncMetadata(raw, previous) {
@@ -129,14 +195,59 @@
     }
     return project(p);
   }
-  function resultStatus(raw, result) { var r = validateResult(result), stale = r.sourceFingerprint !== fingerprint(raw); return { stale: stale, status: stale ? 'stale' : 'current' }; }
-  function setOperation(raw, operation) { var p = withMetadata(raw); p.workflow.operation = validateOperation(operation); return syncMetadata(p, raw); }
+  function resultStatus(raw, result) {
+    var r = validateResult(result), stale = r.sourceFingerprint !== fingerprint(raw);
+    // Older files can omit explicit goal settings. Compare the captured goal as well
+    // so a changed default cannot make old comparison evidence look current.
+    if (r.comparison) {
+      var p = project(raw), expected = getComparison(p), c = r.comparison;
+      if (c.machine !== p.machine || c.mode !== expected.mode || c.depthMm !== expected.depthMm || c.toleranceMm !== expected.toleranceMm) stale = true;
+    }
+    return { stale: stale, status: stale ? 'stale' : 'current' };
+  }
+  function setOperation(raw, operation) { var p = withMetadata(raw); p.workflow.operation = validateOperation(operation); delete p.workflow.sequence; return syncMetadata(p, raw); }
+  function getSequence(raw) {
+    var p = withMetadata(raw), m = p.workflow;
+    return own(m, 'sequence') ? clone(m.sequence) : { version: 1, steps: m.operation ? [{ id: 'legacy-operation', label: m.operation.kind.replace(/-/g, ' '), operation: clone(m.operation) }] : [] };
+  }
+  function setSequence(raw, input) {
+    var p = withMetadata(raw), sequence = validateSequence(input);
+    p.workflow.sequence = sequence;
+    // The list is authoritative; this mirror only supports older summary readers.
+    p.workflow.operation = sequence.steps.length ? clone(sequence.steps[0].operation) : null;
+    return syncMetadata(p, raw);
+  }
+  function comparisonState(raw) {
+    var p = withMetadata(raw), present = own(p.workflow, 'comparison');
+    var settings = present ? clone(p.workflow.comparison) : { mode: p.machine === 'mill' ? 'pocket' : 'retained-solid', depthMm: p.machine === 'mill' ? Math.min(2, p.stock.depth * .2) : null, toleranceMm: 0.1 };
+    var adjusted = false;
+    // Editing the stock or switching machines must remain possible with old evidence.
+    // Resolve a safe current target without rewriting the historic explicit settings.
+    if (p.machine === 'lathe' && (settings.mode !== 'retained-solid' || settings.depthMm !== null)) { settings.mode = 'retained-solid'; settings.depthMm = null; adjusted = true; }
+    if (p.machine === 'mill' && (settings.depthMm === null || settings.depthMm > p.stock.depth)) { settings.depthMm = p.stock.depth; adjusted = true; }
+    return { settings: settings, adjusted: adjusted, message: adjusted ? 'The machine or stock changed. Review and save the comparison target shown for this setup.' : '' };
+  }
+  function getComparison(raw) { return comparisonState(raw).settings; }
+  function setComparison(raw, input) {
+    var p = withMetadata(raw), comparison = validateComparison(input);
+    if (p.machine === 'lathe' && (comparison.mode !== 'retained-solid' || comparison.depthMm !== null)) fail('A cylinder comparison uses its retained diameter and length, with no milling depth.');
+    if (p.machine === 'mill' && (comparison.depthMm === null || comparison.depthMm > p.stock.depth)) fail('Choose a comparison depth greater than zero and no larger than the stock depth.');
+    p.workflow.comparison = comparison;
+    return syncMetadata(p, raw);
+  }
   function recordResult(raw, input) {
     var p = withMetadata(raw), src = input || {};
-    var r = validateResult({ id: src.id || id('result'), kind: src.kind || 'simulation', capturedAt: src.capturedAt || now(), sourceFingerprint: fingerprint(p),
+    var data = { id: src.id || id('result'), kind: src.kind || 'simulation', capturedAt: src.capturedAt || now(), sourceFingerprint: fingerprint(p),
       operationKind: src.operationKind || '', programNumber: src.programNumber === undefined ? 0 : src.programNumber, programLineCount: src.programLineCount === undefined ? 0 : src.programLineCount,
       actionCount: src.actionCount === undefined ? 0 : src.actionCount, accepted: src.accepted === true, removedVolumeMm3: src.removedVolumeMm3 === undefined ? 0 : src.removedVolumeMm3,
-      diagnostics: src.diagnostics || [], summary: src.summary || '' });
+      diagnostics: src.diagnostics || [], summary: src.summary || '' };
+    if (src.operationCount !== undefined) data.operationCount = src.operationCount;
+    if (src.comparison !== undefined) {
+      var comparison = validateComparisonResult(src.comparison), expected = getComparison(p);
+      if (comparison.machine !== p.machine || comparison.mode !== expected.mode || comparison.depthMm !== expected.depthMm || comparison.toleranceMm !== expected.toleranceMm) fail('Comparison evidence must match the current target settings and machine.');
+      data.comparison = comparison;
+    }
+    var r = validateResult(data);
     p.workflow.results = p.workflow.results.filter(function (v) { return v.id !== r.id; }).concat([r]).slice(-20);
     return syncMetadata(p, raw);
   }
@@ -260,7 +371,9 @@
   function restoreRevision(raw, projectId, n, at) { var lib = validateLibrary(raw), e = lib.entries.find(function (x) { return x.id === projectId; }), r = e && e.revisions.find(function (x) { return x.number === n; }); if (!r) fail('That revision is not available.'); return upsert(lib, r.project, 'Saved edit', at); }
   function removeRevision(raw, projectId, n) { var lib = validateLibrary(raw), e = lib.entries.find(function (x) { return x.id === projectId; }); if (!e || !e.revisions.some(function (r) { return r.number === n; })) fail('That revision is not available.'); e.revisions = e.revisions.filter(function (r) { return r.number !== n; }); return lib; }
   function remove(raw, projectId) { var lib = validateLibrary(raw); if (!lib.entries.some(function (e) { return e.id === projectId; })) fail('That project is not in this library.'); lib.entries = lib.entries.filter(function (e) { return e.id !== projectId; }); if (lib.activeId === projectId) lib.activeId = lib.entries.length ? lib.entries[lib.entries.length - 1].id : null; return lib; }
-  function exportLibrary(raw) { return JSON.stringify(validateLibrary(raw), null, 2); }
+  // Use the same compact representation as the validated storage budget. Pretty
+  // printing can push a valid near-limit backup over the importer's 4 MiB limit.
+  function exportLibrary(raw) { return JSON.stringify(validateLibrary(raw)); }
   function importLibrary(text) { return validateLibrary(parse(text, MAX_BYTES)); }
   function mergeLibrary(current, incoming) {
     var lib = validateLibrary(current), source = validateLibrary(incoming), imported = 0, copied = 0, skipped = 0, importedActive = null;
@@ -289,7 +402,8 @@
     try { var text = storage.getItem(KEY); if (!text) return { ok: true, library: createLibrary(), message: '' }; return { ok: true, library: importLibrary(text), message: '' }; }
     catch (_) { return { ok: false, library: createLibrary(), message: 'The saved library is unavailable or damaged. Its stored record was left unchanged; open a downloaded library to recover your work.' }; }
   }
-  return Object.freeze({ storageKey: KEY, limits: { projects: MAX_PROJECTS, revisions: MAX_REVISIONS, bytes: MAX_BYTES }, defaultMetadata: defaults, validateMetadata: validateMetadata, validateOperation: validateOperation,
+  return Object.freeze({ storageKey: KEY, limits: { projects: MAX_PROJECTS, revisions: MAX_REVISIONS, bytes: MAX_BYTES }, defaultMetadata: defaults, validateMetadata: validateMetadata, validateOperation: validateOperation, validateSequence: validateSequence, getSequence: getSequence, sequence: getSequence, setSequence: setSequence,
+    validateComparison: validateComparison, validateComparisonResult: validateComparisonResult, getComparison: getComparison, comparisonState: comparisonState, setComparison: setComparison,
     fingerprint: fingerprint, geometryFingerprint: geometryFingerprint, syncMetadata: syncMetadata, withMetadata: withMetadata, ensure: withMetadata, setOperation: setOperation, recordResult: recordResult, resultStatus: resultStatus,
     addCheckpoint: addCheckpoint, checkpointStatus: checkpointStatus, dimension: dimension, inspect: inspect, inspectionStatus: inspectionStatus,
     createAssignment: createAssignment, validateAssignment: validateAssignment, assignmentJSON: assignmentJSON, importAssignment: importAssignment, assign: assign, review: review, assessment: assessment, submission: submission,

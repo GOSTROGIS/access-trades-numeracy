@@ -92,11 +92,11 @@ const CAM = (() => {
       'G20 G17 G40 G49 G80 G90 G94');
 
     const geo = segs => segs.map(s => translateSeg(s, progShift));
-    let curTool = null;
+    let curTool = null, currentCutting = job.cutting, currentStep = null;
     function toolOn(tn, at) {
       const t = tools[tn]; if (!t) { W.push('T' + tn + ' is not in the tool library.'); return null; }
       used.add(tn);
-      const sp = job.cutting || speeds(t, mat, job.maxRpm);
+      const sp = currentCutting || speeds(t, mat, job.maxRpm);
       if (curTool !== tn) {
         if (curTool !== null) toolOff();
         L.push('(' + t.name.toUpperCase().replace(/[()]/g, '') + ')', 'T' + tn + ' M06', 'G00 G90 G54 X' + f(at.x) + ' Y' + f(at.y), 'S' + sp.rpm + ' M03', 'G43 H' + String(tn).padStart(2, '0') + ' Z' + f(clear + 0.9) + ' M08', 'Z' + f(clear));
@@ -284,6 +284,12 @@ const CAM = (() => {
 
     job.ops.forEach(op => {
       const layer = job.layers[op.layer]; if (!layer || op.op === 'none') return;
+      if (op.stepId !== undefined && op.stepId !== currentStep) {
+        if (curTool !== null) toolOff();
+        L.push('(' + String(op.stepLabel || op.stepId).replace(/[^\x20-\x7e]|[()%]/g, ' ') + ')');
+        currentStep = op.stepId;
+      }
+      currentCutting = op.cutting || job.cutting;
       const closed = layer.contours.filter(c => c.closed);
       const label = (op.op === 'profile-out' ? 'OUTSIDE PROFILE ' : 'INSIDE PROFILE ') + op.layer.toUpperCase();
       if (op.op === 'profile-out' || op.op === 'profile-in') {
@@ -351,10 +357,12 @@ const CAM = (() => {
       '(BAR ' + f(stockDia) + ' DIA. Z0 = FINISHED FACE. X = DIAMETER)', '(MATERIAL: ' + mat.label.toUpperCase() + '. FEEDS AND SPEEDS ARE TRAINING VALUES)',
       'G18 G20 G40 G54 G80 G99', 'G28 U0. W0.', 'G50 S' + job.maxRpm);
     const tc = n => 'T' + String(n).padStart(2, '0') + String(n).padStart(2, '0');
+    const profileStart = job.profileStart || 100, profileEnd = job.profileEnd || 200;
+    const profileRange = 'P' + profileStart + ' Q' + profileEnd;
     const nm = n => '(' + (tools[n] ? tools[n].name.toUpperCase().replace(/[()]/g, '') : 'T' + n) + ')';
     if (job.face && tools[job.rough]) L.push('(FACE)', nm(job.rough), tc(job.rough), spindle('rough') + ' M03', 'G00 X' + clr + ' Z0.1 M08', 'G01 Z0. F' + mat.finish[1], 'X-0.062', 'G00 Z0.1', 'X' + clr, 'G28 U0. W0.', 'M01');
     const s0 = CAD.start(segs[0]);
-    const prof = ['N100 G00 X' + f(X(s0.y)), 'G01 Z' + f(Z(s0.x)) + ' F' + mat.finish[1]];
+    const prof = ['N' + profileStart + ' G00 X' + f(X(s0.y)), 'G01 Z' + f(Z(s0.x)) + ' F' + mat.finish[1]];
     if (!grooves.length) {
       segs.forEach(s => {
         const e = CAD.end(s);
@@ -366,17 +374,17 @@ const CAM = (() => {
       // G71/G70 follow the outside envelope. The grooves are cut afterwards with the grooving tool.
       rdp(hull, 0.0005).slice(1).forEach(p => prof.push('X' + f(X(p.y)) + ' Z' + f(Z(p.x))));
     }
-    prof.push('N200 G01 X' + clr);
+    prof.push('N' + profileEnd + ' G01 X' + clr);
     if (tools[job.rough]) {
       L.push('(ROUGH WITH G71)', nm(job.rough), tc(job.rough), spindle('rough') + ' M03', 'G00 X' + clr + ' Z0.1 M08');
-      if (two) L.push('G71 U' + roughDepth + ' R0.02', 'G71 P100 Q200 U0.02 W0.005 F' + mat.rough[1]);
-      else L.push('G71 P100 Q200 U0.02 W0.005 D' + roughDepth + ' F' + mat.rough[1]);
+      if (two) L.push('G71 U' + roughDepth + ' R0.02', 'G71 ' + profileRange + ' U0.02 W0.005 F' + mat.rough[1]);
+      else L.push('G71 ' + profileRange + ' U0.02 W0.005 D' + roughDepth + ' F' + mat.rough[1]);
       prof.forEach(x => L.push(x));
       L.push('G00 X' + clr + ' Z0.1', 'G28 U0. W0.', 'M01');
     }
     if (tools[job.finish]) {
       if (!tools[job.rough]) prof.forEach(x => L.push(x));
-      L.push('(FINISH WITH G70)', nm(job.finish), tc(job.finish), spindle('finish') + ' M03', 'G00 X' + clr + ' Z0.1 M08', 'G70 P100 Q200', 'G00 X' + clr + ' Z0.1 M09', 'G28 U0. W0.', 'M01');
+      L.push('(FINISH WITH G70)', nm(job.finish), tc(job.finish), spindle('finish') + ' M03', 'G00 X' + clr + ' Z0.1 M08', 'G70 ' + profileRange, 'G00 X' + clr + ' Z0.1 M09', 'G28 U0. W0.', 'M01');
     }
     if (grooves.length) {
       const gt = tools[job.groove], w = gt.width || 0.125;

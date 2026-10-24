@@ -13,6 +13,7 @@
   <script defer src="../cnc/cad-engine.js"></script>
   <script defer src="../cnc/cam-engine.js"></script>
   <script defer src="../cnc/design-cam.js"></script>
+  <script defer src="../cnc/design-comparison.js"></script>
   <script defer src="design-app.js"></script>
   <script defer src="design-studio.js"></script>
 </head>
@@ -73,9 +74,21 @@
           <details><summary>Inspect a measured dimension</summary><label>Dimension to inspect<select id="inspection-dimension"></select></label><div class="field-grid"><label>Measured value <span class="unit-label inspection-unit">mm</span><input id="inspection-measured" type="number" step="any" min="0"></label><label>Allowed ± tolerance <span class="unit-label inspection-unit">mm</span><input id="inspection-tolerance" type="number" step="any" min="0" value="0.5"></label><label>Instrument resolution <span class="unit-label inspection-unit">mm</span><input id="inspection-resolution" type="number" step="any" min="0" value="0.1"></label></div><p class="help">Record a measurement from your physical part or an identified simulator measurement. Instrument resolution is the smallest change it can show.</p><label>Measurement source<input id="inspection-source" maxlength="160" placeholder="Example: Calliper on practice part"></label><button type="button" id="inspection-save">Record inspection</button><div id="inspection-list" class="evidence-list"></div></details>
         </div>
         <div data-panel="3" hidden>
-          <p class="help">Carry your stock and design brief into the mill or lathe. Your drawing remains a target to compare with the machined result.</p>
+          <p class="help">Choose what the finished practice part should look like, then build and simulate its machining steps in order.</p>
+          <section class="comparison-goal" aria-labelledby="comparison-title">
+            <h3 id="comparison-title">What are you trying to make?</h3>
+            <label>Use this drawing to…<select id="comparison-mode"><option value="retained-solid">Keep the outlined shape</option><option value="pocket">Cut a pocket inside the outline</option></select></label>
+            <div class="field-grid">
+              <label id="comparison-depth-field">Target cut depth <span class="comparison-unit unit-label">mm</span><input id="comparison-depth" type="number" min="0.000001" step="any" required></label>
+              <label>Comparison tolerance <span class="comparison-unit unit-label">mm</span><input id="comparison-tolerance" type="number" min="0" step="any" required></label>
+            </div>
+            <p id="comparison-goal-help" class="help"></p>
+            <p id="comparison-adjusted" class="callout" hidden></p><button id="comparison-confirm" type="button" hidden>Use this adjusted goal</button>
+            <p class="help">The simulator compares sampled material with this goal. Its sampling may be too coarse to judge a tight tolerance. A successful program check alone does not mean the part matches.</p>
+          </section>
+          <h3>Your machining sequence</h3><p id="operation-summary" class="help"></p><ol id="operation-sequence" class="operation-sequence"></ol>
           <div class="handoff"><h3 id="machine-title">CNC practice</h3><p id="machine-summary"></p><p id="machine-readiness"></p><a id="open-cnc" class="button primary" href="../cnc/index.html">Continue in CNC trainer →</a></div>
-          <p id="operation-summary" class="help"></p><div id="machine-results" class="evidence-list" aria-live="polite"></div>
+          <div id="machine-results" class="evidence-list" aria-live="polite"></div>
           <p class="callout">Training only. A design outline is not a toolpath. Choose a tool and machining moves in the trainer, simulate them, and review with your instructor.</p>
           <h3>Use your design in another app</h3><div class="export-actions"><button type="button" id="export-svg">Export measured SVG</button><button type="button" id="export-dxf">Export measured DXF</button></div><p id="export-note" class="help">Exports contain the part outline at real size, without dimension labels.</p>
         </div>

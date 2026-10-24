@@ -3,7 +3,7 @@
 const {chromium}=require('playwright'),assert=require('node:assert/strict'),fs=require('node:fs'),path=require('node:path');
 const {pathToFileURL}=require('node:url');
 const D=require('../../numeracy-hub/design/design-model.js');
-const base=process.env.DESIGN_BASE_URL||'http://127.0.0.1:8766';
+const base=process.env.DESIGN_BASE_URL||'http://127.0.0.1:8765';
 const ready=p=>p.waitForFunction(()=>window.AccessDesignCAM&&window.CNCBuilder&&CNCBuilder.getState());
 const snapshot=p=>p.evaluate(()=>JSON.parse(JSON.stringify(CNCBuilder.getState())));
 const incoming=async(p,project)=>{await p.evaluate(hash=>location.hash=hash,'#design='+D.encode(project));await p.waitForFunction(title=>document.getElementById('cnc-design-title').textContent===title,project.title);await p.locator('#cnc-operation').evaluate(el=>el.open=true);};
