@@ -1,0 +1,134 @@
+/* ACCESS Indigenous Skills4Success — shared simulator appearance. */
+:root {
+  --acc-red:#D2181F; --acc-red-deep:#C60016; --acc-gold:#FFBC00;
+  --acc-ink:#1A1A1A; --acc-slate:#4A4E54; --acc-mist:#F4F5F6;
+  --bg:#171719; --panel:#242427; --panel-2:#303034; --line:#59595F;
+  --text:#F4F5F6; --muted:#C3C3C8; --accent:#FFBC00;
+  --start:#247853; --hold:#FFBC00; --stop:#D2181F; --info:#99C8EE;
+  --f-display:Archivo,"Arial",sans-serif;
+  --f-body:"IBM Plex Sans","Segoe UI",Arial,sans-serif;
+  --f-mono:"IBM Plex Mono",Consolas,monospace;
+  --r:8px;
+}
+body {font-size:16px;line-height:1.45;background:var(--bg)}
+button,select,input,textarea {font-family:var(--f-body)}
+button,a,input,select {touch-action:manipulation}
+button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible {outline:3px solid var(--acc-gold);outline-offset:3px}
+.topbar {padding:14px 20px;gap:12px 16px;align-items:center;background:#1A1A1D;border:0}
+.brand.cnc-brand {display:flex;align-items:center;gap:18px;margin-right:auto;min-width:315px;align-self:stretch}
+.cnc-brand .cnc-badge {width:120px;height:110px;object-fit:contain;flex:none}
+.cnc-brand .cnc-brand-copy {display:flex;flex-direction:column;gap:7px;min-width:0}
+.brand.cnc-brand h1 {font-size:28px;font-weight:750;line-height:1.1;letter-spacing:-.03em;text-transform:none;white-space:normal}
+.brand.cnc-brand small {display:block;max-width:225px;font-size:13px;line-height:1.4;white-space:normal;color:#D0D0D5}
+.cnc-home {font-size:13px;color:#FFEBB2;text-underline-offset:4px;width:max-content;max-width:100%}
+.sel label {font-family:var(--f-body);font-size:11px;line-height:1.3;letter-spacing:.055em;color:#C3C3C8}
+.seg {border-color:#68686F;background:#101012;padding:3px}
+.seg button {font-family:var(--f-body);font-size:13px;letter-spacing:0;text-transform:none;min-height:34px;color:#D9D9DF;padding:7px 12px}
+.seg button[aria-pressed="true"] {background:var(--acc-gold);color:var(--acc-ink);font-weight:750;box-shadow:none}
+.seg button:hover:not([aria-pressed="true"]) {background:#3B3B40;color:white}
+.iconbtn,select.ctl {min-height:40px;font-size:13px;font-family:var(--f-body);letter-spacing:0;text-transform:none}
+.iconbtn {background:#303034;border-color:#626269;padding:9px 13px}
+.iconbtn:hover {background:#444449}
+#training-projects {background:#303034;border:1px solid #626269;border-radius:8px;color:#F4F5F6;padding:9px 10px;min-height:40px;font-size:13px;max-width:min(460px,100%)!important}
+.studio-toggle {background:var(--acc-red)!important;color:white!important;border-color:var(--acc-red)!important}
+.studio-toggle:hover {background:#9E1217!important}
+.main {grid-template-columns:minmax(0,1fr) 440px}
+.viewport {background:#171719}
+.legend {background:rgba(26,26,29,.94);border-color:#696970;max-width:245px;font-size:12px}
+.legend h2 {font-family:var(--f-body);letter-spacing:.04em;font-size:12px;color:#D4D4DB}
+.legend li.active {color:#FFEBB2}
+.viewbtns {gap:6px}
+.viewbtns button {min-height:35px;font-family:var(--f-body);font-size:12px;text-transform:none;letter-spacing:0;background:rgba(26,26,29,.94);color:#E5E5EB;border-color:#696970}
+.viewbtns button[aria-pressed="true"] {background:#FFBC00;color:#1A1A1A;border-color:#FFBC00}
+.banner {z-index:4;line-height:1.45;max-height:45%;overflow:auto}
+.banner.done {background:#E8F3ED;color:#174C34;border:1px solid #87B59B}
+.banner.alarm {background:#9E1217;border:1px solid #E47479}
+.banner.stop {background:#FFEBB2;color:#1A1A1A}
+.timeline {background:rgba(26,26,29,.94);border-color:#696970}
+.pendant {--pend-bg:#303034;--pend-label:#D9D9DF;--scr-bg:#101014;--scr-fg:#F4F5F6;--scr-dim:#B9BBC5;--scr-bar:#27272D;--scr-bar-fg:#FFEBB2;--scr-tab:#3B3B43;--scr-tab-fg:#E4E4EB;--scr-hi:rgba(255,188,0,.24);--scr-warn:rgba(210,24,31,.3);--scr-line:#5E5E69;--scr-row:#24242C;--scr-font:var(--f-mono);--key-bg:#E5E7E9;--key-fg:#1A1A1A;--key-edge:#A3A6AC;--key-on:#FFEBB2;border-left:1px solid #5B5B63}
+.pend-head {font-family:var(--f-body);letter-spacing:.035em;padding:11px 14px}
+.bezel {background:#08080A;border-radius:10px;box-shadow:none}
+.scr-tabs button {font-size:11px;padding:7px 9px;letter-spacing:.025em;min-height:32px}
+.scr-tabs button[aria-selected="true"] {color:#FFEBB2}
+.codewrap textarea,.codewrap pre {font-size:13px;line-height:18px}
+.gutter {font-size:12px}
+.ops {padding:12px;gap:12px}
+.keys {gap:6px}
+.keys button {font-family:var(--f-body);font-size:10px;line-height:1.2;letter-spacing:0;min-height:37px;box-shadow:none;border-radius:5px}
+.big {font-family:var(--f-body);font-size:14px;letter-spacing:0;text-transform:none;min-height:46px;box-shadow:none}
+.big.start {background:#FFBC00;color:#1A1A1A}
+.big.hold {background:#E5E7E9;color:#1A1A1A}
+.big.reset {background:#D2181F;color:white}
+.big:hover {filter:brightness(1.08)}
+.small-btn {font-family:var(--f-body);font-size:12px;letter-spacing:0;text-transform:none;min-height:32px;line-height:1.2}
+.row2 {font-size:12px;gap:10px 12px}
+.msgs li {border:1px solid #5E5E69;border-radius:6px;padding:7px 9px}
+.msgs li.alarm {border-color:#E47479;background:#431C22}
+.msgs li.warn {border-color:#BF8D00;background:#3E341B}
+.msgs li.info {border-color:#749DC0}
+.wdlg {max-width:min(1000px,calc(100vw - 24px));border-radius:12px;border-color:#6F6F78}
+.wdlg::backdrop {background:#08080BD9}
+.wdlg header {gap:16px;align-items:center}
+.wdlg h2 {font-family:var(--f-body);letter-spacing:-.025em;line-height:1.2}
+.wdlg :is(button,input,select) {min-height:36px}
+.wdlg :is(input,select) {border-color:#73737B}
+.w-primary {background:#D2181F!important;color:white!important;border-color:#D2181F!important}
+.w-primary:hover {background:#9E1217!important}
+.wdlg .w-note,.wdlg p,.wdlg li {line-height:1.5}
+.cnc-skip {position:fixed;top:10px;left:12px;z-index:1000;transform:translateY(-150%);padding:10px 16px;background:#FFBC00;color:#1A1A1A;border-radius:6px}
+.cnc-skip:focus {transform:translateY(0)}
+@media(min-width:1280px) {
+  .brand.cnc-brand {flex-basis:350px}
+  .topbar {gap:10px 13px}
+}
+@media(max-width:1100px) and (min-width:801px) {
+  .main {grid-template-columns:minmax(0,1fr) 400px}
+  .topbar {padding:12px;gap:10px}
+  .brand.cnc-brand {min-width:285px}
+  .cnc-brand .cnc-badge {width:104px;height:96px}
+  .brand.cnc-brand h1 {font-size:25px}
+  .viewbtns {justify-content:flex-start}
+  .legend {max-width:205px}
+}
+@media(max-width:800px) {
+  body:not(.teaching-view):not(.manual-builder) {overflow:auto}
+  body:not(.teaching-view):not(.manual-builder) .app {height:auto;min-height:100dvh}
+  body:not(.teaching-view):not(.manual-builder) .main {display:flex;flex-direction:column}
+  body:not(.teaching-view):not(.manual-builder) .viewport {height:480px;min-height:480px}
+  body:not(.teaching-view):not(.manual-builder) .pendant {height:720px;min-height:720px;border-left:0;border-top:1px solid #5B5B63}
+  .topbar {padding:12px;gap:10px}
+  .brand.cnc-brand {min-width:0;width:100%;flex-basis:100%;gap:16px}
+  .cnc-brand .cnc-badge {width:100px;height:92px}
+  .brand.cnc-brand h1 {font-size:27px}
+  .brand.cnc-brand small {font-size:13px;max-width:220px}
+  .topbar>.sel {flex:1 1 150px}
+  .topbar>.sel:has(#seg-gen),.topbar>.sel:has(#sel-prog) {flex-basis:100%}
+  .topbar>.sel select.ctl {width:100%;max-width:none!important}
+  #seg-gen {display:flex}
+  #seg-gen button {flex:1;padding:7px 8px}
+  #training-projects {min-width:0!important;width:100%;flex-basis:100%;max-width:none!important}
+  .legend {max-width:185px;padding:7px 8px}
+  .vp-top {left:10px;right:10px;top:10px}
+  .viewbtns {justify-content:flex-start}
+  .viewbtns button {padding:6px 8px;font-size:12px}
+  .wdlg .wbody {padding:14px}
+  .wdlg header {padding:14px}
+  .wdlg h2 {font-size:21px}
+  .wdlg :is(table,.wtable) {display:block;max-width:100%;overflow-x:auto}
+}
+@media(max-width:400px) {
+  .brand.cnc-brand h1 {font-size:24px}
+  .brand.cnc-brand small {font-size:12px}
+  .cnc-brand .cnc-badge {width:86px;height:79px}
+  .topbar>.sel {flex-basis:100%}
+  #seg-gen button {font-size:12px;padding:7px 6px}
+  .ops {padding:8px}
+  .keys {gap:4px}
+  .keys button {font-size:9px}
+  .row2 input[type=range] {width:100px}
+  .timeline {gap:7px;padding:8px;font-size:10px}
+  .legend {max-width:160px;font-size:11px}
+  .legend h2 {font-size:11px}
+}
+@media(prefers-reduced-motion:reduce) {*{scroll-behavior:auto!important}}
+@media(forced-colors:active) {button,.seg,.legend,.timeline,.screen,.banner{border:1px solid CanvasText}}

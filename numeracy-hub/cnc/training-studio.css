@@ -1,0 +1,40 @@
+#studio {display:none}
+[hidden] {display:none!important}
+.studio-toggle {background:#FFBC00!important;color:#1A1A1A!important;border-color:#FFBC00!important}
+body.teaching-view {overflow:hidden;background:#F4F5F6;font-family:'Segoe UI',Arial,sans-serif}
+body.teaching-view .topbar,body.teaching-view .pendant,body.teaching-view .vp-top,body.teaching-view .timeline {display:none}
+body.teaching-view .app,body.teaching-view .main {display:block;min-height:0}
+body.teaching-view .viewport {position:absolute;left:0;top:64px;width:840px;height:556px;overflow:hidden}
+body.teaching-view #studio {display:block;position:fixed;inset:0;pointer-events:none;color:#1A1A1A}
+.studio-header {position:absolute;inset:0 0 auto;height:64px;background:#24272b;color:white;display:flex;align-items:center;padding:0 28px;gap:24px;border-bottom:0}
+.studio-brand {font-weight:800;font-size:23px;letter-spacing:.8px;white-space:nowrap}.studio-brand em {color:#FFBC00;font-style:normal}
+.studio-series {font-size:16px;letter-spacing:2px;border-left:1px solid #77827d;padding-left:24px}.studio-number {margin-left:auto;font-weight:700;font-size:19px;color:#FFEBB2}
+.studio-board {position:absolute;left:840px;top:64px;width:440px;height:556px;background:#F4F5F6;border-left:2px solid #E5E7E9;padding:18px 24px;display:flex;flex-direction:column;gap:10px}
+.studio-kicker {font-size:12px;letter-spacing:1.8px;text-transform:uppercase;font-weight:700;color:#9E1217}
+.studio-title {font-size:25px;font-weight:750;line-height:1.15;margin:0;min-height:56px}
+.studio-material {font-size:14px;color:#4A4E54;min-height:20px}
+.studio-blocks {background:#1A1A1A;color:#F4F5F6;border-left:0;border-radius:3px;min-height:183px;max-height:183px;overflow:hidden;padding:11px 10px;font:16px/26px Consolas,monospace;white-space:pre}
+.studio-blocks .active {background:#FFBC00;color:#1A1A1A;font-weight:800;margin:0 -10px;padding:0 10px;overflow:hidden;text-overflow:ellipsis}
+.studio-blocks .code-line {overflow:hidden;text-overflow:ellipsis;height:26px}
+.studio-data {display:grid;grid-template-columns:repeat(3,1fr);gap:5px;padding:8px 0;border-bottom:1px solid #E5E7E9}
+.studio-data span {font-size:11px;letter-spacing:.7px;color:#4A4E54;display:block}.studio-data strong {font-size:19px;font-weight:750}
+.studio-math {font:600 17px/1.55 'Segoe UI',sans-serif;white-space:pre-line;margin:0;color:#9E1217;flex:1;overflow:hidden}
+.studio-op {position:absolute;top:81px;left:22px;max-width:790px;padding:8px 14px;background:rgba(36,39,43,.91);color:white;border-left:0;font-size:21px;font-weight:650;line-height:1.2}
+.studio-view-label {position:absolute;left:24px;top:583px;color:#F4F5F6;background:rgba(36,39,43,.86);font-size:13px;padding:4px 9px;letter-spacing:.4px}
+.studio-caption {position:absolute;top:620px;left:0;width:1280px;height:97px;background:#24272b;color:#fff;display:flex;align-items:center;justify-content:center;padding:9px 100px;text-align:center;font:500 27px/1.35 'Segoe UI',sans-serif}
+.studio-progress {position:absolute;top:717px;left:0;width:1280px;height:3px;background:#8E9298}.studio-progress div {height:100%;background:#FFBC00;width:0}
+.studio-exit {pointer-events:auto;position:absolute;right:12px;top:12px;display:none}
+body.teaching-view:not(.recording) .studio-exit {display:block}
+body.teaching-view:not(.recording) .studio-number {margin-right:100px}
+body.teaching-view:not(.recording) .studio-controls {position:absolute;left:22px;top:538px;display:flex;gap:6px;pointer-events:auto}
+.studio-controls {display:none}.studio-controls button {background:#24272b;color:white;border:1px solid #FFBC00;border-radius:4px;padding:7px 12px;font-size:15px}
+@media (max-width:1100px) {body.teaching-view:not(.recording) #studio {transform-origin:top left;transform:scale(var(--studio-scale,1))}body.teaching-view:not(.recording) .viewport {transform-origin:top left;transform:scale(var(--studio-scale,1));top:calc(64px * var(--studio-scale,1))}}
+
+/* The logo uses the official artwork; highlights remain part of the active-block display. */
+.studio-brand{display:flex;align-items:center;gap:14px;font-size:20px;letter-spacing:0}
+.studio-brand img{width:64px;height:59px;object-fit:contain}
+.studio-series{font-size:14px;letter-spacing:.06em;border-left:0;padding-left:0}
+.studio-controls button{min-height:38px;box-shadow:none;border-color:#777780}
+.studio-controls button:first-child{background:#FFBC00;color:#1A1A1A;border-color:#FFBC00}
+.studio-exit{background:#F4F5F6;color:#1A1A1A;border:1px solid #D0D0D5;border-radius:6px;padding:9px 12px;font-size:13px;font-weight:700}
+.studio-project-picker{background:#D2181F!important;color:#FFFFFF!important;border-color:#D2181F!important;font:700 13px var(--f-body,"Segoe UI",Arial,sans-serif)!important;min-height:38px}

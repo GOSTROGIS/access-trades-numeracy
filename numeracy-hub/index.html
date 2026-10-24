@@ -487,6 +487,14 @@ main.wrap { padding-block: 28px 56px; display: grid; gap: 48px; }
 .panel[hidden] { display: none; }
 .hub-frame { display: block; width: calc(100% + 32px); margin-inline: -16px; border: 0; height: calc(100dvh - 49px); background: var(--bg); }
 .frame-wait { padding: 40px 0; color: var(--muted); text-align: center; }
+.cnc-launch { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px 20px; padding: 16px 0; }
+.cnc-launch p { margin: 0; color: var(--slate); font-size: 16px; }
+.cnc-window { display: inline-flex; align-items: center; justify-content: center; min-height: 44px; padding: 10px 16px; border-radius: var(--radius); background: var(--red); color: #FFFFFF; font: 600 16px/1.35 var(--font-body); text-decoration: none; }
+.cnc-window:hover { background: var(--red-deep); }
+.cnc-window:focus-visible { outline: 3px solid var(--focus); outline-offset: 3px; }
+.cnc-frame { display: block; width: calc(100% + 32px); margin-inline: -16px; border: 0; height: max(600px, calc(100dvh - 120px)); background: var(--bg); }
+@media (max-width: 600px) { .cnc-launch { gap: 10px; } .cnc-frame { height: max(680px, calc(100dvh - 120px)); } }
+
 
 /* ---------- exam builder ---------- */
 .eb { max-width: 1120px; margin-inline: auto; padding-block: 24px 96px; display: grid; gap: 28px; }
@@ -1087,6 +1095,7 @@ main.wrap { padding-block: 28px 56px; display: grid; gap: 48px; }
     <button type="button" class="tab" role="tab" id="t-coords" aria-controls="p-coords" aria-selected="false" tabindex="-1" title="Coordinate Systems"><span class="tab-n" aria-hidden="true">9</span>Coordinate Systems</button>
     <button type="button" class="tab" role="tab" id="t-measure" aria-controls="p-measure" aria-selected="false" tabindex="-1" title="Measuring Tools"><span class="tab-n" aria-hidden="true">10</span>Measuring Tools</button>
     <button type="button" class="tab" role="tab" id="t-exam" aria-controls="p-exam" aria-selected="false" tabindex="-1" title="Exam builder"><span class="tab-n" aria-hidden="true">11</span>Exam builder</button>
+    <button type="button" class="tab" role="tab" id="t-cnc" aria-controls="p-cnc" aria-selected="false" tabindex="-1" title="3D mill, lathe and manual CNC program builder"><span class="tab-n" aria-hidden="true">12</span>CNC machining</button>
     </div>
     <div class="tsize" role="group" aria-label="Text size">
       <button type="button" class="tsize-btn" id="ts-down" aria-label="Smaller text">A−</button>
@@ -1137,6 +1146,15 @@ main.wrap { padding-block: 28px 56px; display: grid; gap: 48px; }
   <iframe class="hub-frame" title="Measuring Tools" data-src="src-measure" loading="eager"></iframe>
 </section>
 
+
+<section class="panel" id="p-cnc" role="tabpanel" aria-labelledby="t-cnc" hidden>
+  <div class="cnc-launch">
+    <p>Explore the 3D mill and lathe. Machine manually and build the CNC program as you go.</p>
+    <a class="cnc-window" href="cnc/index.html" target="_blank" rel="noopener" aria-label="Open CNC machining in a full window, in a new tab">Open full window</a>
+  </div>
+  <p class="frame-wait" role="status">Loading CNC machining…</p>
+  <iframe class="cnc-frame" title="CNC machining: 3D mill, lathe and program builder" data-page="cnc/index.html" allow="fullscreen"></iframe>
+</section>
 
 <section class="panel" id="p-exam" role="tabpanel" aria-labelledby="t-exam" tabindex="-1" hidden>
   <div class="eb">
@@ -20818,7 +20836,22 @@ if (typeof module !== 'undefined' && module.exports) module.exports = CalcKit;
   var tabs = Array.prototype.slice.call(doc.querySelectorAll('.tab'));
   var STORE = 'access-shell-tab-v1';
   function panel(t) { return doc.getElementById(t.getAttribute('aria-controls')); }
+  function cncVisibility() {
+    var p = doc.getElementById('p-cnc');
+    var fr = p && p.querySelector('iframe[data-page]');
+    if (!fr || !fr.getAttribute('src')) return;
+    var origin = G.location.origin;
+    try { fr.contentWindow.postMessage({ type: 'cnc-hub-visibility', visible: !p.hidden }, origin && origin !== 'null' ? origin : '*'); } catch (e) { /* frame is not ready */ }
+  }
   function load(p) {
+    var pageFrame = p.querySelector('iframe[data-page]');
+    if (pageFrame) {
+      if (pageFrame.getAttribute('src')) return;
+      var wait = p.querySelector('.frame-wait');
+      pageFrame.addEventListener('load', function () { if (wait) wait.hidden = true; cncVisibility(); });
+      pageFrame.setAttribute('src', pageFrame.getAttribute('data-page'));
+      return;
+    }
     var fr = p.querySelector('iframe[data-src]');
     if (!fr || fr.getAttribute('srcdoc')) return;
     var data = doc.getElementById(fr.getAttribute('data-src'));
@@ -20837,6 +20870,7 @@ if (typeof module !== 'undefined' && module.exports) module.exports = CalcKit;
       panel(x).hidden = !on;
     });
     load(panel(t));
+    cncVisibility();
     if (focus) t.focus();
     try { t.scrollIntoView({ block: 'nearest', inline: 'nearest' }); } catch (e) { /* old browser */ }
     var key = t.id.slice(2);
