@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Design Workshop · ACCESS Trades Numeracy</title>
+  <link rel="stylesheet" href="design.css">
+  <script defer src="design-model.js"></script>
+  <script defer src="../../source/canvas/src/vendor/shapes-engine.js"></script>
+  <script defer src="design-app.js"></script>
+</head>
+<body>
+<a class="skip" href="#step-title">Skip to design step</a>
+<header class="masthead">
+  <a href="../index.html" class="brand"><img src="../../brand/is4s-badge.svg" width="78" height="72" alt="ACCESS Indigenous Skills4Success"><span>Numeracy Hub<strong>Design Workshop</strong></span></a>
+  <div class="file-actions"><button id="open-project">Open project</button><button id="save-project">Download project</button><input id="project-file" type="file" accept=".json,application/json" hidden></div>
+</header>
+<main class="workshop">
+  <div class="intro"><div><p class="eyebrow">FROM AN IDEA TO A CHECKED DESIGN</p><h1>Make it. Measure it. Explain it.</h1><p>One project connects your drawing, stock and CNC practice.</p></div><p class="save-status" id="save-status" role="status">Ready to design</p></div>
+  <nav class="steps" aria-label="Design steps">
+    <button data-step="0" aria-current="step"><span>1</span>Brief</button><button data-step="1"><span>2</span>Draw</button><button data-step="2"><span>3</span>Check</button><button data-step="3"><span>4</span>Machine</button><button data-step="4"><span>5</span>Reflect</button>
+  </nav>
+  <div id="notice" class="notice" role="status" hidden></div>
+  <div class="workspace">
+    <section class="editor" aria-labelledby="step-title">
+      <div class="step-heading"><div><p class="eyebrow" id="step-number">STEP 1 OF 5</p><h2 id="step-title" tabindex="-1">Give your design a purpose</h2></div><div class="history"><button id="undo" aria-label="Undo project change" title="Undo project change">Undo</button><button id="redo" aria-label="Redo project change" title="Redo project change">Redo</button></div></div>
+      <form id="project-form" novalidate>
+        <div data-panel="0">
+          <p class="help">Choose a starting point, then describe what your part needs to do.</p>
+          <div class="templates" aria-label="Start a new project"><button type="button" data-template="plate"><b>▱ &nbsp; Plate</b><span>Length, width and area</span></button><button type="button" data-template="washer"><b>◎ &nbsp; Washer</b><span>Radius, diameter and holes</span></button><button type="button" data-template="shaft"><b>▰ &nbsp; Shaft</b><span>Diameter, length and volume</span></button></div>
+          <label>Project name<input id="project-title" maxlength="120" required></label>
+          <label>What are you making, and why?<textarea id="project-brief" rows="4" maxlength="2000" placeholder="Example: A plate that fits inside a 100 × 70 mm space."></textarea></label>
+          <label>Working units<select id="units"><option value="mm">Millimetres (mm)</option><option value="in">Inches (in)</option></select></label><p class="help">Changing units converts the numbers. Your part stays the same physical size.</p>
+        </div>
+        <div data-panel="1" hidden>
+          <p class="help">Enter real dimensions. Use Shape Canvas to explore, annotate and show your working.</p>
+          <div id="dimension-fields" class="field-grid"></div>
+          <div id="placement-fields" class="field-grid"><label>Left edge X <span class="unit-label"></span><input id="placement-x" type="number" step="any" min="0" required></label><label>Bottom edge Y <span class="unit-label"></span><input id="placement-y" type="number" step="any" min="0" required></label></div>
+          <p id="origin-note" class="callout"></p>
+          <a id="open-canvas" class="button primary" href="../../shape-canvas/index.html">Edit in Shape Canvas →</a>
+          <details><summary>Bring in work from desktop design apps</summary><p>Keep the original CorelDRAW, AutoCAD or Visio file. Export a measured SVG or DXF for the CNC trainer’s drawing importer. Check its units, scale and contours there before machining practice.</p><p>This workshop’s editable project format currently supports a rectangle, square, circle, washer or cylinder. Trace images and outline text in your desktop app first.</p></details>
+        </div>
+        <div data-panel="2" hidden>
+          <p class="help">Stock is the material you start with. Make sure your part fits, then compare the drawing with your brief.</p>
+          <button type="button" id="repair-machine" hidden></button>
+          <div id="stock-fields" class="field-grid"></div>
+          <ul id="check-list" class="checks" aria-live="polite"></ul>
+          <p class="help">These checks cover dimensions and stock fit. The CNC trainer checks the machining setup during practice.</p>
+        </div>
+        <div data-panel="3" hidden>
+          <p class="help">Carry your stock and design brief into the mill or lathe. Your drawing remains a target to compare with the machined result.</p>
+          <div class="handoff"><h3 id="machine-title">CNC practice</h3><p id="machine-summary"></p><p id="machine-readiness"></p><a id="open-cnc" class="button primary" href="../cnc/index.html">Continue in CNC trainer →</a></div>
+          <p class="callout">Training only. A design outline is not a toolpath. Choose a tool and machining moves in the trainer, simulate them, and review with your instructor.</p>
+          <h3>Use your design in another app</h3><div class="export-actions"><button type="button" id="export-svg">Export measured SVG</button><button type="button" id="export-dxf">Export measured DXF</button></div><p id="export-note" class="help">Exports contain the part outline at real size, without dimension labels.</p>
+        </div>
+        <div data-panel="4" hidden>
+          <p class="help">Show how you used numeracy. Record what you changed after checking or machining.</p>
+          <label>Your working and reflection<textarea id="reflection" rows="8" maxlength="4000" placeholder="What did you estimate? Which formula did you use? Did the result fit the stock? What would you change next time?"></textarea></label>
+          <button type="button" id="print-sheet">Print project worksheet</button><p class="help">The worksheet includes your brief, dimensions, checks and reflection. Download the project to keep editing on another computer.</p>
+        </div>
+      </form>
+      <div class="step-actions"><button id="previous">← Back</button><button id="next" class="primary">Draw your part →</button></div>
+    </section>
+    <aside class="drawing" aria-labelledby="drawing-title"><div class="drawing-heading"><div><p class="eyebrow">YOUR DESIGN</p><h2 id="drawing-title">Plate</h2></div><span class="unit-chip" id="unit-chip">mm</span></div><div id="drawing-preview" class="drawing-preview"></div><p id="drawing-caption" class="help"></p><div id="measurements" class="measurements"></div><details class="working"><summary>See the maths</summary><div id="formula-working"></div></details><p class="help">Drawing fitted to screen. Use the dimension labels or measured exports for physical sizes.</p></aside>
+  </div>
+  <section id="print-summary" class="print-summary" aria-label="Project worksheet"></section>
+</main>
+<dialog id="new-dialog"><form method="dialog"><h2>Start a new design?</h2><p>Your current project will be replaced in this workshop. Download a copy first if you want to keep it.</p><div class="file-actions"><button value="cancel">Keep current project</button><button id="download-before-new" type="button">Download current project</button><button value="start" class="primary">Start new design</button></div></form></dialog>
+</body>
+</html>

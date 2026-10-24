@@ -15,6 +15,7 @@ Everything runs in the browser. Once the folder is downloaded, the hub, the canv
 | Open this | What it is |
 |---|---|
 | `index.html` | The home page, with links to everything below |
+| `numeracy-hub/design/index.html` | Design Workshop: Brief → Draw → Check → Machine → Reflect. Start a plate, washer or shaft; carry physical dimensions into Shape Canvas and CNC practice; save an editable project and export measured SVG/DXF profiles. |
 | `numeracy-hub/index.html` | Numeracy Hub: shapes, order of operations, volume and layout, angles and trig, fabrication, pipe trades, unit conversions, mechanical aptitude, coordinate systems, measuring tools, the exam builder and CNC machining |
 | `shape-canvas/index.html` | Shape Canvas: drag shapes onto a sheet with every angle and formula shown, make flat shapes 3D, change their sizes, unfold them into nets, snap pieces together, style them, copy them into PowerPoint, and export drawings with a title block (vector PDF, SVG, PNG) |
 | `numeracy-hub/cnc/index.html` | 3D CNC mill and lathe, plus a program builder that records manual machining moves as G-code. Also opens from the Hub’s CNC machining tab. |
