@@ -25,6 +25,19 @@ test('configuration rejects invalid geometry/units and nonfinite values',()=>{
   assert.throws(()=>M.create({...M.defaultConfig(),tool:{type:'endmill',diameter:Infinity,length:100}}));
   assert.throws(()=>M.defaultConfig('router'));assert.throws(()=>M.defaultConfig('mill','feet'));
 });
+
+test('exact scaled stock limits accept decimal boundaries without clamping outside stock',()=>{
+  const mill=M.defaultConfig('mill','mm');mill.stock={x:609.6,y:304.8,z:101.6};
+  assert.deepEqual(M.create(mill).config.stock,mill.stock);
+  const lathe=M.defaultConfig('lathe','mm');lathe.stock={diameter:152.4,length:254};
+  assert.deepEqual(M.create(lathe).config.stock,lathe.stock);
+  for(const [config,key]of [[mill,'x'],[mill,'y'],[mill,'z'],[lathe,'diameter'],[lathe,'length']]){
+    const outside=JSON.parse(JSON.stringify(config));outside.stock[key]+=0.000001;
+    const before=JSON.stringify(outside);
+    assert.throws(()=>M.create(outside),/must be no more than/);
+    assert.equal(JSON.stringify(outside),before);
+  }
+});
 test('manual feed requires running spindle; rejected action leaves history unchanged',()=>{
   const old=M.create(M.defaultConfig());const snapshot=JSON.stringify(old);
   assert.throws(()=>M.apply(old,{type:'move',target:{z:-1},motion:'feed'}),/spindle/);

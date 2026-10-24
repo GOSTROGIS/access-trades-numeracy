@@ -114,6 +114,11 @@ p { margin: 0; }
 .btn-primary:hover { background: var(--red-deep); border-color: var(--red-deep); }
 .btn-small { min-height: 30px; padding: 3px 9px; font-size: 13px; }
 .btn:disabled { opacity: 0.45; cursor: default; }
+.design-dialog { width: min(480px, calc(100vw - 24px)); max-height: calc(100dvh - 32px); overflow: auto; padding: 22px; border: 1px solid var(--line-strong); border-top: 4px solid var(--gold); border-radius: var(--radius); background: var(--surface); color: var(--ink); box-shadow: var(--shadow); }
+.design-dialog::backdrop { background: var(--scrim); }
+.design-dialog form { display: flex; flex-direction: column; gap: 14px; }
+.design-dialog h2 { font-size: 20px; }
+.design-dialog .btn { min-height: 44px; text-decoration: none; white-space: normal; }
 .main { position: relative; display: grid; grid-template-columns: var(--lib-w) minmax(0, 1fr) var(--side-w); min-height: 0; }
 
 /* ---------- library ---------- */
@@ -621,6 +626,7 @@ body.presenter .page-tab { height: 36px; font-size: 15px; }
       <button type="button" class="tb only-mid edit-only side-btn" id="btn-side" aria-controls="side" aria-expanded="false" title="Sizes and formulas"><svg viewBox="0 0 24 24"><path d="M4 6h16M4 12h10M4 18h13"/></svg><span class="tl">Details</span></button>
     </div>
     <div class="bar-end">
+      <button type="button" class="btn edit-only" id="btn-design-project" aria-haspopup="dialog" title="Take your shape's dimensions into a guided design and CNC project">Design project</button>
       <label class="fld wide fld-units"><span>Units</span><select class="sel" id="units" aria-label="Drawing units"><option value="mm">mm</option><option value="cm">cm</option><option value="m">m</option><option value="in">in</option><option value="ft">ft</option></select></label>
       <label class="fld wide"><span>Calculator</span><select class="sel" id="calc-model" aria-label="Calculator model"></select></label>
       <button type="button" class="tb present-nav" id="btn-prev" aria-label="Previous page"><svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg></button>
@@ -676,6 +682,19 @@ body.presenter .page-tab { height: 36px; font-size: 15px; }
 <div class="pop confirm" id="confirm" hidden role="alertdialog" aria-modal="true" aria-labelledby="cf-h"></div>
 <div class="pop answer" id="answer" hidden role="dialog" aria-modal="false" aria-labelledby="an-h"></div>
 <div class="pop confirm" id="clip-msg" hidden role="alertdialog" aria-modal="true" aria-labelledby="cm-h"></div>
+<dialog class="design-dialog" id="design-project-dialog" aria-labelledby="design-project-heading" aria-describedby="design-project-summary design-project-note">
+  <form method="dialog">
+    <h2 id="design-project-heading">Continue your design</h2>
+    <p id="design-project-summary" role="status"></p>
+    <p class="muted" id="design-project-note"></p>
+    <div class="row">
+      <button type="button" class="btn btn-primary" id="design-project-primary">Use selected shape</button>
+      <button type="button" class="btn" id="design-project-new" hidden>Add a separate page</button>
+      <a class="btn" id="design-project-workspace" href="../numeracy-hub/design/index.html">Open design workspace</a>
+      <button type="submit" class="btn" id="design-project-cancel">Stay on canvas</button>
+    </div>
+  </form>
+</dialog>
 <input type="file" id="file-in" accept=".json,application/json" hidden>
 <input type="file" id="pic-in" accept="image/png,image/jpeg,image/gif,image/webp,image/svg+xml,.svg" multiple hidden>
 <p class="sr-only" id="live-msg" aria-live="polite"></p>
@@ -18584,4 +18603,8 @@ window.SC_BRAND = {"name": "ACCESS Indigenous Skills4Success"}
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init); else init();
 })(window);
 </script>
+<script src="../numeracy-hub/design/design-geometry.js"></script>
+<script src="../numeracy-hub/design/design-workflow.js"></script>
+<script src="../numeracy-hub/design/design-model.js"></script>
+<script src="design-bridge.js"></script>
 </body></html>
