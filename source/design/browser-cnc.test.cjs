@@ -96,7 +96,7 @@ const incoming = async (page, project) => {
     assert.deepEqual(await state(page), lastValid);
     const fresh = D.create('washer'); fresh.title = 'Mobile washer'; fresh.brief = 'Check the inner and outer diameters.';
     await incoming(page, fresh); await page.click('#cnc-design-apply');
-    await page.locator('#cnc-design-target summary').click();
+    await page.locator('#cnc-design-target > summary').click();
     await shot(page, 'cnc-design-desktop');
     await page.setViewportSize({ width: 390, height: 844 });
     await shot(page, 'cnc-design-mobile');

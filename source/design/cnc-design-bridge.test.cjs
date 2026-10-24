@@ -35,12 +35,12 @@ test('inch handoff converts canonical mm and discloses CNC precision without cla
 
 test('lathe handoff uses diameter and stick-out; target geometry is not converted to cutting actions', () => {
   const project = D.create('shaft'), ready = B.prepare(project), state = E.create(ready.config);
-  assert.deepEqual(ready.config.stock, { diameter: 40, length: 90 });
+  assert.deepEqual(ready.config.stock, { diameter: 40, length: 100 });
   assert.equal(state.actions.length, 0);
   const simulator = E.project(state);
   assert.equal(simulator.machine, 'lathe');
   assert.equal(simulator.stock.dia, 40 / 25.4);
-  assert.equal(simulator.stock.stickout, 90 / 25.4);
+  assert.equal(simulator.stock.stickout, 100 / 25.4);
   assert.deepEqual(ready.project.geometry, project.geometry);
 });
 
@@ -101,7 +101,7 @@ test('builder setup transaction does not mutate rejected jobs and provides cross
   const savedWrites = [], events = [];
   const sandbox = { E, JSON, console, Error, Event: class { constructor(type) { this.type = type; } },
     localStorage: { setItem(key, value) { savedWrites.push([key, value]); } },
-    document: { body: { classList: { contains: () => false, add() {} } } },
+    document: { body: { classList: { contains: () => false, add() {}, remove() {} } } },
     window: { dispatchEvent: event => events.push(event) },
     T: { manualPlayback() {} },
     $: () => ({ textContent: 'Fixture check failed.', setAttribute() {} }),

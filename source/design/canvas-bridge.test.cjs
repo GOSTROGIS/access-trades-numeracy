@@ -5,6 +5,7 @@ const path = require('node:path');
 const repo = path.resolve(__dirname, '../..');
 const modelPath = path.join(repo, 'numeracy-hub/design/design-model.js');
 const D = require(modelPath);
+const Workflow = require(path.join(repo, 'numeracy-hub/design/design-workflow.js'));
 const Shapes = require(path.join(repo, 'source/canvas/src/vendor/shapes-engine.js'));
 const html = fs.readFileSync(path.join(repo, 'shape-canvas/index.html'), 'utf8');
 const code = html.match(/<script id="js-model">([\s\S]*?)<\/script>/)[1];
@@ -33,7 +34,7 @@ function node(id) {
 }
 const location = { hash: '', pathname: '/shape-canvas/index.html', search: '', href: '' };
 const window = {
-  SC, Shapes, AccessDesign: D, location,
+  SC, Shapes, AccessDesign: D, AccessDesignWorkflow: Workflow, location,
   history: { replaceState() { location.hash = ''; } },
   addEventListener(type, callback) { handlers[type] = callback; },
   document: { readyState: 'loading', addEventListener(type, callback) { ready = callback; }, getElementById: node }
@@ -88,7 +89,7 @@ SC.S.sel = [id, original.id];
 assert.throws(() => SC.DesignBridge.selectedProject(), /Select one/);
 SC.S.sel = [id];
 M.obj(id).shape = 'cone';
-assert.throws(() => SC.DesignBridge.selectedProject(), /supports/);
+assert.throws(() => SC.DesignBridge.selectedProject(), /flat shape/);
 M.obj(id).shape = 'rectangle';
 const file = M.exportJSON();
 assert.equal(M.importJSON(file).ok, true);
@@ -101,8 +102,9 @@ const beforeOffer = M.snapshot();
 ready();
 assert.equal(node('design-project-dialog').open, true);
 assert.equal(M.snapshot(), beforeOffer);
-assert.equal(node('design-project-primary').textContent, 'Add as a new page');
-node('design-project-primary').click();
+assert.equal(node('design-project-primary').disabled, true, 'Conflicting local dimensions are not overwritten');
+assert.equal(node('design-project-new').hidden, false);
+node('design-project-new').click();
 assert.equal(M.doc.pages.length, 3);
 assert.equal(node('design-project-dialog').open, false);
 assert.equal(location.hash, '');
@@ -123,10 +125,21 @@ node('design-project-workspace').click();
 assert.equal(saves, 2, 'The direct workspace link also flushes canvas changes');
 node('design-project-dialog').close();
 // Malformed links are presented without an enabled import action or mutation.
+const beforeMalformed = M.snapshot();
 location.hash = '#project=%INVALID';
 handlers.hashchange();
 assert.equal(node('design-project-primary').disabled, true);
-assert.equal(M.snapshot(), afterAcceptance);
+assert.equal(M.snapshot(), beforeMalformed);
 node('design-project-dialog').close();
 assert.equal(location.hash, '');
+// An older legacy copy must not silently erase newly attached learning evidence.
+M.reset();
+const evidenced = Workflow.withMetadata(D.create('plate'));
+const evidenceId = SC.DesignBridge.importProject(evidenced);
+const legacy = D.validate(evidenced); delete legacy.workflow;
+const beforeLegacy = M.snapshot();
+assert.equal(SC.DesignBridge.incomingStatus(legacy).kind, 'conflict');
+assert.throws(() => SC.DesignBridge.importProject(legacy), /learning evidence/);
+assert.equal(M.snapshot(), beforeLegacy);
+assert.equal(M.obj(evidenceId).designProject.workflow.revision, evidenced.workflow.revision);
 console.log('PASS: canvas bridge preserves pages, units, metadata, JSON roundtrip, selection rules, and undo/redo; project links require acceptance and invalid imports do not mutate the drawing.');

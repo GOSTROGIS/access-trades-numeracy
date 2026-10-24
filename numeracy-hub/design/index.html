@@ -5,9 +5,16 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Design Workshop · ACCESS Trades Numeracy</title>
   <link rel="stylesheet" href="design.css">
+  <link rel="stylesheet" href="design-studio.css">
+  <script defer src="design-workflow.js"></script>
+  <script defer src="design-geometry.js"></script>
   <script defer src="design-model.js"></script>
   <script defer src="../../source/canvas/src/vendor/shapes-engine.js"></script>
+  <script defer src="../cnc/cad-engine.js"></script>
+  <script defer src="../cnc/cam-engine.js"></script>
+  <script defer src="../cnc/design-cam.js"></script>
   <script defer src="design-app.js"></script>
+  <script defer src="design-studio.js"></script>
 </head>
 <body>
 <a class="skip" href="#step-title">Skip to design step</a>
@@ -21,6 +28,17 @@
     <button data-step="0" aria-current="step"><span>1</span>Brief</button><button data-step="1"><span>2</span>Draw</button><button data-step="2"><span>3</span>Check</button><button data-step="3"><span>4</span>Machine</button><button data-step="4"><span>5</span>Reflect</button>
   </nav>
   <div id="notice" class="notice" role="status" hidden></div>
+  <details class="project-library" id="library-panel">
+    <summary>My projects and saved versions <span id="library-count"></span></summary>
+    <p class="help">Your projects stay in this browser. Download a library backup to move them to another computer.</p>
+    <div class="field-grid"><label>Saved project<select id="library-project"></select></label><label>Saved version<select id="library-revision"></select></label></div>
+    <div class="export-actions"><button id="library-open">Open selected project</button><button id="library-restore">Restore selected version</button></div>
+    <div class="export-actions library-cleanup"><button id="library-remove">Remove selected project from library</button><button id="revision-remove">Remove selected version</button><button id="library-undo" disabled>Undo library removal</button></div>
+    <label>Name this version<input id="revision-name" maxlength="100" placeholder="Example: Before machining"></label>
+    <div class="export-actions"><button id="revision-save">Save named version</button><button id="library-download">Download library backup</button><button id="library-import">Open library backup</button></div>
+    <input id="library-file" type="file" accept=".json,application/json" hidden>
+    <p id="library-message" class="help" role="status"></p>
+  </details>
   <div class="workspace">
     <section class="editor" aria-labelledby="step-title">
       <div class="step-heading"><div><p class="eyebrow" id="step-number">STEP 1 OF 5</p><h2 id="step-title" tabindex="-1">Give your design a purpose</h2></div><div class="history"><button id="undo" aria-label="Undo project change" title="Undo project change">Undo</button><button id="redo" aria-label="Redo project change" title="Redo project change">Redo</button></div></div>
@@ -31,32 +49,41 @@
           <label>Project name<input id="project-title" maxlength="120" required></label>
           <label>What are you making, and why?<textarea id="project-brief" rows="4" maxlength="2000" placeholder="Example: A plate that fits inside a 100 × 70 mm space."></textarea></label>
           <label>Working units<select id="units"><option value="mm">Millimetres (mm)</option><option value="in">Inches (in)</option></select></label><p class="help">Changing units converts the numbers. Your part stays the same physical size.</p>
+          <label>How much guidance?<select id="workflow-mode"><option value="guided">Guided · one step at a time</option><option value="advanced">Explore · shapes, coordinates and teacher tools</option></select></label>
+          <details><summary>Use a class assignment</summary><p class="help" id="assignment-summary">Open a teacher’s assignment to keep the brief and assessment criteria with your project.</p><button type="button" id="assignment-open">Open assignment</button><input id="assignment-file" type="file" accept=".json,application/json" hidden><div data-advanced hidden><label>Assessment criteria · one per line<textarea id="assignment-criteria" rows="4" placeholder="Use correct units&#10;Explain the calculation&#10;Compare the result with the design"></textarea></label><label>Include dimension targets?<select id="assignment-dimensions"><option value="no">Brief and rubric only</option><option value="yes">Use the current drawing dimensions</option></select></label><label>Target tolerance ± <span class="inspection-unit">mm</span><input id="assignment-tolerance" type="number" step="any" min="0" value="0.5"></label><button type="button" id="assignment-download">Download assignment for students</button></div></details>
         </div>
         <div data-panel="1" hidden>
           <p class="help">Enter real dimensions. Use Shape Canvas to explore, annotate and show your working.</p>
+          <label>Part shape<select id="shape-choice"></select></label>
           <div id="dimension-fields" class="field-grid"></div>
+          <details id="profile-editor" hidden><summary>Edit outline coordinates</summary><p class="help">One X,Y pair per line, in the working units. Separate closed outlines with a blank line. The last point joins the first. Keep holes inside the outside outline.</p><label>Outline points<textarea id="profile-points" rows="8" spellcheck="false"></textarea></label><button type="button" id="profile-apply">Apply outline points</button><div class="export-actions"><button type="button" id="profile-rotate">Rotate outline 90°</button><button type="button" id="profile-mirror">Mirror outline left to right</button></div><div data-advanced hidden><label>Scale factor<input id="profile-scale" type="number" min="0.001" max="1000" step="any" value="1"></label><button type="button" id="profile-resize">Scale the measured outline</button><p class="help">A factor of 2 doubles every length and multiplies area by 4. Placement stays measured from the stock corner.</p></div></details>
           <div id="placement-fields" class="field-grid"><label>Left edge X <span class="unit-label"></span><input id="placement-x" type="number" step="any" min="0" required></label><label>Bottom edge Y <span class="unit-label"></span><input id="placement-y" type="number" step="any" min="0" required></label></div>
           <p id="origin-note" class="callout"></p>
           <a id="open-canvas" class="button primary" href="../../shape-canvas/index.html">Edit in Shape Canvas →</a>
-          <details><summary>Bring in work from desktop design apps</summary><p>Keep the original CorelDRAW, AutoCAD or Visio file. Export a measured SVG or DXF for the CNC trainer’s drawing importer. Check its units, scale and contours there before machining practice.</p><p>This workshop’s editable project format currently supports a rectangle, square, circle, washer or cylinder. Trace images and outline text in your desktop app first.</p></details>
+          <details><summary>Bring in a drawing</summary><p>Export a measured SVG or DXF from your design app. Closed outlines become an editable part here. Keep the original file for text, images and other features.</p><label>Units if the file does not declare them<select id="import-units"><option value="mm">Millimetres</option><option value="in">Inches</option></select></label><button type="button" id="drawing-import">Import SVG or DXF</button><input id="drawing-file" type="file" accept=".svg,.dxf" hidden><p id="drawing-import-message" class="help" role="status"></p></details>
         </div>
         <div data-panel="2" hidden>
           <p class="help">Stock is the material you start with. Make sure your part fits, then compare the drawing with your brief.</p>
           <button type="button" id="repair-machine" hidden></button>
           <div id="stock-fields" class="field-grid"></div>
           <ul id="check-list" class="checks" aria-live="polite"></ul>
+          <div id="assignment-checks" class="evidence-list"></div>
           <p class="help">These checks cover dimensions and stock fit. The CNC trainer checks the machining setup during practice.</p>
+          <details open><summary>Estimate, calculate, compare</summary><label>What are you estimating?<select id="estimate-quantity"></select></label><div class="field-grid"><label>Your estimate<input id="estimate-value" type="number" step="any" min="0"></label><label>Acceptable difference<input id="estimate-tolerance" type="number" step="any" min="0" value="0"></label></div><label>Show your working<textarea id="estimate-working" rows="3" maxlength="2000"></textarea></label><button type="button" id="estimate-save">Record comparison</button><div id="checkpoint-list" class="evidence-list"></div></details>
+          <details><summary>Inspect a measured dimension</summary><label>Dimension to inspect<select id="inspection-dimension"></select></label><div class="field-grid"><label>Measured value <span class="unit-label inspection-unit">mm</span><input id="inspection-measured" type="number" step="any" min="0"></label><label>Allowed ± tolerance <span class="unit-label inspection-unit">mm</span><input id="inspection-tolerance" type="number" step="any" min="0" value="0.5"></label><label>Instrument resolution <span class="unit-label inspection-unit">mm</span><input id="inspection-resolution" type="number" step="any" min="0" value="0.1"></label></div><p class="help">Record a measurement from your physical part or an identified simulator measurement. Instrument resolution is the smallest change it can show.</p><label>Measurement source<input id="inspection-source" maxlength="160" placeholder="Example: Calliper on practice part"></label><button type="button" id="inspection-save">Record inspection</button><div id="inspection-list" class="evidence-list"></div></details>
         </div>
         <div data-panel="3" hidden>
           <p class="help">Carry your stock and design brief into the mill or lathe. Your drawing remains a target to compare with the machined result.</p>
           <div class="handoff"><h3 id="machine-title">CNC practice</h3><p id="machine-summary"></p><p id="machine-readiness"></p><a id="open-cnc" class="button primary" href="../cnc/index.html">Continue in CNC trainer →</a></div>
+          <p id="operation-summary" class="help"></p><div id="machine-results" class="evidence-list" aria-live="polite"></div>
           <p class="callout">Training only. A design outline is not a toolpath. Choose a tool and machining moves in the trainer, simulate them, and review with your instructor.</p>
           <h3>Use your design in another app</h3><div class="export-actions"><button type="button" id="export-svg">Export measured SVG</button><button type="button" id="export-dxf">Export measured DXF</button></div><p id="export-note" class="help">Exports contain the part outline at real size, without dimension labels.</p>
         </div>
         <div data-panel="4" hidden>
           <p class="help">Show how you used numeracy. Record what you changed after checking or machining.</p>
           <label>Your working and reflection<textarea id="reflection" rows="8" maxlength="4000" placeholder="What did you estimate? Which formula did you use? Did the result fit the stock? What would you change next time?"></textarea></label>
-          <button type="button" id="print-sheet">Print project worksheet</button><p class="help">The worksheet includes your brief, dimensions, checks and reflection. Download the project to keep editing on another computer.</p>
+          <div id="assessment-summary" class="evidence-list"></div><div id="assessment-criteria"></div>
+          <div class="export-actions"><button type="button" id="print-sheet">Print project worksheet</button><button type="button" id="submission-download">Download learning evidence</button></div><p class="help">Your learning evidence includes the editable project, calculations, inspections and captured CNC checks. Share the file using your class’s usual submission method.</p>
         </div>
       </form>
       <div class="step-actions"><button id="previous">← Back</button><button id="next" class="primary">Draw your part →</button></div>

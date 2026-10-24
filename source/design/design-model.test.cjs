@@ -12,6 +12,8 @@ const near = (a, b) => assert.ok(Math.abs(a - b) < 1e-8, `${a} != ${b}`);
 
 test('browser and Node expose the same shared document API', () => {
   const context = vm.createContext({});
+  vm.runInContext(fs.readFileSync(path.resolve(__dirname, '../canvas/src/vendor/shapes-engine.js'), 'utf8'), context);
+  vm.runInContext(fs.readFileSync(path.resolve(__dirname, '../../numeracy-hub/design/design-geometry.js'), 'utf8'), context);
   vm.runInContext(fs.readFileSync(modelPath, 'utf8'), context);
   assert.equal(context.AccessDesign.format, Design.format);
   assert.equal(context.AccessDesign.create('washer').geometry.shapeId, 'annulus');
@@ -74,12 +76,12 @@ test('malformed, oversized, invalid Unicode and invalid annulus imports fail cle
   for (const payload of ['', '%ZZ', '{bad', 'null', 'a'.repeat(Design.maxBytes * 3 + 1)])
     assert.throws(() => Design.decode(payload));
   const p = Design.create('washer'); p.geometry.params.r = p.geometry.params.R;
-  assert.throws(() => Design.validate(p), /inner radius/);
+  assert.throws(() => Design.validate(p), /inner radius/i);
   const long = Design.create(); long.title = 'a'.repeat(161);
   assert.throws(() => Design.validate(long), /Title/);
   long.title = '\ud800';
   assert.throws(() => Design.validate(long), /Unicode/);
-  assert.throws(() => Design.decode('{' + ' '.repeat(Design.maxBytes) + '}'), /64 KB/);
+  assert.throws(() => Design.decode('{' + ' '.repeat(Design.maxBytes) + '}'), /limit/);
 });
 
 test('stock fit is readiness, not document validity; coordinates use stock lower-left', () => {

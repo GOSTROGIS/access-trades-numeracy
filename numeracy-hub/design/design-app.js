@@ -1,6 +1,6 @@
 (function () {
   'use strict';
-  const D = window.AccessDesign, $ = id => document.getElementById(id);
+  const D = window.AccessDesign, W = window.AccessDesignWorkflow, $ = id => document.getElementById(id);
   const STORE = 'access-design-workshop-v1';
   const titles = ['Give your design a purpose', 'Draw with real dimensions', 'Check the part against the stock', 'Try your design in the machine', 'Explain what you learned'];
   const nextLabels = ['Draw your part →', 'Check the design →', 'Plan machining →', 'Record your learning →'];
@@ -10,6 +10,7 @@
   let initialMessage = '';
   try { const saved = localStorage.getItem(STORE); if (saved) { project = D.validate(JSON.parse(saved)); hadSaved = true; } }
   catch (_) { initialMessage = 'Your saved project could not be opened. You can open a downloaded project or start again.'; }
+  if (!hadSaved) { try { const loaded = W.loadLibrary(localStorage); if (loaded.ok && loaded.library.activeId) { project = W.open(loaded.library, loaded.library.activeId); hadSaved = true; initialMessage = 'Your active project was recovered from the project library.'; } } catch (_) { /* Download remains available without storage. */ } }
   if (location.hash.startsWith('#project=')) {
     try { const incoming = D.decode(location.hash.slice(9)); if (hadSaved && JSON.stringify(incoming) !== JSON.stringify(project)) pendingIncoming = incoming; else project = incoming; initialMessage = 'Design received. Your dimensions, stock and notes are ready to review.'; }
     catch (e) { initialMessage = 'The incoming project was not opened: ' + e.message; }
@@ -28,29 +29,39 @@
     const candidate = copy(project);
     try {
       change(candidate);
-      const clean = D.validate(candidate);
+      const clean = W.syncMetadata(candidate, project);
       if (JSON.stringify(clean) !== JSON.stringify(project)) { undo.push(copy(project)); if (undo.length > 80) undo.shift(); redo = []; project = clean; save(); }
       notify(''); render();
     } catch (e) { notify('Check this value: ' + e.message); render(); }
   }
-  function numericField(container, id, labelText, value, change, min = 0.000001) {
+  function replaceProject(next) {
+    try {
+      const clean = D.validate(next);
+      if (JSON.stringify(clean) !== JSON.stringify(project)) { undo.push(copy(project)); if (undo.length > 80) undo.shift(); redo = []; project = clean; save(); }
+      notify(''); render();
+    } catch (error) { notify('Project not opened: ' + error.message); }
+  }
+  function numericField(container, id, labelText, value, change, min = 0.000001, parameter = {}) {
     const label = document.createElement('label'); label.htmlFor = id; label.append(labelText);
-    const unit = document.createElement('span'); unit.className = 'unit-label'; unit.textContent = project.units; label.append(unit);
-    const input = document.createElement('input'); input.type = 'number'; input.id = id; input.step = 'any'; input.min = min; input.required = true;
-    input.value = Number((value / unitFactor()).toFixed(8));
-    input.onchange = () => { const number = input.valueAsNumber; edit(p => change(p, number * unitFactor())); };
+    const unit = document.createElement('span'); unit.className = 'unit-label'; unit.textContent = parameter.angle ? 'degrees' : parameter.int ? 'count' : project.units; label.append(unit);
+    const input = document.createElement('input'); input.type = 'number'; input.id = id; input.step = parameter.int ? '1' : 'any'; input.min = min; input.required = true;
+    input.value = Number((value / (parameter.angle || parameter.int ? 1 : unitFactor())).toFixed(8));
+    input.onchange = () => { const number = input.valueAsNumber; edit(p => change(p, number * (parameter.angle || parameter.int ? 1 : unitFactor()))); };
     label.append(input); container.append(label);
   }
   function render() {
     $('project-title').value = project.title; $('project-brief').value = project.brief; $('units').value = project.units; $('reflection').value = project.reflection;
     $('undo').disabled = !undo.length; $('redo').disabled = !redo.length;
-    if (dimensionShape !== project.geometry.shapeId) {
-      $('dimension-fields').replaceChildren(); dimensionShape = project.geometry.shapeId;
-      for (const [key, value] of Object.entries(project.geometry.params)) numericField($('dimension-fields'), 'dim-' + key,
-        project.geometry.shapeId === 'annulus' && key === 'r' ? 'Inside radius' : labels[key], value, (p, n) => { p.geometry.params[key] = n; });
+    const parameters = D.geometryParams(project);
+    const geometryKey = project.geometry.shapeId + JSON.stringify(project.geometry.ao || {});
+    if (dimensionShape !== geometryKey) {
+      $('dimension-fields').replaceChildren(); dimensionShape = geometryKey;
+      for (const parameter of parameters) { const key = parameter.k;
+        numericField($('dimension-fields'), 'dim-' + key, parameter.name || labels[key] || key,
+          project.geometry.params[key], (p, n) => { p.geometry.params[key] = n; }, parameter.min == null ? 0.000001 : parameter.min, parameter);
+      }
     }
-    for (const [key, value] of Object.entries(project.geometry.params)) $('dim-' + key).value = Number((value / unitFactor()).toFixed(8));
-    document.querySelectorAll('#dimension-fields .unit-label').forEach(el => { el.textContent = project.units; });
+    for (const parameter of parameters) { const input = $('dim-' + parameter.k); if (input) { input.value = Number((project.geometry.params[parameter.k] / (parameter.angle || parameter.int ? 1 : unitFactor())).toFixed(8)); input.parentElement.querySelector('.unit-label').textContent = parameter.angle ? 'degrees' : parameter.int ? 'count' : project.units; } }
     for (const axis of ['x', 'y']) $('placement-' + axis).value = Number((project.placement[axis] / unitFactor()).toFixed(8));
     document.querySelectorAll('#placement-fields .unit-label').forEach(el => { el.textContent = project.units; });
     const lathe = project.machine === 'lathe';
@@ -67,11 +78,11 @@
     for (const key of Object.keys(stockLabels)) $('stock-' + key).value = Number((project.stock[key] / unitFactor()).toFixed(8));
     document.querySelectorAll('#stock-fields .unit-label').forEach(el => { el.textContent = project.units; });
     $('drawing-title').textContent = project.title; $('unit-chip').textContent = project.units;
-    const canvasShape = D.toCanvas(project, project.units);
-    $('drawing-preview').innerHTML = Shapes.render(canvasShape.shapeId, canvasShape.params, { units: project.units, labels: 'values', allAngles: false, moreDims: false });
-    const svg = $('drawing-preview').querySelector('svg'); if (svg) { svg.setAttribute('role', 'img'); svg.setAttribute('aria-label', names[project.geometry.shapeId] + ' with dimensions in ' + project.units); }
-    $('drawing-caption').textContent = names[project.geometry.shapeId] + ' · ' + (lathe ? 'X uses diameter in CNC practice.' : 'Part offsets: X ' + fmt(project.placement.x / unitFactor()) + ', Y ' + fmt(project.placement.y / unitFactor()) + ' ' + project.units + '.');
-    const maths = Shapes.calc(canvasShape.shapeId, canvasShape.params, project.units);
+    const shapeName = D.geometryInfo(project).name || names[project.geometry.shapeId];
+    $('drawing-preview').innerHTML = D.render(project, project.units);
+    const svg = $('drawing-preview').querySelector('svg'); if (svg) { svg.setAttribute('role', 'img'); svg.setAttribute('aria-label', shapeName + ' with dimensions in ' + project.units); }
+    $('drawing-caption').textContent = shapeName + ' · ' + (lathe ? 'X uses diameter in CNC practice.' : 'Part offsets: X ' + fmt(project.placement.x / unitFactor()) + ', Y ' + fmt(project.placement.y / unitFactor()) + ' ' + project.units + '.');
+    const maths = D.measurements(project, project.units);
     $('measurements').replaceChildren(); $('formula-working').replaceChildren();
     maths.items.slice(0, 4).forEach(item => { const box = document.createElement('div'); box.className = 'measurement'; const label = document.createElement('span'); label.textContent = item.name; const number = document.createElement('strong'); number.textContent = fmt(item.value) + ' ' + item.unit; box.append(label, number); $('measurements').append(box); });
     maths.items.forEach(item => { const title = document.createElement('h3'); title.textContent = item.name; $('formula-working').append(title); item.lines.forEach(line => { const p = document.createElement('p'); p.textContent = line; $('formula-working').append(p); }); });
@@ -89,7 +100,9 @@
     $('open-canvas').href = '../../shape-canvas/index.html#project=' + D.encode(project);
     $('export-svg').disabled = lathe; $('export-dxf').disabled = lathe;
     $('export-note').textContent = lathe ? 'Download the editable project for this 3D shaft. A lathe cutting profile requires a separate machining operation.' : 'Exports contain the part outline at real size in millimetres, without dimension labels. Check units when importing into another app.';
+    if (!lathe && !['circle', 'annulus'].includes(project.geometry.shapeId) && D.outline(project).approximate) $('export-note').textContent += ' Curved edges export as sampled straight segments; the displayed formula results use the original shape.';
     renderStep(false); renderWorksheet(checks);
+    window.dispatchEvent(new CustomEvent('design-workshop-render', { detail: copy(project) }));
   }
   function renderStep(focus = true) {
     document.querySelectorAll('[data-panel]').forEach(el => { el.hidden = Number(el.dataset.panel) !== step; });
@@ -104,10 +117,11 @@
     const paragraph = text => { const el = document.createElement('p'); el.textContent = text; out.append(el); };
     heading(project.title, 'h2'); heading('Design brief'); paragraph(project.brief || 'No brief recorded.');
     heading('Dimensions and setup'); paragraph($('machine-summary').textContent); paragraph($('origin-note').textContent);
-    for (const [key, value] of Object.entries(project.geometry.params)) paragraph((labels[key] || key) + ': ' + fmt(value / unitFactor()) + ' ' + project.units);
+    for (const parameter of D.geometryParams(project)) paragraph(parameter.name + ': ' + fmt(project.geometry.params[parameter.k] / (parameter.angle || parameter.int ? 1 : unitFactor())) + ' ' + (parameter.angle ? 'degrees' : parameter.int ? '' : project.units));
     heading('Design checks'); checks.forEach(c => paragraph((c.ok ? 'Pass: ' : 'Review: ') + c.message));
     heading('Working and reflection'); paragraph(project.reflection || 'Record your calculations, changes and next steps here.');
     paragraph('Training design worksheet · ACCESS Indigenous Skills4Success');
+    window.dispatchEvent(new CustomEvent('design-workshop-worksheet', { detail: copy(project) }));
   }
   function download(name, text, type) {
     const url = URL.createObjectURL(new Blob([text], { type })), a = document.createElement('a'); a.href = url; a.download = name; a.click(); setTimeout(() => URL.revokeObjectURL(url), 1000);
@@ -129,17 +143,18 @@
   function askReplace(incoming) {
     const dialog = $('new-dialog');
     dialog.querySelector('h2').textContent = incoming ? 'Open the incoming design?' : 'Start a new design?';
-    dialog.querySelector('p').textContent = 'You already have a project in this workshop. Download it to keep a separate copy. You can also Undo after replacing it during this visit.';
+    const earlier = pendingIncoming && pendingIncoming.id === project.id && project.workflow && (!pendingIncoming.workflow || pendingIncoming.workflow.revision < project.workflow.revision);
+    dialog.querySelector('p').textContent = (earlier ? 'This incoming copy is an earlier version or is missing your current learning records. ' : pendingIncoming ? 'Incoming project: ' + pendingIncoming.title + '. ' : '') + 'You already have a project in this workshop. Download it to keep a separate copy. You can also Undo after replacing it during this visit.';
     dialog.querySelector('[value="start"]').textContent = incoming ? 'Open incoming design' : 'Start new design';
     dialog.returnValue = ''; dialog.showModal();
   }
   document.querySelectorAll('[data-template]').forEach(el => { el.onclick = () => { pendingTemplate = el.dataset.template; askReplace(false); }; });
-  $('new-dialog').addEventListener('close', () => { if ($('new-dialog').returnValue === 'start' && (pendingTemplate || pendingIncoming)) { const next = pendingIncoming || D.create(pendingTemplate); edit(p => { for (const key of Object.keys(p)) delete p[key]; Object.assign(p, next); }); notify('Design opened. Undo returns to the previous project during this visit.'); } pendingTemplate = null; pendingIncoming = null; });
+  $('new-dialog').addEventListener('close', () => { if ($('new-dialog').returnValue === 'start' && (pendingTemplate || pendingIncoming)) { const next = pendingIncoming || D.create(pendingTemplate); replaceProject(next); notify('Design opened. Undo returns to the previous project during this visit.'); } pendingTemplate = null; pendingIncoming = null; });
   $('download-before-new').onclick = downloadProject; $('save-project').onclick = downloadProject;
   $('open-project').onclick = () => $('project-file').click();
   $('project-file').onchange = async event => {
     const file = event.target.files[0]; if (!file) return;
-    try { if (file.size > 100000) throw new Error('Project files must be smaller than 100 KB.'); const incoming = D.validate(JSON.parse(await file.text())); undo.push(copy(project)); redo = []; project = incoming; step = 0; save(); render(); notify('Project opened. Use Undo to return to your previous design.'); }
+    try { if (file.size > D.maxBytes) throw new Error('This project exceeds the 1 MB file limit.'); const incoming = D.validate(JSON.parse(await file.text())); undo.push(copy(project)); redo = []; project = incoming; step = 0; save(); render(); notify('Project opened. Use Undo to return to your previous design.'); }
     catch (e) { notify('Project not opened: ' + e.message); }
     event.target.value = '';
   };
@@ -147,6 +162,11 @@
   for (const ext of ['svg', 'dxf']) $('export-' + ext).onclick = () => { try { download(filename() + '.' + ext, ext === 'svg' ? D.toSVG(project) : D.toDXF(project), ext === 'svg' ? 'image/svg+xml' : 'application/dxf'); } catch (e) { notify(e.message); } };
   $('print-sheet').onclick = () => { renderWorksheet(D.checks(project)); window.print(); };
   // Read-only snapshots make the handoff inspectable without exposing mutable application state.
-  window.DesignWorkshop = { getProject: () => copy(project) };
+  window.DesignWorkshop = {
+    getProject: () => copy(project), update: edit, notify, download, filename,
+    replaceProject,
+    showStep: value => { step = Math.max(0, Math.min(4, value)); renderStep(); },
+    refresh: render
+  };
   render(); save(); if (initialMessage) notify(initialMessage); if (pendingIncoming) askReplace(true);
 })();
