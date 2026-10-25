@@ -81,3 +81,54 @@ test('snapshot copies the actual native simulator material and comparison surviv
   const summary=C.summary(r);assert.deepEqual(W.validateComparisonResult(JSON.parse(JSON.stringify(summary))),summary);
   assert.ok(JSON.stringify(summary).length<10000);assert.equal('topMm' in summary,false);
 });
+test('mill facing shifts the kept surface while the pocket floor remains relative to the original top',()=>{
+  const p=plate(4,4,3);p.geometry.params={l:2,w:2};p.placement={x:1,y:1};const s=grid(p,9);
+  for(let j=0;j<9;j++)for(let i=0;i<9;i++)s.data.topMm[j*9+i]=(i>=2&&i<=6&&j>=2&&j<=6)?-1.5:-.5;
+  const options={mode:'pocket',depthMm:1.5,toleranceMm:.1,faceAllowanceMm:.5},correct=C.compare(p,s,options);
+  near(correct.metrics.missingVolumeMm3,0);near(correct.metrics.excessVolumeMm3,0);assert.equal(correct.status,'resolution-limited');
+  const wrong=C.compare(p,s,{...options,faceAllowanceMm:0});assert.equal(wrong.status,'needs-work');assert.ok(wrong.metrics.missingVolumeMm3>0);
+  assert.throws(()=>C.compare(p,s,{...options,depthMm:.4}),/floor|Facing|faced/i);
+});
+function actualLathe(){
+  const html=fs.readFileSync(path.resolve(__dirname,'../../numeracy-hub/cnc/index.html'),'utf8');
+  const lathe=html.slice(html.indexOf('  class LatheStock {'),html.indexOf('  /* ---------------- workholding'));
+  const capture=html.slice(html.indexOf('  function materialSnapshot(meta)'),html.indexOf('  /* Exact-resolution, detached stock check'));
+  const transaction=html.slice(html.indexOf('  function captureManualScene()'),html.indexOf('  /* Detached measurements of the stock actually changed by playback'));
+  class Group{constructor(){this.children=[];}add(o){this.children.push(o);o.parent=this;}remove(o){this.children=this.children.filter(v=>v!==o);}}
+  class Geometry{constructor(profile){this.attributes={position:{count:1,getY:()=>profile[1].y}};}setAttribute(k,v){this.attributes[k]=v;}}
+  const context=vm.createContext({STOCK_BASE:{r:1,g:1,b:1},THREE:{Group,Vector2:class{constructor(x,y){this.x=x;this.y=y;}},LatheGeometry:Geometry,BufferAttribute:class{},MeshStandardMaterial:class{},Mesh:class{constructor(){this.rotation={};}}}});
+  vm.runInContext(lathe+'\nlet M,root={},follow=false;const scene={remove(){},add(){}},controls={target:{clone(){return this;},copy(){}},apply(){}};\n'+transaction+capture+'\nglobalThis.make=()=>{const stock=new LatheStock(14/25.4,-.7,30/25.4,false);M={type:"lathe",stock,setup:{stock:{stickout:30/25.4}}};return stock;};globalThis.capture=materialSnapshot;globalThis.save=captureManualScene;globalThis.restore=restoreManualScene;',context);
+  return{stock:context.make(),capture:()=>context.capture({complete:true,program:'native-turn-face-part'}),save:()=>context.save(),restore:s=>context.restore(s)};
+}
+function turnFacePart(length=10,allowance=1){
+  const fixture=actualLathe(),s=fixture.stock,front=30-allowance,back=front-length;
+  s.cut({z:back/25.4,r:5/25.4},{z:30/25.4,r:5/25.4},'turn',0,1);
+  if(allowance)s.cut({z:front/25.4,r:7/25.4},{z:front/25.4,r:0},'turn',0,2);
+  s.cut({z:back/25.4,r:7/25.4},{z:back/25.4,r:0},'part',1/25.4,3);
+  const part=s.checkParted(back/25.4);assert.ok(part&&part.group.children.length);s.parts.push(part.group);
+  return fixture;
+}
+test('actual lathe cuts preserve detached profiles and measure facing and part length without realigning the target',()=>{
+  const p=shaft(),fixture=turnFacePart(),s=fixture.capture(),options={mode:'retained-solid',depthMm:null,toleranceMm:.3,faceAllowanceMm:1};
+  assert.equal(s.data.detachedParts,1);assert.equal(s.data.detachedProfiles.length,1);
+  assert.ok(s.data.detachedProfiles[0].radiiMm.some(r=>Math.abs(r-5)<1e-6));
+  const r=C.compare(p,s,options);assert.equal(r.status,'within-sample-tolerance',JSON.stringify(r));assert.equal(r.dimensions.source,'detached');
+  near(r.dimensions.expectedFrontMm,29);assert.ok(Math.abs(r.dimensions.actualFrontMm-29)<=.127);assert.ok(Math.abs(r.dimensions.actualLengthMm-10)<=.254);
+  assert.ok(r.overlay.samples.every(v=>Math.abs(v.diameterMm-10)<1e-6));
+  const liveRadius=fixture.stock.detachedProfiles[0].r[2];s.data.detachedProfiles[0].radiiMm[2]=999;near(fixture.stock.detachedProfiles[0].r[2],liveRadius);
+  const wrongFace=C.compare(p,fixture.capture(),{...options,faceAllowanceMm:0});assert.equal(wrongFace.status,'needs-work');assert.ok(wrongFace.metrics.missingVolumeMm3>0);assert.ok(wrongFace.dimensions.frontErrorMm<-.8);
+  const fine=C.compare(p,fixture.capture(),{...options,toleranceMm:.05});assert.equal(fine.status,'resolution-limited');
+  assert.deepEqual(W.validateComparisonResult(JSON.parse(JSON.stringify(r))),r);
+  const saved=fixture.save();fixture.stock.refresh=()=>{};fixture.stock.reset();assert.equal(fixture.stock.detachedProfiles.length,0);
+  fixture.restore(saved);assert.equal(fixture.capture().data.detachedProfiles.length,1);assert.deepEqual(C.compare(p,fixture.capture(),options),r,'Preview rollback restores loose-piece samples and mounted material together');
+});
+test('actual short and long loose parts fail their fixed length goal and multiple pieces stay ambiguous',()=>{
+  const p=shaft(),options={mode:'retained-solid',depthMm:null,toleranceMm:.3,faceAllowanceMm:1};
+  assert.throws(()=>C.compare(p,radial(p),{...options,faceAllowanceMm:21}),/target length must fit/);
+  const short=C.compare(p,turnFacePart(8).capture(),options),long=C.compare(p,turnFacePart(12).capture(),options);
+  assert.equal(short.status,'needs-work');assert.ok(short.dimensions.lengthErrorMm<-1.7);assert.ok(short.metrics.missingVolumeMm3>100);
+  assert.equal(long.status,'needs-work');assert.ok(long.dimensions.lengthErrorMm>1.7);assert.ok(long.metrics.excessVolumeMm3>100);
+  const ambiguous=turnFacePart().capture();ambiguous.data.detachedParts=2;ambiguous.data.detachedProfiles.push(structuredClone(ambiguous.data.detachedProfiles[0]));
+  assert.equal(C.compare(p,ambiguous,options).status,'unsupported');
+  ambiguous.data.detachedParts=1;assert.throws(()=>C.compare(p,ambiguous,options),/piece count/);
+});

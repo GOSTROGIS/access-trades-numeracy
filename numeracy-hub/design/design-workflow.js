@@ -52,10 +52,10 @@
   function validateOperation(o) {
     if (o === null) return null;
     record(o, OP_KEYS, 'operation');
-    var result = { kind: choice(o.kind, ['profile-out', 'profile-in', 'pocket', 'drill', 'turn', 'clear-outside'], 'operation kind') };
+    var result = { kind: choice(o.kind, ['profile-out', 'profile-in', 'pocket', 'drill', 'turn', 'clear-outside', 'face', 'part'], 'operation kind') };
     ['toolDiameterMm', 'depthMm', 'stepDownMm', 'feedMmPerMin'].forEach(function (k) { result[k] = number(o[k], 0.000001, 1000000, k); });
     result.spindleRpm = number(o.spindleRpm, 1, 100000, 'spindle RPM', true);
-    if (result.stepDownMm > result.depthMm) fail('Step down must not exceed the total depth.');
+    if (result.kind !== 'part' && result.stepDownMm > result.depthMm) fail('Step down must not exceed the total depth.');
     return result;
   }
   function validateSequence(s) {
@@ -69,17 +69,23 @@
     }, 'sequence steps') };
   }
   function validateComparison(c) {
-    record(c, ['mode', 'depthMm', 'toleranceMm'], 'comparison settings');
-    return { mode: choice(c.mode, ['retained-solid', 'pocket'], 'comparison target mode'), depthMm: nullableNumber(c.depthMm, 0.000001, 1000000, 'comparison depth'), toleranceMm: number(c.toleranceMm, 0, 1000000, 'comparison tolerance') };
+    record(c, ['mode', 'depthMm', 'toleranceMm', 'faceAllowanceMm'], 'comparison settings', ['faceAllowanceMm']);
+    var result = { mode: choice(c.mode, ['retained-solid', 'pocket'], 'comparison target mode'), depthMm: nullableNumber(c.depthMm, 0.000001, 1000000, 'comparison depth'), toleranceMm: number(c.toleranceMm, 0, 1000000, 'comparison tolerance') };
+    // Absence means zero and remains absent in old serialized projects/fingerprints.
+    if (own(c, 'faceAllowanceMm')) result.faceAllowanceMm = number(c.faceAllowanceMm, 0, 1000000, 'face allowance');
+    return result;
   }
   function validateComparisonResult(c) {
-    record(c, ['version', 'machine', 'mode', 'depthMm', 'toleranceMm', 'resolutionMm', 'status', 'metrics', 'observations', 'limitations', 'overlay'], 'comparison result');
+    record(c, ['version', 'machine', 'mode', 'depthMm', 'toleranceMm', 'resolutionMm', 'status', 'metrics', 'observations', 'limitations', 'overlay', 'faceAllowanceMm', 'dimensions'], 'comparison result', ['faceAllowanceMm', 'dimensions']);
     if (c.version !== 1) fail('Unsupported comparison result version.');
-    var settings = validateComparison({ mode: c.mode, depthMm: c.depthMm, toleranceMm: c.toleranceMm });
+    var target = { mode: c.mode, depthMm: c.depthMm, toleranceMm: c.toleranceMm };
+    if (own(c, 'faceAllowanceMm')) target.faceAllowanceMm = c.faceAllowanceMm;
+    var settings = validateComparison(target);
     var status = choice(c.status, ['within-sample-tolerance', 'needs-work', 'resolution-limited', 'unsupported', 'incomplete'], 'comparison status');
     var machine = choice(c.machine, ['mill', 'lathe'], 'comparison machine');
     if (machine === 'lathe' && (settings.mode !== 'retained-solid' || settings.depthMm !== null)) fail('Lathe comparison needs the retained-solid target and no milling depth.');
     if (machine === 'mill' && settings.depthMm === null) fail('Mill comparison needs an explicit target depth.');
+    if (machine === 'mill' && settings.depthMm < (settings.faceAllowanceMm || 0)) fail('The comparison floor cannot be above the faced surface.');
     var metricKeys = ['sampleCount', 'desiredVolumeMm3', 'actualVolumeMm3', 'missingVolumeMm3', 'excessVolumeMm3', 'maxUndercutMm', 'maxExcessMm', 'mismatchedPercent'];
     record(c.metrics, metricKeys, 'comparison metrics');
     var metrics = { sampleCount: number(c.metrics.sampleCount, 0, 10000000, 'comparison samples', true) };
@@ -107,10 +113,28 @@
         overlay = { kind: 'lathe-chart', lengthMm: length, targetDiameterMm: number(c.overlay.targetDiameterMm, 0.000001, 1000000, 'target diameter'), samples: samples };
       } else fail('Unsupported comparison overlay.');
     }
-    return { version: 1, machine: machine, mode: settings.mode, depthMm: settings.depthMm, toleranceMm: settings.toleranceMm,
+    var result = { version: 1, machine: machine, mode: settings.mode, depthMm: settings.depthMm, toleranceMm: settings.toleranceMm,
       resolutionMm: number(c.resolutionMm, ['unsupported', 'incomplete'].includes(status) ? 0 : 0.000001, 1000000, 'comparison resolution'), status: status, metrics: metrics,
       observations: list(c.observations, 8, function (v) { return str(v, 600, 'comparison observation', true); }, 'comparison observations'),
       limitations: list(c.limitations, 8, function (v) { return str(v, 600, 'comparison limitation', true); }, 'comparison limitations'), overlay: overlay };
+    if (own(settings, 'faceAllowanceMm')) result.faceAllowanceMm = settings.faceAllowanceMm;
+    if (own(c, 'dimensions')) {
+      if (machine !== 'lathe') fail('Finished-face and piece-length evidence is only available for the lathe.');
+      var d = c.dimensions;
+      record(d, ['source', 'pieceCount', 'expectedFrontMm', 'actualFrontMm', 'expectedLengthMm', 'actualLengthMm', 'frontErrorMm', 'lengthErrorMm'], 'comparison dimensions');
+      var dimensions = { source: choice(d.source, ['mounted', 'detached'], 'material measurement source'), pieceCount: number(d.pieceCount, 0, 12, 'detached piece count', true),
+        expectedFrontMm: number(d.expectedFrontMm, -1000000, 1000000, 'expected front'), actualFrontMm: nullableNumber(d.actualFrontMm, -1000000, 1000000, 'actual front'),
+        expectedLengthMm: number(d.expectedLengthMm, 0.000001, 1000000, 'expected part length'), actualLengthMm: nullableNumber(d.actualLengthMm, 0, 1000000, 'actual part length'),
+        frontErrorMm: nullableNumber(d.frontErrorMm, -2000000, 2000000, 'front error'), lengthErrorMm: nullableNumber(d.lengthErrorMm, -1000000, 1000000, 'part length error') };
+      if (dimensions.source === 'detached' && !dimensions.pieceCount) fail('Detached measurements must identify at least one sampled piece.');
+      if (dimensions.source === 'mounted' && (dimensions.actualLengthMm !== null || dimensions.lengthErrorMm !== null)) fail('Mounted-stock evidence cannot claim a detached part length.');
+      [['actualFrontMm', 'expectedFrontMm', 'frontErrorMm'], ['actualLengthMm', 'expectedLengthMm', 'lengthErrorMm']].forEach(function (keys) {
+        var actual = dimensions[keys[0]], expected = dimensions[keys[1]], error = dimensions[keys[2]];
+        if (actual === null ? error !== null : error === null || Math.abs(error - (actual - expected)) > 1e-7 * Math.max(1, Math.abs(actual), Math.abs(expected))) fail('Comparison dimension error must equal the observed value minus the target.');
+      });
+      result.dimensions = dimensions;
+    }
+    return result;
   }
   function validateCheckpoint(c) {
     record(c, ['id', 'label', 'unit', 'estimate', 'actual', 'tolerance', 'working', 'sourceFingerprint'], 'checkpoint');
@@ -130,7 +154,7 @@
     record(r, RESULT_KEYS, 'result', ['operationCount', 'comparison']);
     if (typeof r.accepted !== 'boolean') fail('Result accepted must be true or false.');
     var result = { id: str(r.id, 100, 'result ID', true), kind: choice(r.kind, ['simulation', 'check', 'inspection'], 'result kind'), capturedAt: date(r.capturedAt, 'result date'),
-      sourceFingerprint: str(r.sourceFingerprint, 100, 'result fingerprint', true), operationKind: choice(r.operationKind, ['', 'profile-out', 'profile-in', 'pocket', 'drill', 'turn', 'clear-outside', 'sequence'], 'result operation'),
+      sourceFingerprint: str(r.sourceFingerprint, 100, 'result fingerprint', true), operationKind: choice(r.operationKind, ['', 'profile-out', 'profile-in', 'pocket', 'drill', 'turn', 'clear-outside', 'face', 'part', 'sequence'], 'result operation'),
       programNumber: number(r.programNumber, 0, 99999, 'program number', true), programLineCount: number(r.programLineCount, 0, 1000000, 'program lines', true),
       actionCount: number(r.actionCount, 0, 1000000, 'action count', true), accepted: r.accepted, removedVolumeMm3: number(r.removedVolumeMm3, 0, 1e18, 'removed volume'),
       diagnostics: list(r.diagnostics, 100, function (d) { record(d, ['level', 'message'], 'diagnostic'); return { level: choice(d.level, ['info', 'warning', 'error'], 'diagnostic level'), message: str(d.message, 1000, 'diagnostic message', true) }; }, 'diagnostics'),
@@ -201,7 +225,7 @@
     // so a changed default cannot make old comparison evidence look current.
     if (r.comparison) {
       var p = project(raw), expected = getComparison(p), c = r.comparison;
-      if (c.machine !== p.machine || c.mode !== expected.mode || c.depthMm !== expected.depthMm || c.toleranceMm !== expected.toleranceMm) stale = true;
+      if (c.machine !== p.machine || c.mode !== expected.mode || c.depthMm !== expected.depthMm || c.toleranceMm !== expected.toleranceMm || (c.faceAllowanceMm || 0) !== expected.faceAllowanceMm) stale = true;
     }
     return { stale: stale, status: stale ? 'stale' : 'current' };
   }
@@ -220,11 +244,14 @@
   function comparisonState(raw) {
     var p = withMetadata(raw), present = own(p.workflow, 'comparison');
     var settings = present ? clone(p.workflow.comparison) : { mode: p.machine === 'mill' ? 'pocket' : 'retained-solid', depthMm: p.machine === 'mill' ? Math.min(2, p.stock.depth * .2) : null, toleranceMm: 0.1 };
+    settings.faceAllowanceMm = settings.faceAllowanceMm || 0;
     var adjusted = false;
     // Editing the stock or switching machines must remain possible with old evidence.
     // Resolve a safe current target without rewriting the historic explicit settings.
     if (p.machine === 'lathe' && (settings.mode !== 'retained-solid' || settings.depthMm !== null)) { settings.mode = 'retained-solid'; settings.depthMm = null; adjusted = true; }
     if (p.machine === 'mill' && (settings.depthMm === null || settings.depthMm > p.stock.depth)) { settings.depthMm = p.stock.depth; adjusted = true; }
+    var allowanceLimit = p.machine === 'mill' ? Math.min(settings.depthMm, Math.max(0, p.stock.depth - 0.000001)) : Math.max(0, p.stock.length - (p.geometry.shapeId === 'cylinder' ? p.geometry.params.h : 0));
+    if (settings.faceAllowanceMm > allowanceLimit) { settings.faceAllowanceMm = allowanceLimit; adjusted = true; }
     return { settings: settings, adjusted: adjusted, message: adjusted ? 'The machine or stock changed. Review and save the comparison target shown for this setup.' : '' };
   }
   function getComparison(raw) { return comparisonState(raw).settings; }
@@ -232,6 +259,9 @@
     var p = withMetadata(raw), comparison = validateComparison(input);
     if (p.machine === 'lathe' && (comparison.mode !== 'retained-solid' || comparison.depthMm !== null)) fail('A cylinder comparison uses its retained diameter and length, with no milling depth.');
     if (p.machine === 'mill' && (comparison.depthMm === null || comparison.depthMm > p.stock.depth)) fail('Choose a comparison depth greater than zero and no larger than the stock depth.');
+    var allowance = comparison.faceAllowanceMm || 0;
+    if (p.machine === 'mill' && (allowance >= p.stock.depth || allowance > comparison.depthMm)) fail('The faced surface must stay within stock and at or above the comparison floor.');
+    if (p.machine === 'lathe' && allowance + (p.geometry.shapeId === 'cylinder' ? p.geometry.params.h : 0) > p.stock.length) fail('The face allowance plus target length must fit within the stock length.');
     p.workflow.comparison = comparison;
     return syncMetadata(p, raw);
   }
@@ -244,7 +274,7 @@
     if (src.operationCount !== undefined) data.operationCount = src.operationCount;
     if (src.comparison !== undefined) {
       var comparison = validateComparisonResult(src.comparison), expected = getComparison(p);
-      if (comparison.machine !== p.machine || comparison.mode !== expected.mode || comparison.depthMm !== expected.depthMm || comparison.toleranceMm !== expected.toleranceMm) fail('Comparison evidence must match the current target settings and machine.');
+      if (comparison.machine !== p.machine || comparison.mode !== expected.mode || comparison.depthMm !== expected.depthMm || comparison.toleranceMm !== expected.toleranceMm || (comparison.faceAllowanceMm || 0) !== expected.faceAllowanceMm) fail('Comparison evidence must match the current target settings and machine.');
       data.comparison = comparison;
     }
     var r = validateResult(data);

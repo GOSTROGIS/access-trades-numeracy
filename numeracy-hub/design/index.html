@@ -79,6 +79,7 @@
             <h3 id="comparison-title">What are you trying to make?</h3>
             <label>Use this drawing to…<select id="comparison-mode"><option value="retained-solid">Keep the outlined shape</option><option value="pocket">Cut a pocket inside the outline</option></select></label>
             <div class="field-grid">
+              <label><span id="comparison-face-label">Facing allowance from original top</span> <span class="comparison-unit unit-label">mm</span><input id="comparison-face-allowance" type="number" min="0" step="any" required></label>
               <label id="comparison-depth-field">Target cut depth <span class="comparison-unit unit-label">mm</span><input id="comparison-depth" type="number" min="0.000001" step="any" required></label>
               <label>Comparison tolerance <span class="comparison-unit unit-label">mm</span><input id="comparison-tolerance" type="number" min="0" step="any" required></label>
             </div>

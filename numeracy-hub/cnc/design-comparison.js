@@ -14,10 +14,12 @@
     const s=W.validateComparison(value||defaults(p));
     if(p.machine==='lathe'){
       if(s.mode!=='retained-solid'||s.depthMm!==null)throw Error('A cylinder comparison keeps the target shaft; use retained-solid with no pocket depth.');
-    }else if(s.depthMm===null||s.depthMm>p.stock.depth)throw Error('Comparison depth must be positive and no greater than the stock thickness.');
+      if((s.faceAllowanceMm||0)+p.geometry.params.h>p.stock.length+EPS)throw Error('Facing allowance plus target length must fit within the exposed stock.');
+    }else if(s.depthMm===null||s.depthMm>p.stock.depth||s.depthMm<(s.faceAllowanceMm||0))throw Error('Comparison floor must be at or below the faced surface and within the stock thickness.');
+    if((s.faceAllowanceMm||0)>=(p.machine==='mill'?p.stock.depth:p.stock.length))throw Error('Facing allowance must leave material in the stock.');
     return s;
   }
-  function base(p,s){return{version:1,machine:p.machine,mode:s.mode,depthMm:s.depthMm,toleranceMm:s.toleranceMm,resolutionMm:0,status:'unsupported',
+  function base(p,s){return{version:1,machine:p.machine,mode:s.mode,depthMm:s.depthMm,toleranceMm:s.toleranceMm,faceAllowanceMm:s.faceAllowanceMm||0,resolutionMm:0,status:'unsupported',
     metrics:{sampleCount:0,desiredVolumeMm3:0,actualVolumeMm3:0,missingVolumeMm3:0,excessVolumeMm3:0,maxUndercutMm:0,maxExcessMm:0,mismatchedPercent:0},observations:[],limitations:[],overlay:null};}
   function unavailable(result,status,message){result.status=status;result.observations.push(message);return result;}
   function checkedSnapshot(s){
@@ -78,7 +80,7 @@
           inside=dist<=R&&!(p.geometry.shapeId==='annulus'&&dist<q.r);
         }
         if(inside)insideSamples++;
-        const removedRegion=result.mode==='pocket'?inside:!inside,expectedTop=removedRegion?-result.depthMm:0;
+        const removedRegion=result.mode==='pocket'?inside:!inside,expectedTop=removedRegion?-result.depthMm:-result.faceAllowanceMm;
         const expectedThickness=stock.depthMm+expectedTop,actualThickness=Math.max(0,top[k]-bottom[k]);
         const overlap=Math.max(0,Math.min(expectedTop,top[k])-Math.max(-stock.depthMm,bottom[k]));
         const missing=Math.max(0,expectedThickness-overlap),excess=Math.max(0,actualThickness-overlap);
@@ -102,8 +104,8 @@
     if(result.mode==='pocket'&&m.mismatchedPercent>0&&m.mismatchedPercent<2&&m.maxExcessMm>result.toleranceMm&&m.maxUndercutMm<=result.toleranceMm)
       result.observations.push('Small areas still contain excess material. A round cutter may leave material in sharp inside corners: compare those locations on the map with the tool diameter and design. A smaller tool reduces the corner radius; it cannot make a perfectly sharp internal corner.');
     result.limitations.push('The grid resolves approximately '+fmt(result.resolutionMm)+' mm across its diagonal. Volumes and boundaries are sampled estimates; features between points and undercuts cannot be certified.');
-    if(result.mode==='retained-solid')result.limitations.push('The goal keeps the outlined region and removes surrounding stock to '+fmt(result.depthMm)+' mm. An outside contour can leave surrounding waste, which is still counted here; a groove alone is not a finished part.');
-    else result.limitations.push('The goal is a '+fmt(result.depthMm)+' mm deep pocket inside the outline. Nested holes in the drawing are islands that should remain. Stock outside the pocket should remain unchanged.');
+    if(result.mode==='retained-solid')result.limitations.push('The goal keeps the outlined region at '+fmt(result.faceAllowanceMm)+' mm below the original top and removes surrounding stock to '+fmt(result.depthMm)+' mm below that original top. An outside contour can leave surrounding waste, which is still counted here; a groove alone is not a finished part.');
+    else result.limitations.push('The pocket floor is '+fmt(result.depthMm)+' mm below the original top; surrounding stock and nested islands should be at '+fmt(result.faceAllowanceMm)+' mm below the original top. Facing allowance is an explicit goal, not inferred from the program.');
     if(outline.approximate&&!['circle','annulus'].includes(p.geometry.shapeId))result.limitations.push('This target boundary uses the design library’s sampled curve segments; formula measurements may be more precise than the polygon boundary.');
     return result;
   }
@@ -113,29 +115,53 @@
     if(a.kind!=='radial-profile')throw Error('This lathe snapshot has no radial material profile.');
     finite(stock.diameterMm,.001,1000000,'Snapshot diameter');finite(stock.lengthMm,.001,1000000,'Snapshot length');
     if(!close(stock.diameterMm,p.stock.diameter)||!close(stock.lengthMm,p.stock.length))return unavailable(result,'unsupported','The simulated bar differs from the design stock. Simulate the current design again.');
-    finite(a.z0Mm,-1000000,1000000,'Profile origin');finite(a.dzMm,1e-9,1000000,'Profile sample spacing');finite(a.frontZMm,-1000000,1000000,'Finished-face coordinate');
-    if(!Number.isInteger(a.detachedParts)||a.detachedParts<0)throw Error('The detached part count is invalid.');
-    if(a.detachedParts)return unavailable(result,'unsupported','The simulator has parted-off pieces. Their original radial samples are no longer in the mounted stock; this comparison cannot certify the loose part.');
-    const r=samples(a.radiiMm,a.radiiMm&&a.radiiMm.length,'Stock radii',0,stock.diameterMm/2+EPS);
-    if(r.length<2)throw Error('A lathe comparison needs at least two radial samples.');
-    const radius=p.geometry.params.r,length=p.geometry.params.h,end=a.frontZMm,start=end-length,last=a.z0Mm+(r.length-1)*a.dzMm;
+    finite(a.z0Mm,-1000000,1000000,'Profile origin');finite(a.dzMm,1e-9,1000000,'Profile sample spacing');finite(a.frontZMm,-1000000,1000000,'Original front coordinate');
+    if(!Number.isInteger(a.detachedParts)||a.detachedParts<0||a.detachedParts>12)throw Error('The detached part count is invalid.');
+    const mounted=samples(a.radiiMm,a.radiiMm&&a.radiiMm.length,'Stock radii',0,stock.diameterMm/2+EPS);
+    if(mounted.length<2)throw Error('A lathe comparison needs at least two radial samples.');
+    if(a.detachedParts&&!Array.isArray(a.detachedProfiles))return unavailable(result,'unsupported','This older snapshot has no native radius samples for its parted-off pieces. Replay the program to measure the loose part.');
+    if(a.detachedProfiles&&(!Array.isArray(a.detachedProfiles)||a.detachedProfiles.length!==a.detachedParts))throw Error('Detached part samples do not match the recorded piece count.');
+    let total=0;
+    for(const q of a.detachedProfiles||[]){
+      finite(q.z0Mm,-1000000,1000000,'Detached profile origin');finite(q.dzMm,1e-9,1000000,'Detached profile spacing');
+      finite(q.stockEndZMm,-1000000,1000000,'Original stock end');
+      samples(q.radiiMm,q.radiiMm&&q.radiiMm.length,'Detached part radii',0,stock.diameterMm/2+EPS);total+=q.radiiMm.length;
+      const offset=(q.z0Mm-a.z0Mm)/a.dzMm;
+      if(!close(q.dzMm,a.dzMm)||Math.abs(offset-Math.round(offset))>1e-5||offset<-EPS||offset+q.radiiMm.length>mounted.length+EPS||q.radiiMm.length<2||total>LIMIT||!close(q.stockEndZMm,a.stockEndZMm===undefined?a.frontZMm:a.stockEndZMm))throw Error('Detached samples must preserve the bounded native stock grid.');
+    }
+    if(a.detachedParts>1)return unavailable(result,'unsupported','The simulator contains more than one detached piece. Select or replay one final part before assessing its dimensions; this comparison will not guess which loose piece is the design.');
+    const detached=a.detachedParts===1,q=detached?a.detachedProfiles[0]:a,r=q.radiiMm;
+    const stockEnd=q.stockEndZMm===undefined?a.frontZMm:finite(q.stockEndZMm,-1000000,1000000,'Original stock end');
+    const radius=p.geometry.params.r,length=p.geometry.params.h,end=a.frontZMm-result.faceAllowanceMm,start=end-length,last=a.z0Mm+(mounted.length-1)*a.dzMm;
     if(start<a.z0Mm-EPS||end>last+EPS)return unavailable(result,'unsupported','The material snapshot does not cover the full target length.');
+    let first=-1,lastMaterial=-1;for(let k=0;k<r.length;k++)if(r[k]>1e-4*25.4){if(first<0)first=k;lastMaterial=k;}
+    const actualFront=lastMaterial<0?null:Math.min(stockEnd,q.z0Mm+lastMaterial*q.dzMm),actualBack=first<0?null:q.z0Mm+first*q.dzMm;
+    const actualLength=detached&&actualFront!==null?Math.max(0,actualFront-actualBack):null;
+    result.dimensions={source:detached?'detached':'mounted',pieceCount:a.detachedParts,expectedFrontMm:end,actualFrontMm:actualFront,expectedLengthMm:length,actualLengthMm:actualLength,frontErrorMm:actualFront===null?null:actualFront-end,lengthErrorMm:actualLength===null?null:actualLength-length};
     // Use native samples inside the target interval. Interpolating through its
     // shoulder would mix the target with chuck allowance that is explicitly excluded.
     const zs=[],values=[];
-    for(let k=Math.max(0,Math.ceil((start-a.z0Mm-EPS)/a.dzMm));k<r.length;k++){
-      const z=a.z0Mm+k*a.dzMm;if(z>end+EPS)break;zs.push(Math.max(start,Math.min(end,z)));values.push(r[k]);
+    for(let k=Math.max(0,Math.ceil((start-a.z0Mm-EPS)/a.dzMm));k<mounted.length;k++){
+      const z=a.z0Mm+k*a.dzMm;if(z>end+EPS)break;
+      const index=Math.round((z-q.z0Mm)/q.dzMm);zs.push(Math.max(start,Math.min(end,z)));values.push(index>=0&&index<r.length?r[index]:0);
     }
     if(zs.length<2)return unavailable(result,'unsupported','The target length contains fewer than two native radius samples. The simulator cannot measure its diameter profile.');
     const m=result.metrics;result.resolutionMm=a.dzMm;m.sampleCount=zs.length;
-    let mismatchLength=0,minDiameter=Infinity,maxDiameter=0;
+    let mismatchLength=0,resolvedMismatchLength=0,minDiameter=Infinity,maxDiameter=0;
     for(let i=0;i<zs.length;i++){
       const actual=values[i];minDiameter=Math.min(minDiameter,actual*2);maxDiameter=Math.max(maxDiameter,actual*2);
       m.maxUndercutMm=Math.max(m.maxUndercutMm,2*Math.max(0,radius-actual));m.maxExcessMm=Math.max(m.maxExcessMm,2*Math.max(0,actual-radius));
       const left=i?(zs[i-1]+zs[i])/2:start,right=i<zs.length-1?(zs[i]+zs[i+1])/2:end,dz=right-left;
       m.desiredVolumeMm3+=Math.PI*radius*radius*dz;m.actualVolumeMm3+=Math.PI*actual*actual*dz;
       m.missingVolumeMm3+=Math.PI*Math.max(0,radius*radius-actual*actual)*dz;m.excessVolumeMm3+=Math.PI*Math.max(0,actual*actual-radius*radius)*dz;
-      if(Math.abs(actual-radius)*2>result.toleranceMm+EPS)mismatchLength+=dz;
+      if(Math.abs(actual-radius)*2>result.toleranceMm+EPS){mismatchLength+=dz;if(Math.min(zs[i]-start,end-zs[i])>a.dzMm+EPS)resolvedMismatchLength+=dz;}
+    }
+    // The loose piece is assessed in its original stock coordinates. Material
+    // beyond either desired end remains excess; mounted chuck allowance is excluded.
+    if(actualFront!==null)for(let i=first;i<=lastMaterial;i++){
+      const z=q.z0Mm+i*q.dzMm,left=Math.max(actualBack,z-q.dzMm/2),right=Math.min(actualFront,z+q.dzMm/2);
+      const beyondFront=Math.max(0,right-Math.max(left,end)),behindBack=detached?Math.max(0,Math.min(right,start)-left):0,dz=beyondFront+behindBack;
+      if(dz>0&&r[i]>0){const v=Math.PI*r[i]*r[i]*dz;m.actualVolumeMm3+=v;m.excessVolumeMm3+=v;m.maxExcessMm=Math.max(m.maxExcessMm,2*r[i]);if(2*r[i]>result.toleranceMm+EPS){mismatchLength+=dz;if(z>end+a.dzMm+EPS||(detached&&z<start-a.dzMm-EPS))resolvedMismatchLength+=dz;}}
     }
     m.mismatchedPercent=Math.min(100,100*mismatchLength/length);
     const profile=zs.map((z,i)=>({zMm:Math.max(0,Math.min(length,end-z)),diameterMm:values[i]*2})).reverse(),points=[];
@@ -148,11 +174,17 @@
     }
     if(points[points.length-1].zMm<profile[profile.length-1].zMm)points.push(profile[profile.length-1]);
     result.overlay={kind:'lathe-chart',lengthMm:length,targetDiameterMm:radius*2,samples:points};status(result);
-    result.observations.push('Measured diameter along the '+fmt(length)+' mm target length from the finished face. The chuck allowance behind the target is excluded.');
+    const d=result.dimensions,frontResolved=d.frontErrorMm!==null&&Math.abs(d.frontErrorMm)>result.toleranceMm+a.dzMm+EPS,lengthResolved=d.lengthErrorMm!==null&&Math.abs(d.lengthErrorMm)>result.toleranceMm+2*a.dzMm+EPS;
+    const endpointDifference=(d.frontErrorMm!==null&&Math.abs(d.frontErrorMm)>result.toleranceMm+EPS)||(d.lengthErrorMm!==null&&Math.abs(d.lengthErrorMm)>result.toleranceMm+EPS);
+    if(actualFront===null||resolvedMismatchLength>0||frontResolved||lengthResolved)result.status='needs-work';
+    else if(m.mismatchedPercent>EPS||endpointDifference)result.status='resolution-limited';
+    result.observations.push('Measured the '+(detached?'detached piece':'mounted bar')+' against the fixed '+fmt(length)+' mm target, starting '+fmt(result.faceAllowanceMm)+' mm behind the original front. '+(detached?'Excess material beyond either desired end is counted.':'The chuck allowance behind the target is excluded.'));
+    result.observations.push(actualFront===null?'No positive-radius material remains in the measured profile.':'Measured front: '+fmt(actualFront)+' mm in the original stock frame; target front: '+fmt(end)+' mm (signed difference '+fmt(d.frontErrorMm)+' mm).'+(detached?' Sampled loose-part length: '+fmt(actualLength)+' mm; target: '+fmt(length)+' mm (difference '+fmt(d.lengthErrorMm)+' mm).':''));
     result.observations.push('Sampled diameter ranges from '+fmt(minDiameter)+' to '+fmt(maxDiameter)+' mm; target diameter is '+fmt(radius*2)+' mm. '+fmt(m.mismatchedPercent)+'% of the sampled length exceeds the diameter tolerance.');
     result.observations.push('Approximately '+fmt(m.missingVolumeMm3)+' mm³ is overcut and '+fmt(m.excessVolumeMm3)+' mm³ remains above the target cylinder.');
     result.limitations.push('Axial sample spacing is '+fmt(a.dzMm)+' mm. The model assumes a solid, rotationally symmetric part; it cannot assess internal bores, thread form, runout, surface finish or real tool deflection.');
-    result.limitations.push('Only native samples inside the target are used. Endpoint volumes use the nearest interior sample; up to one axial spacing at each end is unresolved. This does not certify end faces, part-off position or loose-part length.');
+    result.limitations.push('Endpoint positions are the first/last positive native samples, clipped to the original stock end. Each face is unresolved by up to '+fmt(a.dzMm)+' mm; a sampled loose-part length can differ by up to '+fmt(2*a.dzMm)+' mm from its boundary extent. Endpoint volumes use nearest interior samples.');
+    if(result.status==='resolution-limited'&&m.mismatchedPercent>EPS)result.observations.push('The remaining discrepancies lie within an axial sample of the desired end faces. Their raw volume and diameter differences are retained, but this sampling cannot resolve the exact face or part-off position.');
     return result;
   }
   function compare(raw,snapshot,options){
@@ -178,7 +210,7 @@
     }
     const width=540,height=250,x=40,y=30,max=Math.max(o.targetDiameterMm,...o.samples.map(q=>q.diameterMm))*1.1;
     const px=z=>x+z/o.lengthMm*width,py=d=>y+height-d/(max||1)*height,points=o.samples.map(q=>fmt(px(q.zMm))+','+fmt(py(q.diameterMm))).join(' ');
-    return'<svg xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Simulated diameter along the target length, compared with the design diameter." viewBox="0 0 620 370"><rect x="40" y="30" width="540" height="250" fill="#f0f3f5" stroke="#334155"/><path d="M40,'+fmt(py(o.targetDiameterMm))+'H580" stroke="#17202a" stroke-width="2" stroke-dasharray="6 4"/><polyline points="'+points+'" fill="none" stroke="#1261a0" stroke-width="2"/><g fill="#17202a" font-family="system-ui,sans-serif" font-size="13"><text x="40" y="18">Diameter target: '+show(o.targetDiameterMm)+' '+unit+'</text><text x="40" y="302">0 · finished face</text><text x="430" y="302">'+show(o.lengthMm)+' '+unit+' from face</text><text x="40" y="327">Blue: measured simulator diameter · Dashed: design diameter</text><text x="40" y="349">Above target: excess stock · Below target: overcut</text></g></svg>';
+    return'<svg xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Simulated diameter along the target length, compared with the design diameter." viewBox="0 0 620 370"><rect x="40" y="30" width="540" height="250" fill="#f0f3f5" stroke="#334155"/><path d="M40,'+fmt(py(o.targetDiameterMm))+'H580" stroke="#17202a" stroke-width="2" stroke-dasharray="6 4"/><polyline points="'+points+'" fill="none" stroke="#1261a0" stroke-width="2"/><g fill="#17202a" font-family="system-ui,sans-serif" font-size="13"><text x="40" y="18">Diameter target: '+show(o.targetDiameterMm)+' '+unit+'</text><text x="40" y="302">0 · design front</text><text x="430" y="302">'+show(o.lengthMm)+' '+unit+' from front</text><text x="40" y="327">Blue: measured simulator diameter · Dashed: design diameter</text><text x="40" y="349">Above target: excess stock · Below target: overcut</text></g></svg>';
   }
   return Object.freeze({defaults,compare,summary,renderSVG:function(result,units){
     return renderSVG(result,units).replace(/(<svg[^>]*>)/,'$1<title>Simulated material compared with the design goal</title><desc>The figure displays measured simulator samples. Read the accompanying numerical differences and resolution limitations; colour alone does not establish a finished-part match.</desc>');

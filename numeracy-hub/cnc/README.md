@@ -5,6 +5,9 @@ Open `index.html`, or choose **CNC machining** in Numeracy Hub.
 - **3D simulator:** explore the mill and lathe, edit programs, inspect workholding and tools, and run the included machining demonstrations.
 - **Manual program builder:** choose stock and units, start the spindle, and jog or enter tool coordinates. Accepted moves update the cut stock and G-code together. Undo and redo rebuild both. Each machine keeps its own draft in the browser.
 - **Program output:** copy or download an `.nc` program, or replay it in the 3D simulator. The builder includes the setup and finishing moves. The mill uses XYZ coordinates; lathe X is diameter and Z0 is the front face. Builder feed is distance per minute.
+- **Design Workshop:** bring a measured drawing and stock into an ordered sequence. Add facing before other cuts, then pockets/profiles/clearing/drilling on the mill or turning followed by parting on the lathe. Generate, review, simulate, compare with the design, and capture the result before returning to the same project.
+
+In a shared design sequence, facing amounts are measured from the original stock top/front. Mill pocket and profile depths also start at that original top. Lathe turning and finished-piece lengths start at the newly faced front; the work offset stays fixed. Enter the intended facing allowance in the comparison goal, independently of the cut. Parting runs last and includes blade width plus chuck clearance. The comparison checks sampled material, including the front and length of one loose piece, and keeps the result with the design's worksheet and submission.
 
 The manual builder uses a flat end mill or a turning tool and the simulator’s Classic-style interpreter. It is a teaching generator, not a machine-specific production postprocessor. Material removal and collision checks use the simulator’s approximate stock model.
 

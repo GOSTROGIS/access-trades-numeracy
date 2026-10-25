@@ -243,19 +243,19 @@ test('sequence validates bounded IDs, operations and structure without executing
   assert.throws(() => W.validateSequence({ ...sequence(), version: 2 }), /version/);
   const invalid = sequence(); invalid.steps[0].operation = null; assert.throws(() => W.validateSequence(invalid), /needs an operation/);
   const getter = sequence(); Object.defineProperty(getter.steps[0], 'label', { enumerable: true, get() { throw Error('must not execute'); } }); assert.throws(() => W.validateSequence(getter), /Unexpected/);
-  assert.equal(W.validateOperation({ ...operation, kind: 'clear-outside' }).kind, 'clear-outside');
+  for (const kind of ['clear-outside', 'face', 'part']) assert.equal(W.validateOperation({ ...operation, kind }).kind, kind);
 });
 
 test('comparison settings are explicit physical targets and invalidate only manufacturing evidence', () => {
   const p = W.setSequence(plate(), sequence()), f = W.fingerprint(p), g = W.geometryFingerprint(p);
-  assert.deepEqual(W.getComparison(p), { mode: 'pocket', depthMm: 2, toleranceMm: .1 });
+  assert.deepEqual(W.getComparison(p), { mode: 'pocket', depthMm: 2, toleranceMm: .1, faceAllowanceMm: 0 });
   const changed = W.setComparison(p, { mode: 'pocket', depthMm: 4, toleranceMm: .25 });
   assert.notEqual(W.fingerprint(changed), f); assert.equal(W.geometryFingerprint(changed), g);
   assert.equal(p.workflow.comparison, undefined);
   const tolerance = W.setComparison(changed, { ...W.getComparison(changed), toleranceMm: .3 }); assert.notEqual(W.fingerprint(tolerance), W.fingerprint(changed));
   assert.throws(() => W.setComparison(p, { mode: 'pocket', depthMm: 11, toleranceMm: .1 }), /stock depth/);
   assert.throws(() => W.setComparison(p, { mode: 'pocket', depthMm: null, toleranceMm: .1 }), /stock depth/);
-  const shaft = D.create('shaft'); assert.deepEqual(W.getComparison(shaft), { mode: 'retained-solid', depthMm: null, toleranceMm: .1 });
+  const shaft = D.create('shaft'); assert.deepEqual(W.getComparison(shaft), { mode: 'retained-solid', depthMm: null, toleranceMm: .1, faceAllowanceMm: 0 });
   assert.throws(() => W.setComparison(shaft, { mode: 'pocket', depthMm: 2, toleranceMm: .1 }), /cylinder/);
 });
 
@@ -304,11 +304,11 @@ test('stock and machine changes retain old targets for undo but resolve usable c
   p = W.recordResult(p, { comparison: millComparison(p), accepted: true });
   const old = p.workflow.results[0], shallower = copy(p); shallower.stock.depth = 3;
   assert.equal(D.validate(shallower).stock.depth, 3);
-  assert.deepEqual(W.getComparison(shallower), { mode: 'pocket', depthMm: 3, toleranceMm: .2 });
+  assert.deepEqual(W.getComparison(shallower), { mode: 'pocket', depthMm: 3, toleranceMm: .2, faceAllowanceMm: 0 });
   assert.equal(W.comparisonState(shallower).adjusted, true);
   assert.equal(shallower.workflow.comparison.depthMm, 8); assert.equal(W.resultStatus(shallower, old).status, 'stale');
   const cylinder = D.create('shaft'); cylinder.id = p.id; cylinder.workflow = copy(p.workflow);
-  assert.deepEqual(W.getComparison(cylinder), { mode: 'retained-solid', depthMm: null, toleranceMm: .2 });
+  assert.deepEqual(W.getComparison(cylinder), { mode: 'retained-solid', depthMm: null, toleranceMm: .2, faceAllowanceMm: 0 });
   assert.equal(cylinder.workflow.comparison.mode, 'pocket'); assert.equal(W.resultStatus(cylinder, old).status, 'stale');
   const saved = W.setComparison(cylinder, W.getComparison(cylinder)); assert.equal(W.comparisonState(saved).adjusted, false);
   const back = plate(); back.workflow = copy(saved.workflow); assert.equal(W.getComparison(back).depthMm, back.stock.depth);
@@ -336,4 +336,85 @@ test('a near-limit library backup remains within the same import size budget', (
   assert.ok(Buffer.byteLength(exported) <= W.limits.bytes);
   assert.ok(Buffer.byteLength(JSON.stringify(valid, null, 2)) > W.limits.bytes, 'fixture exposes pretty-print growth above the import limit');
   const restored = W.importLibrary(exported); assert.equal(restored.entries.length, 3); assert.equal(restored.entries[0].revisions.length, 12);
+});
+
+test('face and part plans round-trip without changing the meaning of part radial peck depth', () => {
+  const face = { ...operation, kind: 'face', depthMm: 2, stepDownMm: .5 };
+  const part = { ...operation, kind: 'part', depthMm: .5, stepDownMm: 1 };
+  assert.equal(W.validateOperation(part).stepDownMm, 1);
+  assert.throws(() => W.validateOperation({ ...part, kind: 'face' }), /Step down/);
+  const p = W.setSequence(D.create('shaft'), { version: 1, steps: [{ id: 'face', label: 'Face the bar', operation: face }, { id: 'part', label: 'Part off', operation: part }] });
+  assert.equal(W.getSequence(D.decode(D.encode(p))).steps[1].operation.kind, 'part');
+  assert.equal(W.recordResult(p, { operationKind: 'part', operationCount: 2 }).workflow.results[0].operationKind, 'part');
+});
+
+test('optional zero face allowance preserves old v2 files and fingerprints until explicitly saved', () => {
+  let p = D.create('plate'); p.id = 'legacy-goal-v2';
+  p = W.setComparison(p, { mode: 'pocket', depthMm: 4, toleranceMm: .2 });
+  assert.equal(W.fingerprint(p), 'design-v2-c73d47ba');
+  assert.equal(Object.hasOwn(p.workflow.comparison, 'faceAllowanceMm'), false);
+  assert.equal(W.getComparison(p).faceAllowanceMm, 0);
+  const reopened = D.decode(D.encode(p));
+  assert.equal(W.fingerprint(reopened), W.fingerprint(p)); assert.equal(Object.hasOwn(reopened.workflow.comparison, 'faceAllowanceMm'), false);
+  const explicit = W.setComparison(p, W.getComparison(p)); assert.equal(explicit.workflow.comparison.faceAllowanceMm, 0); assert.notEqual(W.fingerprint(explicit), W.fingerprint(p));
+  const legacySummary = millComparison(p); delete legacySummary.faceAllowanceMm;
+  const captured = W.recordResult(p, { comparison: legacySummary, accepted: true }); assert.equal(W.resultStatus(captured, captured.workflow.results[0]).status, 'current');
+});
+
+test('mill face goals use an absolute original-top floor and keep facing-only equality valid', () => {
+  const p = plate(), goal = { mode: 'pocket', depthMm: 4, toleranceMm: .2, faceAllowanceMm: 1 };
+  assert.deepEqual(W.getComparison(W.setComparison(p, goal)), goal);
+  assert.equal(W.setComparison(p, { ...goal, faceAllowanceMm: 4 }).workflow.comparison.faceAllowanceMm, 4);
+  assert.throws(() => W.setComparison(p, { ...goal, faceAllowanceMm: 5 }), /faced surface/);
+  assert.throws(() => W.setComparison(p, { ...goal, depthMm: p.stock.depth, faceAllowanceMm: p.stock.depth }), /faced surface/);
+  assert.throws(() => W.setComparison(p, { ...goal, faceAllowanceMm: -1 }), /face allowance/);
+  assert.throws(() => W.setComparison(p, { ...goal, faceAllowanceMm: '1' }), /face allowance/);
+  const old = W.setComparison(p, { ...goal, faceAllowanceMm: 3 }); old.stock.depth = 2;
+  assert.equal(old.workflow.comparison.faceAllowanceMm, 3); assert.equal(D.validate(old).stock.depth, 2);
+  const safe = W.comparisonState(old); assert.equal(safe.adjusted, true); assert.ok(safe.settings.faceAllowanceMm < 2); assert.equal(safe.settings.depthMm, 2);
+});
+
+test('facing changes invalidate captured comparison evidence and target matching uses semantic zero', () => {
+  const p = W.setComparison(plate(), { mode: 'pocket', depthMm: 4, toleranceMm: .2, faceAllowanceMm: 1 });
+  const saved = W.recordResult(p, { comparison: millComparison(p), accepted: true }), result = saved.workflow.results[0];
+  assert.equal(result.comparison.faceAllowanceMm, 1);
+  const changed = W.setComparison(saved, { ...W.getComparison(saved), faceAllowanceMm: 2 });
+  assert.equal(W.resultStatus(changed, result).status, 'stale'); assert.equal(changed.workflow.results.length, 1);
+  assert.throws(() => W.recordResult(changed, { comparison: result.comparison }), /current target/);
+  const wrong = millComparison(p); wrong.faceAllowanceMm = 5; assert.throws(() => W.validateComparisonResult(wrong), /floor/);
+});
+
+test('lathe faced-front goals fit the fixed target length and adapt after stock edits without rewriting history', () => {
+  const p = D.create('shaft'), goal = { mode: 'retained-solid', depthMm: null, toleranceMm: .2, faceAllowanceMm: 2 };
+  const saved = W.setComparison(p, goal); assert.deepEqual(W.getComparison(saved), goal);
+  assert.throws(() => W.setComparison(p, { ...goal, faceAllowanceMm: p.stock.length - p.geometry.params.h + 1 }), /target length/);
+  const short = copy(saved); short.stock.length = short.geometry.params.h + 1;
+  assert.equal(short.workflow.comparison.faceAllowanceMm, 2); assert.equal(W.getComparison(short).faceAllowanceMm, 1); assert.equal(W.comparisonState(short).adjusted, true);
+});
+
+function facedLatheEvidence(p) {
+  return { ...millComparison(plate()), machine: 'lathe', ...W.getComparison(p),
+    overlay: { kind: 'lathe-chart', lengthMm: p.geometry.params.h, targetDiameterMm: p.geometry.params.r * 2, samples: [{ zMm: 0, diameterMm: p.geometry.params.r * 2 }, { zMm: p.geometry.params.h, diameterMm: p.geometry.params.r * 2 }] },
+    dimensions: { source: 'detached', pieceCount: 1, expectedFrontMm: 88, actualFrontMm: 88.05, expectedLengthMm: 80, actualLengthMm: 79.9, frontErrorMm: .05, lengthErrorMm: -.1 } };
+}
+
+test('sampled detached length and faced-front evidence survive project library and submission', () => {
+  const p = W.setComparison(D.create('shaft'), { mode: 'retained-solid', depthMm: null, toleranceMm: .2, faceAllowanceMm: 2 });
+  const evidence = facedLatheEvidence(p), saved = W.recordResult(p, { comparison: evidence, operationKind: 'part', accepted: true });
+  const reopened = W.open(W.importLibrary(W.exportLibrary(W.upsert(W.createLibrary(), saved, 'Faced and parted'))), saved.id);
+  assert.deepEqual(reopened.workflow.results[0].comparison.dimensions, evidence.dimensions);
+  assert.equal(W.submission(reopened).project.workflow.results[0].comparison.faceAllowanceMm, 2);
+  const mounted = copy(evidence); mounted.dimensions.source = 'mounted'; mounted.dimensions.pieceCount = 0; mounted.dimensions.actualLengthMm = null; mounted.dimensions.lengthErrorMm = null;
+  assert.equal(W.validateComparisonResult(mounted).dimensions.actualLengthMm, null);
+});
+
+test('detached dimensions reject inconsistent errors, mounted length claims, raw arrays and invalid bounds', () => {
+  const p = W.setComparison(D.create('shaft'), { mode: 'retained-solid', depthMm: null, toleranceMm: .2, faceAllowanceMm: 2 });
+  const r = facedLatheEvidence(p), bad = copy(r); bad.dimensions.lengthErrorMm = 0; assert.throws(() => W.validateComparisonResult(bad), /observed value/);
+  bad.dimensions = { ...r.dimensions, source: 'mounted' }; assert.throws(() => W.validateComparisonResult(bad), /Mounted/);
+  bad.dimensions = { ...r.dimensions, pieceCount: 0 }; assert.throws(() => W.validateComparisonResult(bad), /at least one/);
+  bad.dimensions = { ...r.dimensions, pieceCount: 13 }; assert.throws(() => W.validateComparisonResult(bad), /piece count/);
+  bad.dimensions = { ...r.dimensions, radii: [] }; assert.throws(() => W.validateComparisonResult(bad), /Unexpected/);
+  bad.dimensions = { ...r.dimensions, actualFrontMm: null }; assert.throws(() => W.validateComparisonResult(bad), /observed value/);
+  const mill = millComparison(plate()); mill.dimensions = r.dimensions; assert.throws(() => W.validateComparisonResult(mill), /only available for the lathe/);
 });

@@ -82,14 +82,16 @@
     $('comparison-depth').value = goal.depthMm === null ? '' : Number((goal.depthMm / f).toFixed(8));
     $('comparison-depth').max = String(p.stock.depth / f);
     $('comparison-tolerance').value = Number((goal.toleranceMm / f).toFixed(8));
-    comparisonOriginal = goal; comparisonValues = { depth: $('comparison-depth').value, tolerance: $('comparison-tolerance').value };
+    $('comparison-face-allowance').value = Number(((goal.faceAllowanceMm || 0) / f).toFixed(8));
+    $('comparison-face-label').textContent = lathe ? 'Facing allowance from original front' : 'Facing allowance from original top';
+    comparisonOriginal = { ...goal, faceAllowanceMm: goal.faceAllowanceMm || 0 }; comparisonValues = { depth: $('comparison-depth').value, tolerance: $('comparison-tolerance').value, 'face-allowance': $('comparison-face-allowance').value };
     const goalState = W.comparisonState(p); $('comparison-adjusted').hidden = !goalState.adjusted; $('comparison-confirm').hidden = !goalState.adjusted; $('comparison-adjusted').textContent = goalState.message;
     document.querySelectorAll('.comparison-unit').forEach(el => { el.textContent = p.units; });
     $('comparison-goal-help').textContent = lathe
-      ? 'Compare the turned diameter along the shaft’s design length. Stock held in the chuck is outside this comparison.'
+      ? 'Facing allowance moves the intended front face back from the original stock end. Compare the shaft diameter and, after parting, the sampled loose-piece length. Stock held in the chuck is excluded.'
       : goal.mode === 'pocket'
-        ? 'Remove material inside the outline to the target depth. Keep the surrounding stock and any islands inside holes in the drawing.'
-        : 'Keep the outlined shape at the stock surface and clear the surrounding material and holes to the target depth. A shallow depth makes a raised shape; the full stock depth makes a cut-out target. Tracing only the edge leaves extra material to clear.';
+        ? 'Facing lowers the whole top by the allowance. The target cut depth is measured from the original stock top; the pocket depth below the faced surface is ' + fmt((goal.depthMm - (goal.faceAllowanceMm || 0)) / f) + ' ' + p.units + '. Keep surrounding stock and islands at the faced surface.'
+        : 'Keep the outlined shape at the faced surface and clear the surrounding material and holes to the target cut depth, measured from the original stock top. Equal allowance and cut depth describes a flat faced surface. Tracing only an edge leaves extra material to clear.';
     $('operation-summary').textContent = sequence.steps.length ? sequence.steps.length + ' ordered step' + (sequence.steps.length === 1 ? '' : 's') + ' on the same stock. Edit, reorder and simulate the complete sequence in CNC practice, then bring the comparison back here.' : 'In CNC practice, add the first operation, choose its tool and cutting values, then add any next steps. Simulate the complete sequence and capture the comparison before returning here.';
     $('operation-sequence').replaceChildren();
     sequence.steps.forEach(s => { const item = element('li'); item.append(element('strong', s.label), element('p', operationText(s.operation, p), 'help')); $('operation-sequence').append(item); });
@@ -105,8 +107,9 @@
     });
   }
   function operationText(operation, p) {
-    const labels = { 'profile-out': 'Outside profile', 'profile-in': 'Inside profile', pocket: 'Pocket', 'clear-outside': 'Clear around the shape', drill: 'Drill', turn: 'Turn shaft' }, f = factor(p);
-    return (labels[operation.kind] || operation.kind) + ' · tool ' + fmt(operation.toolDiameterMm / f) + ' ' + p.units + ' · ' + (operation.kind === 'turn' ? 'length ' : 'depth ') + fmt(operation.depthMm / f) + ' ' + p.units;
+    const labels = { 'profile-out': 'Outside profile', 'profile-in': 'Inside profile', pocket: 'Pocket', 'clear-outside': 'Clear around the shape', drill: 'Drill', turn: 'Turn shaft', face: p.machine === 'lathe' ? 'Face the stock end' : 'Face the stock top', part: 'Part off the finished piece' }, f = factor(p);
+    const depth = operation.kind === 'face' ? 'removed from original ' + (p.machine === 'lathe' ? 'front ' : 'top ') : operation.kind === 'part' ? 'piece length ' : operation.kind === 'turn' ? 'turning length ' : 'depth from original top ';
+    return (labels[operation.kind] || operation.kind) + ' · ' + (operation.kind === 'part' ? 'blade width ' : 'tool ') + fmt(operation.toolDiameterMm / f) + ' ' + p.units + ' · ' + depth + fmt(operation.depthMm / f) + ' ' + p.units;
   }
   function comparisonLabel(c) {
     return { 'within-sample-tolerance': 'Sampled material matches the goal', 'needs-work': 'The part needs another look', 'resolution-limited': 'Sampling cannot confirm this result', unsupported: 'This goal cannot be compared', incomplete: 'Complete the simulation to compare' }[c.status] || c.status;
@@ -115,7 +118,8 @@
     const section = element('section', undefined, 'comparison-evidence'), f = factor(p), metrics = c.metrics;
     section.append(element('h4', comparisonLabel(c)));
     if (stale) section.append(element('p', 'This map belongs to the goal at the time of capture. It does not assess the current drawing.', 'help'));
-    section.append(element('p', (c.mode === 'pocket' ? 'Pocket target' : 'Retained shape target') + (c.depthMm === null ? '' : ' · depth ' + fmt(c.depthMm / f) + ' ' + p.units) + ' · tolerance ' + fmt(c.toleranceMm / f) + ' ' + p.units));
+    section.append(element('p', (c.mode === 'pocket' ? 'Pocket target' : 'Retained shape target') + (c.depthMm === null ? '' : ' · depth ' + fmt(c.depthMm / f) + ' ' + p.units) + ((c.faceAllowanceMm || 0) ? ' · facing allowance ' + fmt(c.faceAllowanceMm / f) + ' ' + p.units : '') + ' · tolerance ' + fmt(c.toleranceMm / f) + ' ' + p.units));
+    if (c.dimensions) { const d = c.dimensions, measurement = value => value === null ? 'not measurable' : fmt(value / f) + ' ' + p.units; section.append(element('p', (d.source === 'detached' ? 'Loose piece length: ' + measurement(d.actualLengthMm) + ' · design length: ' + measurement(d.expectedLengthMm) + ' · length error: ' + measurement(d.lengthErrorMm) : 'The shaft is still attached to the stock.') + ' · front position error: ' + measurement(d.frontErrorMm) + '. Dimensions are sampled.')); }
     if (metrics.sampleCount) section.append(element('p', 'Largest sampled extra material: ' + fmt(metrics.maxExcessMm / f) + ' ' + p.units + ' · largest sampled overcut: ' + fmt(metrics.maxUndercutMm / f) + ' ' + p.units + (c.machine === 'lathe' ? ' (diameter differences)' : ' (depth differences)')));
     if (window.AccessDesignComparison && c.overlay) { const figure = element('figure', undefined, 'comparison-figure'); figure.innerHTML = window.AccessDesignComparison.renderSVG(c, p.units); figure.append(element('figcaption', c.machine === 'mill' ? 'Red: overcut. Blue: extra material. Purple: both in one map cell. Grey: within the sampled tolerance.' : 'Blue: simulated diameter. Dashed line: design diameter. Above the line is extra material; below it is overcut.')); section.append(figure); }
     c.observations.forEach(line => section.append(element('p', line)));
@@ -165,7 +169,7 @@
     if (m.assignment) { heading('Assignment: ' + m.assignment.title); W.assessment(p).criteria.forEach(c => para(c.title + ': ' + (c.score === null ? 'not reviewed' : c.score + '/' + c.maxScore) + ' ' + c.comment)); }
   }
   $('workflow-mode').onchange = e => mutate(p => { p = W.ensure(p); p.workflow.mode = e.target.value; return p; });
-  ['comparison-mode', 'comparison-depth', 'comparison-tolerance'].forEach(id => { $(id).onchange = () => { mutate(p => { const value = (field, key) => $('comparison-' + field).value === comparisonValues[field] ? comparisonOriginal[key] : $('comparison-' + field).valueAsNumber * factor(p); return W.setComparison(p, { mode: p.machine === 'lathe' ? 'retained-solid' : $('comparison-mode').value, depthMm: p.machine === 'lathe' ? null : value('depth', 'depthMm'), toleranceMm: value('tolerance', 'toleranceMm') }); }); renderResults(get()); }; });
+  ['comparison-mode', 'comparison-depth', 'comparison-tolerance', 'comparison-face-allowance'].forEach(id => { $(id).onchange = () => { mutate(p => { const value = (field, key) => $('comparison-' + field).value === comparisonValues[field] ? comparisonOriginal[key] : $('comparison-' + field).valueAsNumber * factor(p); return W.setComparison(p, { mode: p.machine === 'lathe' ? 'retained-solid' : $('comparison-mode').value, depthMm: p.machine === 'lathe' ? null : value('depth', 'depthMm'), toleranceMm: value('tolerance', 'toleranceMm'), faceAllowanceMm: value('face-allowance', 'faceAllowanceMm') }); }); renderResults(get()); }; });
   $('comparison-confirm').onclick = () => mutate(p => W.setComparison(p, W.getComparison(p)));
   $('shape-choice').onchange = e => mutate(p => { const starter = D.create(e.target.value); p.geometry = starter.geometry; p.machine = starter.machine; return p; });
   $('profile-apply').onclick = () => mutate(p => { const rings = $('profile-points').value.trim().split(/\n\s*\n/).map(group => group.split(/\n/).map(line => { const parts = line.trim().split(/\s*,\s*/); if (parts.length !== 2 || parts.some(x => x.trim() === '')) throw Error('Each outline point needs two numbers: X, Y.'); return parts.map(Number); })); p.geometry = D.fromProfile({ rings, units: p.units, title: p.title }).geometry; return p; });

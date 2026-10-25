@@ -4610,6 +4610,7 @@ const Scene3D = (() => {
       this.seg = 40;
       this.group = new THREE.Group();
       this.parts = [];
+      this.detachedProfiles = [];
       if (buildGeometry) this.build();
     }
     zAt(k) { return this.z0 + k * this.dz; }
@@ -4634,7 +4635,7 @@ const Scene3D = (() => {
       this.group.add(this.mesh);
       this.refresh();
     }
-    reset() { this.r.fill(this.R); this.c.fill(-1); this.parts.forEach(p => p.parent && p.parent.remove(p)); this.parts = []; this.refresh(); }
+    reset() { this.r.fill(this.R); this.c.fill(-1); this.parts.forEach(p => p.parent && p.parent.remove(p)); this.parts = []; this.detachedProfiles = []; this.refresh(); }
     refresh() {
       const { n, seg, pos, col } = this, cols = this.colors || [];
       let last = 0;
@@ -4710,6 +4711,10 @@ const Scene3D = (() => {
         mesh.castShadow = true;
         grp.add(mesh);
       }
+      // Keep native measured radii before removing the separated material from
+      // the mounted bar. Include the cut gap and one trailing zero where present;
+      // a rendered mesh is not a reliable record of the finished dimensions.
+      this.detachedProfiles.push({z0:this.zAt(gap),dz:this.dz,z1:this.z1,r:this.r.slice(gap,Math.min(this.n,last+2))});
       for (let k = gap + 1; k < this.n; k++) this.r[k] = 0;
       this.dirty = true;
       return { group: grp, zStart: pts.length ? pts[0].z : 0, zEnd: pts.length ? pts[pts.length - 1].z : 0, rMax: Math.max(...pts.map(p => p.r), 0) };
@@ -5097,7 +5102,7 @@ const Scene3D = (() => {
       .map(o => ({o,position:o.position.clone(),quaternion:o.quaternion.clone(),scale:o.scale.clone(),visible:o.visible}));
     const materials = [];
     if (M.fixMeshes) Object.values(M.fixMeshes).forEach(list => list.forEach(o => materials.push({o,material:o.material})));
-    return {root,M,arrays,groups,objects,materials,stockState:{h0:stock.h0,b0:stock.b0,colors:stock.colors,parts:stock.parts && stock.parts.slice()},
+    return {root,M,arrays,groups,objects,materials,stockState:{h0:stock.h0,b0:stock.b0,colors:stock.colors,parts:stock.parts && stock.parts.slice(),detachedProfiles:stock.detachedProfiles && stock.detachedProfiles.slice()},
       machineState:{path:M.path,curTool:M.curTool,toolLen:M.toolLen,setup:M.setup},
       camera:{r:controls.r,th:controls.th,ph:controls.ph,target:controls.target.clone(),userMoved:controls.userMoved,follow}};
   }
@@ -5128,8 +5133,11 @@ const Scene3D = (() => {
     }
     if (M.type === 'lathe') {
       if (!Number.isInteger(s.n) || s.n > 100000) throw Error('The simulated stock exceeds the material snapshot limit.');
+      const profiles=s.detachedProfiles||[];
+      if(profiles.length>12||profiles.reduce((n,p)=>n+p.r.length,0)>100000)throw Error('The separated material exceeds the comparison snapshot limit.');
       return Object.assign(common,{stock:{diameterMm:s.R*2*mm,lengthMm:M.setup.stock.stickout*mm},
-        data:{kind:'radial-profile',z0Mm:s.z0*mm,dzMm:s.dz*mm,frontZMm:M.setup.stock.stickout*mm,radiiMm:copy(s.r),detachedParts:s.parts.length}});
+        data:{kind:'radial-profile',z0Mm:s.z0*mm,dzMm:s.dz*mm,frontZMm:M.setup.stock.stickout*mm,stockEndZMm:s.z1*mm,radiiMm:copy(s.r),detachedParts:profiles.length,
+          detachedProfiles:profiles.map(p=>({z0Mm:p.z0*mm,dzMm:p.dz*mm,stockEndZMm:p.z1*mm,radiiMm:copy(p.r)}))}});
     }
     throw Error('This simulator does not expose measurable stock for this machine.');
   }
