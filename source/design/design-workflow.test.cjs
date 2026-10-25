@@ -418,3 +418,125 @@ test('detached dimensions reject inconsistent errors, mounted length claims, raw
   bad.dimensions = { ...r.dimensions, actualFrontMm: null }; assert.throws(() => W.validateComparisonResult(bad), /observed value/);
   const mill = millComparison(plate()); mill.dimensions = r.dimensions; assert.throws(() => W.validateComparisonResult(mill), /only available for the lathe/);
 });
+
+function twoSetups() {
+  let p = W.setSequence(plate(), { version: 1, steps: [{ id: 'cut-top', label: 'Pocket the top', operation: { ...operation, kind: 'pocket' } }] });
+  const setups = W.getSetups(p), second = copy(setups.items[0]);
+  second.id = 'setup-2'; second.label = 'Turn over and face'; second.orientation = 'bottom';
+  second.fixture.method = 'vise_soft'; second.sequence = { version: 1, steps: [{ id: 'face-bottom', label: 'Face the back', operation: { ...operation, kind: 'face', depthMm: 1, stepDownMm: .5 } }] };
+  second.comparison = { mode: 'retained-solid', depthMm: 1, toleranceMm: .2, faceAllowanceMm: 1 };
+  setups.items.push(second); return W.setSetups(p, setups);
+}
+function setupEvidence(p, index, actual = true) {
+  const setup = W.getSetups(p).items[index];
+  return { id: setup.id, index, orientation: setup.orientation, inputMaterialFingerprint: actual ? 'material-in-' + index : null, outputMaterialFingerprint: actual ? 'material-out-' + index : null };
+}
+
+test('implicit setup reads leave old serialization and v1/v2 hashes unchanged', () => {
+  const old = D.create('plate'); old.id = 'legacy-fixture'; const before = JSON.stringify(old);
+  const implicit = W.getSetups(old); assert.equal(implicit.items[0].id, 'setup-1'); assert.equal(implicit.items[0].orientation, 'top');
+  assert.equal(implicit.items[0].fixture.method, 'vise'); assert.deepEqual(implicit.items[0].sequence.steps, []);
+  assert.equal(JSON.stringify(old), before); assert.equal(W.fingerprint(old), 'design-v1-2f5f06e3');
+  let v2 = D.create('plate'); v2.id = 'legacy-goal-v2'; v2 = W.setComparison(v2, { mode: 'pocket', depthMm: 4, toleranceMm: .2 });
+  W.getSetups(v2); assert.equal(W.fingerprint(v2), 'design-v2-c73d47ba'); assert.equal(Object.hasOwn(v2.workflow, 'setups'), false);
+  v2.stock.depth = 2; const retained = W.getSetups(v2);
+  assert.equal(retained.items[0].comparison.depthMm, 4, 'Resolving an implicit setup preserves its historical goal');
+  assert.equal(Object.hasOwn(retained.items[0].comparison, 'faceAllowanceMm'), false);
+  assert.equal(W.setupState(v2, 'setup-1').valid, false);
+  assert.throws(() => W.setSetups(v2, retained), /stock depth/, 'Opt-in needs explicit goal review instead of a silent clamp');
+  const lathe = W.getSetups(D.create('shaft')).items[0]; assert.equal(lathe.orientation, 'front'); assert.equal(lathe.fixture.method, 'chuck3');
+});
+
+test('explicit setups own their sequence, comparison, orientation and canonical fixture across files', () => {
+  const p = twoSetups(), reopened = D.decode(D.encode(p));
+  assert.deepEqual(W.getSetups(reopened), p.workflow.setups); assert.equal(p.workflow.sequence.steps[0].operation.kind, 'pocket');
+  assert.deepEqual(p.workflow.comparison, p.workflow.setups.items[0].comparison); assert.match(W.fingerprint(p), /^design-v3-/);
+  const saved = W.open(W.importLibrary(W.exportLibrary(W.upsert(W.createLibrary(), p, 'Both faces'))), p.id);
+  assert.deepEqual(saved.workflow.setups, p.workflow.setups); assert.deepEqual(W.submission(saved).project.workflow.setups, p.workflow.setups);
+});
+
+test('setup projection is detached and leaves geometry transformation to the machining adapter', () => {
+  const p = twoSetups(), before = copy(p), local = W.setupProject(p, 'setup-2');
+  assert.equal(Object.hasOwn(local.workflow, 'setups'), false); assert.equal(local.workflow.sequence.steps[0].operation.kind, 'face');
+  assert.equal(local.workflow.comparison.faceAllowanceMm, 1); assert.equal(local.id, p.id); assert.deepEqual(local.geometry, p.geometry); assert.deepEqual(local.placement, p.placement);
+  local.workflow.sequence.steps[0].label = 'Changed local copy'; assert.deepEqual(p, before);
+  assert.throws(() => W.setupProject(p, 'removed'), /no longer/);
+});
+
+test('prefix fingerprints invalidate downstream after earlier changes but preserve completed upstream evidence', () => {
+  const p = twoSetups(), first = W.setupFingerprint(p, 'setup-1'), second = W.setupFingerprint(p, 'setup-2');
+  const next = W.getSetups(p); next.items[1].fixture.params.gripMm += .2;
+  const laterEdit = W.setSetups(p, next); assert.equal(W.setupFingerprint(laterEdit, 'setup-1'), first); assert.notEqual(W.setupFingerprint(laterEdit, 'setup-2'), second);
+  next.items[0].sequence.steps[0].operation.feedMmPerMin += 10;
+  const earlierEdit = W.setSetups(p, next); assert.notEqual(W.setupFingerprint(earlierEdit, 'setup-1'), first); assert.notEqual(W.setupFingerprint(earlierEdit, 'setup-2'), second);
+  const reflection = copy(p); reflection.reflection = 'I turned the stock over.'; assert.equal(W.setupFingerprint(reflection, 'setup-2'), second);
+  const units = copy(p); units.units = 'in'; assert.notEqual(W.setupFingerprint(units, 'setup-1'), first);
+  const mirrors = copy(p); mirrors.workflow.sequence.steps[0].label = 'Ignored old summary mirror'; assert.equal(W.fingerprint(mirrors), W.fingerprint(p));
+});
+
+test('captured setup evidence validates its selected goal and reports prefix staleness', () => {
+  let p = twoSetups();
+  p = W.recordResult(p, { id: 'top-result', accepted: true, setup: setupEvidence(p, 0), comparison: millComparison(W.setupProject(p, 'setup-1')) });
+  p = W.recordResult(p, { id: 'bottom-result', accepted: true, setup: setupEvidence(p, 1), comparison: millComparison(W.setupProject(p, 'setup-2')) });
+  const [first, second] = p.workflow.results; assert.equal(first.sourceFingerprint, W.setupFingerprint(p, 'setup-1')); assert.equal(second.sourceFingerprint, W.setupFingerprint(p, 'setup-2'));
+  assert.equal(W.resultStatus(p, second).status, 'current');
+  const restored = W.open(W.importLibrary(W.exportLibrary(W.upsert(W.createLibrary(), p, 'Measured both setups'))), p.id);
+  assert.deepEqual(restored.workflow.results[1].setup, second.setup); assert.equal(W.resultStatus(restored, restored.workflow.results[1]).status, 'current');
+  assert.deepEqual(W.submission(restored).project.workflow.results[1].setup, second.setup);
+  const plan = W.getSetups(p); plan.items[1].comparison.toleranceMm = .3; const changed = W.setSetups(p, plan);
+  assert.equal(W.resultStatus(changed, first).status, 'current'); assert.equal(W.resultStatus(changed, second).status, 'stale');
+  plan.items[0].fixture.params.gripMm += .5; const upstream = W.setSetups(p, plan); assert.equal(W.resultStatus(upstream, first).status, 'stale'); assert.equal(W.resultStatus(upstream, second).status, 'stale');
+  const removed = W.setSetups(p, { version: 1, items: [plan.items[0]] }); assert.equal(W.resultStatus(removed, second).status, 'stale');
+  assert.throws(() => W.recordResult(p, { accepted: true, setup: setupEvidence(p, 1), comparison: millComparison(W.setupProject(p, 'setup-1')) }), /current target/);
+});
+
+test('setup provenance rejects fabricated preflight material, incomplete digests and wrong identities', () => {
+  const p = twoSetups(), input = { accepted: true, setup: setupEvidence(p, 1) };
+  assert.throws(() => W.recordResult(p, { ...input, kind: 'check' }), /Preflight/);
+  assert.throws(() => W.recordResult(p, { accepted: true, setup: setupEvidence(p, 1, false) }), /measured input/);
+  const checked = W.recordResult(p, { kind: 'check', accepted: true, setup: setupEvidence(p, 1, false) }); assert.equal(checked.workflow.results[0].setup.outputMaterialFingerprint, null);
+  assert.throws(() => W.recordResult(p, { ...input, setup: { ...input.setup, outputMaterialFingerprint: null } }), /both input/);
+  for (const change of [{ id: 'removed' }, { index: 0 }, { orientation: 'top' }]) assert.throws(() => W.recordResult(p, { ...input, setup: { ...input.setup, ...change } }), /current setup/);
+  assert.throws(() => W.recordResult(p, { ...input, setup: { ...input.setup, radiiMm: [] } }), /Unexpected/);
+  assert.throws(() => W.recordResult(p, { kind: 'check', setup: setupEvidence(p, 1, false), comparison: millComparison(W.setupProject(p, 'setup-2')) }), /completed measured/);
+});
+
+test('setup schema bounds identity, orientation, fixture parameters and number of setups', () => {
+  const p = twoSetups(), original = W.getSetups(p);
+  assert.throws(() => W.setSetups(p, { version: 2, items: original.items }), /version/);
+  assert.throws(() => W.setSetups(p, { version: 1, items: [] }), /at least one/);
+  assert.throws(() => W.setSetups(p, { version: 1, items: Array.from({ length: 5 }, (_, i) => ({ ...copy(original.items[0]), id: 'setup-' + i })) }), /at most 4/);
+  assert.throws(() => W.setSetups(p, { version: 1, items: [original.items[0], original.items[0]] }), /Duplicate/);
+  const firstBottom = copy(original); firstBottom.items[0].orientation = 'bottom'; assert.throws(() => W.setSetups(p, firstBottom), /first setup/);
+  const wrongMachine = copy(original); wrongMachine.items[1].orientation = 'front'; assert.throws(() => W.setSetups(p, wrongMachine), /orientation/);
+  const extra = copy(original); extra.items[1].fixture.params.rawStock = []; assert.throws(() => W.setSetups(p, extra), /fixture parameters/);
+  const badGoal = copy(original); badGoal.items[1].comparison.faceAllowanceMm = 3; assert.throws(() => W.setSetups(p, badGoal), /faced surface/);
+});
+
+test('machine or stock edits preserve old setup records for recovery without accepting invalid machining', () => {
+  const p = twoSetups(), switched = D.create('shaft'); switched.id = p.id; switched.workflow = copy(p.workflow);
+  assert.equal(D.validate(switched).machine, 'lathe'); assert.equal(W.getSetups(switched).items[0].orientation, 'top');
+  assert.equal(W.setupState(switched, 'setup-1').valid, false); assert.ok(W.setupState(switched, 'setup-1').issues.length >= 2);
+  assert.equal(W.setSetups(switched, W.getSetups(switched)).workflow.setups.items[0].fixture.method, 'vise', 'Old incompatible fields are retained, never silently replaced');
+  const replacement = W.defaultSetup(switched); replacement.sequence = { version: 1, steps: [] };
+  const corrected = W.setSetups(switched, { version: 1, items: [replacement] }); assert.equal(corrected.workflow.setups.items[0].orientation, 'front');
+  const thinner = copy(p); thinner.stock.depth = .5; assert.equal(D.validate(thinner).stock.depth, .5);
+  assert.equal(W.getComparison(W.setupProject(thinner, 'setup-2')).depthMm, .5);
+});
+
+test('setup review repairs incompatible historical fields one at a time without weakening new field validation', () => {
+  let p = twoSetups(); p.stock.depth = .5;
+  assert.equal(W.setupState(p, 'setup-1').valid, false); assert.equal(W.setupState(p, 'setup-2').valid, false);
+  let plan = W.getSetups(p); plan.items[0].comparison = { mode: 'pocket', depthMm: .3, toleranceMm: .1, faceAllowanceMm: 0 };
+  p = W.setSetups(p, plan); assert.equal(W.setupState(p, 'setup-1').valid, true); assert.equal(W.setupState(p, 'setup-2').valid, false);
+  plan = W.getSetups(p); plan.items[1].comparison = { mode: 'retained-solid', depthMm: .2, toleranceMm: .1, faceAllowanceMm: .1 };
+  p = W.setSetups(p, plan); assert.equal(W.setupState(p, 'setup-2').valid, true);
+  const wrong = W.getSetups(p); wrong.items[1].comparison.depthMm = .6; assert.throws(() => W.setSetups(p, wrong), /stock depth/);
+  const switched = D.create('shaft'); switched.id = p.id; switched.workflow = copy(p.workflow); let repair = W.getSetups(switched);
+  repair.items[0].fixture = { method: 'chuck3', params: {} }; let partial = W.setSetups(switched, repair);
+  assert.equal(W.setupState(partial, 'setup-1').valid, false); assert.equal(partial.workflow.setups.items[1].fixture.method, 'vise_soft');
+  repair = W.getSetups(partial); repair.items[0].orientation = 'front'; repair.items[0].comparison = { mode: 'retained-solid', depthMm: null, toleranceMm: .2 };
+  partial = W.setSetups(partial, repair); assert.equal(W.setupState(partial, 'setup-1').valid, true); assert.equal(W.setupState(partial, 'setup-2').valid, false);
+  const newInvalid = W.getSetups(partial); newInvalid.items.push({ ...copy(newInvalid.items[1]), id: 'new-invalid' });
+  assert.throws(() => W.setSetups(partial, newInvalid), /fixture cannot hold/);
+});

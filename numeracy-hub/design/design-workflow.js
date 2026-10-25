@@ -10,9 +10,9 @@
 })(typeof globalThis !== 'undefined' ? globalThis : this, function (root) {
   'use strict';
   var KEY = 'access-design-library-v1', MAX_PROJECTS = 20, MAX_REVISIONS = 12, MAX_BYTES = 4 * 1024 * 1024;
-  var META_KEYS = ['version', 'revision', 'mode', 'checkpoints', 'inspections', 'assignment', 'reviews', 'operation', 'results', 'sequence', 'comparison'];
+  var META_KEYS = ['version', 'revision', 'mode', 'checkpoints', 'inspections', 'assignment', 'reviews', 'operation', 'results', 'sequence', 'comparison', 'setups'];
   var OP_KEYS = ['kind', 'toolDiameterMm', 'depthMm', 'stepDownMm', 'feedMmPerMin', 'spindleRpm'];
-  var RESULT_KEYS = ['id', 'kind', 'capturedAt', 'sourceFingerprint', 'operationKind', 'programNumber', 'programLineCount', 'actionCount', 'accepted', 'removedVolumeMm3', 'diagnostics', 'summary', 'operationCount', 'comparison'];
+  var RESULT_KEYS = ['id', 'kind', 'capturedAt', 'sourceFingerprint', 'operationKind', 'programNumber', 'programLineCount', 'actionCount', 'accepted', 'removedVolumeMm3', 'diagnostics', 'summary', 'operationCount', 'comparison', 'setup'];
   var INSPECTION_KEYS = ['id', 'key', 'label', 'nominalMm', 'measuredMm', 'toleranceMinusMm', 'tolerancePlusMm', 'resolutionMm', 'instrument', 'notes', 'sourceFingerprint', 'recordedAt'];
   function fail(message) { throw Error(message); }
   function own(o, k) { return Object.prototype.hasOwnProperty.call(o, k); }
@@ -47,6 +47,7 @@
   function id(prefix) { return prefix + '-' + (root.crypto && root.crypto.randomUUID ? root.crypto.randomUUID() : Date.now().toString(36) + '-' + Math.random().toString(36).slice(2)); }
   function clone(v) { return JSON.parse(JSON.stringify(v)); }
   function D() { var model = typeof module === 'object' && module.exports ? require('./design-model.js') : root.AccessDesign; if (!model || !model.validate) fail('The design model is unavailable.'); return model; }
+  function H() { var helper = typeof module === 'object' && module.exports ? require('../cnc/design-workholding.js') : root.AccessDesignWorkholding; if (!helper || !helper.validate) fail('The workholding model is unavailable.'); return helper; }
   function project(raw) { return D().validate(raw); }
   function defaults() { return { version: 1, revision: 1, mode: 'guided', checkpoints: [], inspections: [], assignment: null, reviews: [], operation: null, results: [] }; }
   function validateOperation(o) {
@@ -74,6 +75,27 @@
     // Absence means zero and remains absent in old serialized projects/fingerprints.
     if (own(c, 'faceAllowanceMm')) result.faceAllowanceMm = number(c.faceAllowanceMm, 0, 1000000, 'face allowance');
     return result;
+  }
+  function validateSetups(input) {
+    record(input, ['version', 'items'], 'setups');
+    if (input.version !== 1) fail('Unsupported machining setups version.');
+    var items = list(input.items, 4, function (s) {
+      record(s, ['id', 'label', 'fixture', 'orientation', 'sequence', 'comparison'], 'setup');
+      return { id: str(s.id, 100, 'setup ID', true), label: str(s.label, 160, 'setup label', true), fixture: H().validate(s.fixture),
+        orientation: choice(s.orientation, ['top', 'bottom', 'front'], 'setup orientation'), sequence: validateSequence(s.sequence), comparison: validateComparison(s.comparison) };
+    }, 'setups');
+    if (!items.length) fail('Keep at least one machining setup.');
+    if (items[0].orientation === 'bottom') fail('The first setup must use the original top or front.');
+    return { version: 1, items: items };
+  }
+  function validateSetupEvidence(s) {
+    record(s, ['id', 'index', 'orientation', 'inputMaterialFingerprint', 'outputMaterialFingerprint'], 'setup evidence');
+    var digest = function (v, label) { return v === null ? null : str(v, 100, label, true); };
+    var out = { id: str(s.id, 100, 'setup evidence ID', true), index: number(s.index, 0, 3, 'setup evidence index', true),
+      orientation: choice(s.orientation, ['top', 'bottom', 'front'], 'setup evidence orientation'),
+      inputMaterialFingerprint: digest(s.inputMaterialFingerprint, 'input material fingerprint'), outputMaterialFingerprint: digest(s.outputMaterialFingerprint, 'output material fingerprint') };
+    if ((out.inputMaterialFingerprint === null) !== (out.outputMaterialFingerprint === null)) fail('Setup material evidence needs both input and output fingerprints, or neither for preflight.');
+    return out;
   }
   function validateComparisonResult(c) {
     record(c, ['version', 'machine', 'mode', 'depthMm', 'toleranceMm', 'resolutionMm', 'status', 'metrics', 'observations', 'limitations', 'overlay', 'faceAllowanceMm', 'dimensions'], 'comparison result', ['faceAllowanceMm', 'dimensions']);
@@ -151,7 +173,7 @@
       sourceFingerprint: str(i.sourceFingerprint, 100, 'inspection fingerprint', true), recordedAt: date(i.recordedAt, 'inspection date') };
   }
   function validateResult(r) {
-    record(r, RESULT_KEYS, 'result', ['operationCount', 'comparison']);
+    record(r, RESULT_KEYS, 'result', ['operationCount', 'comparison', 'setup']);
     if (typeof r.accepted !== 'boolean') fail('Result accepted must be true or false.');
     var result = { id: str(r.id, 100, 'result ID', true), kind: choice(r.kind, ['simulation', 'check', 'inspection'], 'result kind'), capturedAt: date(r.capturedAt, 'result date'),
       sourceFingerprint: str(r.sourceFingerprint, 100, 'result fingerprint', true), operationKind: choice(r.operationKind, ['', 'profile-out', 'profile-in', 'pocket', 'drill', 'turn', 'clear-outside', 'face', 'part', 'sequence'], 'result operation'),
@@ -161,6 +183,12 @@
       summary: str(r.summary, 4000, 'result summary') };
     if (own(r, 'operationCount')) result.operationCount = number(r.operationCount, 0, 12, 'captured operation count', true);
     if (own(r, 'comparison')) result.comparison = validateComparisonResult(r.comparison);
+    if (own(r, 'setup')) {
+      result.setup = validateSetupEvidence(r.setup);
+      if (r.kind !== 'simulation' && result.setup.inputMaterialFingerprint !== null) fail('Preflight cannot claim completed setup material fingerprints.');
+      if (r.kind === 'simulation' && r.accepted && result.setup.inputMaterialFingerprint === null) fail('A completed setup simulation needs its measured input and output fingerprints.');
+      if (own(r, 'comparison') && result.setup.outputMaterialFingerprint === null) fail('A setup comparison needs completed measured material evidence.');
+    }
     return result;
   }
   function validateAssignment(a) {
@@ -176,7 +204,7 @@
     return out;
   }
   function validateMetadata(m) {
-    record(m, META_KEYS, 'workflow', ['sequence', 'comparison']);
+    record(m, META_KEYS, 'workflow', ['sequence', 'comparison', 'setups']);
     if (m.version !== 1) fail('Unsupported workflow version.');
     var assignment = m.assignment === null ? null : validateAssignment(m.assignment);
     var reviews = list(m.reviews, 20, function (r) {
@@ -191,6 +219,7 @@
       reviews: reviews, operation: validateOperation(m.operation), results: list(m.results, 20, validateResult, 'results') };
     if (own(m, 'sequence')) clean.sequence = validateSequence(m.sequence);
     if (own(m, 'comparison')) clean.comparison = validateComparison(m.comparison);
+    if (own(m, 'setups')) clean.setups = validateSetups(m.setups);
     if (bytes(JSON.stringify(clean)) > 256 * 1024) fail('Learning records exceed 256 KB. Export the submission and remove older records before adding more.');
     return clean;
   }
@@ -203,6 +232,7 @@
   function hash(value, prefix) { var s = stable(value), h = 2166136261; for (var i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 16777619); } return (prefix || 'design-v1-') + (h >>> 0).toString(16).padStart(8, '0'); }
   function fingerprint(raw) {
     var p = project(raw), m = metadata(p), value = { id: p.id, geometry: p.geometry, stock: p.stock, placement: p.placement, units: p.units, machine: p.machine, operation: m.operation };
+    if (own(m, 'setups')) { delete value.operation; value.setups = m.setups; return hash(value, 'design-v3-'); }
     // Preserve exact old fingerprints until a project opts into the new contract.
     if (own(m, 'sequence')) value.sequence = m.sequence;
     if (own(m, 'comparison')) value.comparison = m.comparison;
@@ -220,11 +250,17 @@
     return project(p);
   }
   function resultStatus(raw, result) {
-    var r = validateResult(result), stale = r.sourceFingerprint !== fingerprint(raw);
+    var r = validateResult(result), p = project(raw), stale, expected;
+    if (r.setup) {
+      var items = getSetups(p).items, index = items.findIndex(function (s) { return s.id === r.setup.id; });
+      if (index < 0) return { stale: true, status: 'stale' };
+      stale = index !== r.setup.index || items[index].orientation !== r.setup.orientation || r.sourceFingerprint !== setupFingerprint(p, r.setup.id);
+      expected = getComparison(setupProject(p, r.setup.id));
+    } else { stale = r.sourceFingerprint !== fingerprint(p); expected = getComparison(p); }
     // Older files can omit explicit goal settings. Compare the captured goal as well
     // so a changed default cannot make old comparison evidence look current.
     if (r.comparison) {
-      var p = project(raw), expected = getComparison(p), c = r.comparison;
+      var c = r.comparison;
       if (c.machine !== p.machine || c.mode !== expected.mode || c.depthMm !== expected.depthMm || c.toleranceMm !== expected.toleranceMm || (c.faceAllowanceMm || 0) !== expected.faceAllowanceMm) stale = true;
     }
     return { stale: stale, status: stale ? 'stale' : 'current' };
@@ -240,6 +276,59 @@
     // The list is authoritative; this mirror only supports older summary readers.
     p.workflow.operation = sequence.steps.length ? clone(sequence.steps[0].operation) : null;
     return syncMetadata(p, raw);
+  }
+  function defaultSetup(raw, setupId, label) {
+    var p = withMetadata(raw);
+    return { id: setupId === undefined ? 'setup-1' : str(setupId, 100, 'setup ID', true), label: label === undefined ? 'Setup 1' : str(label, 160, 'setup label', true),
+      fixture: H().defaults(p.machine, p.stock), orientation: p.machine === 'mill' ? 'top' : 'front', sequence: getSequence(p), comparison: getComparison(p) };
+  }
+  function getSetups(raw) {
+    var p = withMetadata(raw);
+    if (own(p.workflow, 'setups')) return clone(p.workflow.setups);
+    var implicit = defaultSetup(p);
+    // Reading an old plan must not silently save a clamped goal during setup opt-in.
+    if (own(p.workflow, 'comparison')) implicit.comparison = clone(p.workflow.comparison);
+    return { version: 1, items: [implicit] };
+  }
+  function setupProject(raw, setupId) {
+    var p = withMetadata(raw), items = getSetups(p).items, setup = items.find(function (s) { return s.id === setupId; });
+    if (!setup) fail('That machining setup is no longer in this project.');
+    delete p.workflow.setups;
+    p.workflow.sequence = clone(setup.sequence); p.workflow.operation = setup.sequence.steps.length ? clone(setup.sequence.steps[0].operation) : null;
+    p.workflow.comparison = clone(setup.comparison);
+    return project(p);
+  }
+  function setupFingerprint(raw, setupId) {
+    var p = project(raw), items = getSetups(p).items, index = items.findIndex(function (s) { return s.id === setupId; });
+    if (index < 0) fail('That machining setup is no longer in this project.');
+    return hash({ id: p.id, geometry: p.geometry, stock: p.stock, placement: p.placement, units: p.units, machine: p.machine,
+      setups: { version: 1, items: items.slice(0, index + 1) } }, 'design-setup-v1-');
+  }
+  function setSetups(raw, input) {
+    var p = withMetadata(raw), setups = validateSetups(input), previous = own(p.workflow, 'setups') ? p.workflow.setups.items : [];
+    setups.items.forEach(function (s) {
+      var old = previous.find(function (v) { return v.id === s.id; });
+      // A stock/machine edit can leave several old setups needing review. Validate
+      // changed fields while retaining unchanged historic fields for explicit repair.
+      if (!old || stable(old.fixture) !== stable(s.fixture)) H().validate(s.fixture, p.machine);
+      if ((!old || old.orientation !== s.orientation) && (p.machine === 'mill' ? !['top', 'bottom'].includes(s.orientation) : s.orientation !== 'front')) fail('Choose an orientation supported by this machine.');
+      if (!old || stable(old.comparison) !== stable(s.comparison)) { var local = clone(p); delete local.workflow.setups; setComparison(local, s.comparison); }
+    });
+    p.workflow.setups = setups;
+    // The setup list is authoritative. Mirrors keep older summary readers useful.
+    p.workflow.sequence = clone(setups.items[0].sequence);
+    p.workflow.operation = p.workflow.sequence.steps.length ? clone(p.workflow.sequence.steps[0].operation) : null;
+    p.workflow.comparison = clone(setups.items[0].comparison);
+    return syncMetadata(p, raw);
+  }
+  function setupState(raw, setupId) {
+    var p = withMetadata(raw), setup = getSetups(p).items.find(function (s) { return s.id === setupId; });
+    if (!setup) fail('That machining setup is no longer in this project.');
+    var issues = [], local = setupProject(p, setupId);
+    try { H().validate(setup.fixture, p.machine); } catch (error) { issues.push(error.message); }
+    if (p.machine === 'mill' ? !['top', 'bottom'].includes(setup.orientation) : setup.orientation !== 'front') issues.push('Review this setup orientation for the current machine.');
+    try { setComparison(local, setup.comparison); } catch (error) { issues.push(error.message); }
+    return { setup: clone(setup), valid: issues.length === 0, issues: issues, comparison: comparisonState(local) };
   }
   function comparisonState(raw) {
     var p = withMetadata(raw), present = own(p.workflow, 'comparison');
@@ -272,8 +361,15 @@
       actionCount: src.actionCount === undefined ? 0 : src.actionCount, accepted: src.accepted === true, removedVolumeMm3: src.removedVolumeMm3 === undefined ? 0 : src.removedVolumeMm3,
       diagnostics: src.diagnostics || [], summary: src.summary || '' };
     if (src.operationCount !== undefined) data.operationCount = src.operationCount;
+    var expectedProject = p;
+    if (src.setup !== undefined) {
+      data.setup = validateSetupEvidence(src.setup);
+      var items = getSetups(p).items, index = items.findIndex(function (s) { return s.id === data.setup.id; });
+      if (index < 0 || index !== data.setup.index || items[index].orientation !== data.setup.orientation) fail('Setup evidence must identify the current setup and its order/orientation.');
+      data.sourceFingerprint = setupFingerprint(p, data.setup.id); expectedProject = setupProject(p, data.setup.id);
+    }
     if (src.comparison !== undefined) {
-      var comparison = validateComparisonResult(src.comparison), expected = getComparison(p);
+      var comparison = validateComparisonResult(src.comparison), expected = getComparison(expectedProject);
       if (comparison.machine !== p.machine || comparison.mode !== expected.mode || comparison.depthMm !== expected.depthMm || comparison.toleranceMm !== expected.toleranceMm || (comparison.faceAllowanceMm || 0) !== expected.faceAllowanceMm) fail('Comparison evidence must match the current target settings and machine.');
       data.comparison = comparison;
     }
@@ -433,6 +529,7 @@
     catch (_) { return { ok: false, library: createLibrary(), message: 'The saved library is unavailable or damaged. Its stored record was left unchanged; open a downloaded library to recover your work.' }; }
   }
   return Object.freeze({ storageKey: KEY, limits: { projects: MAX_PROJECTS, revisions: MAX_REVISIONS, bytes: MAX_BYTES }, defaultMetadata: defaults, validateMetadata: validateMetadata, validateOperation: validateOperation, validateSequence: validateSequence, getSequence: getSequence, sequence: getSequence, setSequence: setSequence,
+    validateSetups: validateSetups, getSetups: getSetups, setups: getSetups, defaultSetup: defaultSetup, setSetups: setSetups, setupProject: setupProject, setupFingerprint: setupFingerprint, setupState: setupState,
     validateComparison: validateComparison, validateComparisonResult: validateComparisonResult, getComparison: getComparison, comparisonState: comparisonState, setComparison: setComparison,
     fingerprint: fingerprint, geometryFingerprint: geometryFingerprint, syncMetadata: syncMetadata, withMetadata: withMetadata, ensure: withMetadata, setOperation: setOperation, recordResult: recordResult, resultStatus: resultStatus,
     addCheckpoint: addCheckpoint, checkpointStatus: checkpointStatus, dimension: dimension, inspect: inspect, inspectionStatus: inspectionStatus,

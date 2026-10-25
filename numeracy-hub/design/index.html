@@ -6,6 +6,7 @@
   <title>Design Workshop · ACCESS Trades Numeracy</title>
   <link rel="stylesheet" href="design.css">
   <link rel="stylesheet" href="design-studio.css">
+  <script defer src="../cnc/design-workholding.js"></script>
   <script defer src="design-workflow.js"></script>
   <script defer src="design-geometry.js"></script>
   <script defer src="design-model.js"></script>
@@ -13,6 +14,7 @@
   <script defer src="../cnc/cad-engine.js"></script>
   <script defer src="../cnc/cam-engine.js"></script>
   <script defer src="../cnc/design-cam.js"></script>
+  <script defer src="../cnc/design-material.js"></script>
   <script defer src="../cnc/design-comparison.js"></script>
   <script defer src="design-app.js"></script>
   <script defer src="design-studio.js"></script>
@@ -77,6 +79,8 @@
           <p class="help">Choose what the finished practice part should look like, then build and simulate its machining steps in order.</p>
           <section class="comparison-goal" aria-labelledby="comparison-title">
             <h3 id="comparison-title">What are you trying to make?</h3>
+            <label id="comparison-setup-field" hidden>Goal for this setup<select id="comparison-setup"></select></label>
+            <p id="comparison-setup-note" class="help" hidden></p>
             <label>Use this drawing to…<select id="comparison-mode"><option value="retained-solid">Keep the outlined shape</option><option value="pocket">Cut a pocket inside the outline</option></select></label>
             <div class="field-grid">
               <label><span id="comparison-face-label">Facing allowance from original top</span> <span class="comparison-unit unit-label">mm</span><input id="comparison-face-allowance" type="number" min="0" step="any" required></label>

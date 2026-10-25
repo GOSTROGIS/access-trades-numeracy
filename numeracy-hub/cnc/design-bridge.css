@@ -16,3 +16,4 @@
 .cnc-comparison{border-top:1px solid #dbc477;margin-top:12px;padding-top:10px}.cnc-comparison h4{font-size:13px;margin:0 0 8px}.cnc-comparison svg{display:block;width:100%;height:auto;background:#fff;max-height:260px}.cnc-comparison ul{font-size:11px;padding-left:18px;line-height:1.5}#cnc-compare-status{font-weight:700}
 
 .cnc-design-content #cnc-compare-legend{font-size:13px;line-height:1.5;margin:8px 0 12px;color:#242424}
+.cnc-setups{border:1px solid #dbc477;border-radius:8px;padding:10px;margin:10px 0 18px;background:#fffdf5}.cnc-setups h4{font-size:13px;margin:0 0 8px}.cnc-setups .cnc-operation-fields{margin-top:10px}.cnc-setups button:focus-visible{outline:3px solid #940010;outline-offset:2px}#cnc-setup-status{font-weight:700}#cnc-fixture-fields:empty{display:none}

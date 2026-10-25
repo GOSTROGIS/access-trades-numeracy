@@ -8,7 +8,7 @@
   const get = () => app.getProject();
   const meta = p => W.ensure(p).workflow;
   let library = W.createLibrary(), libraryWritable = true, lastSaved = '', selectedProject = '', selectedRevision = '', profileSignature = '', rubricSignature = '', lastUnits = get().units, storedLibraryText = null, removedLibrary = null;
-  let comparisonOriginal = null, comparisonValues = {};
+  let comparisonOriginal = null, comparisonValues = {}, comparisonSetupId = '';
   try { const loaded = W.loadLibrary(localStorage); storedLibraryText = localStorage.getItem(W.storageKey); library = loaded.library; libraryWritable = loaded.ok; $('library-message').textContent = loaded.message; }
   catch (_) { libraryWritable = false; $('library-message').textContent = 'Browser saving is unavailable. Download your project or library to keep your work.'; }
   function attempt(action) { try { action(); } catch (error) { app.notify(error.message); } }
@@ -76,39 +76,50 @@
       state.stale ? 'The drawing changed. Measure the revised dimension again.' : ''], state.status); });
   }
   function renderResults(p) {
-    const m = meta(p), f = factor(p), sequence = W.getSequence(p), goal = W.getComparison(p), lathe = p.machine === 'lathe';
+    const m = meta(p), f = factor(p), setups = m.setups?.items || [], selected = setups.find(s => s.id === comparisonSetupId) || setups[0];
+    if (selected) comparisonSetupId = selected.id;
+    $('comparison-setup-field').hidden = !setups.length; $('comparison-setup-note').hidden = !setups.length;
+    options($('comparison-setup'), setups.map((s, i) => ({ value: s.id, label: (i + 1) + '. ' + s.label })), comparisonSetupId);
+    const local = selected ? W.setupProject(p, selected.id) : p, sequence = W.getSequence(local), goal = W.getComparison(local), lathe = p.machine === 'lathe';
+    $('comparison-setup-note').textContent = selected ? fixtureText(selected, p) + '. ' + (selected.orientation === 'bottom' ? 'The bottom faces the cutter after turning over about X. This goal describes the original bottom side.' : selected.orientation === 'front' ? 'The original front remains the datum through fixture changes.' : 'This goal describes the original top side.') + ' Comparison includes the goals and material from earlier setups.' : '';
     $('comparison-mode').value = goal.mode; $('comparison-mode').disabled = lathe;
     $('comparison-depth-field').hidden = lathe; $('comparison-depth').disabled = lathe;
     $('comparison-depth').value = goal.depthMm === null ? '' : Number((goal.depthMm / f).toFixed(8));
     $('comparison-depth').max = String(p.stock.depth / f);
     $('comparison-tolerance').value = Number((goal.toleranceMm / f).toFixed(8));
     $('comparison-face-allowance').value = Number(((goal.faceAllowanceMm || 0) / f).toFixed(8));
-    $('comparison-face-label').textContent = lathe ? 'Facing allowance from original front' : 'Facing allowance from original top';
+    $('comparison-face-label').textContent = lathe ? 'Facing allowance from original front' : 'Facing allowance from original ' + (selected?.orientation === 'bottom' ? 'bottom' : 'top');
     comparisonOriginal = { ...goal, faceAllowanceMm: goal.faceAllowanceMm || 0 }; comparisonValues = { depth: $('comparison-depth').value, tolerance: $('comparison-tolerance').value, 'face-allowance': $('comparison-face-allowance').value };
-    const goalState = W.comparisonState(p); $('comparison-adjusted').hidden = !goalState.adjusted; $('comparison-confirm').hidden = !goalState.adjusted; $('comparison-adjusted').textContent = goalState.message;
+    const goalState = W.comparisonState(local), setupIssues = selected ? W.setupState(p, selected.id).issues : [];
+    $('comparison-adjusted').hidden = !goalState.adjusted && !setupIssues.length; $('comparison-confirm').hidden = !goalState.adjusted;
+    $('comparison-adjusted').textContent = [...new Set([goalState.adjusted ? goalState.message : '', ...setupIssues].filter(Boolean))].join(' ');
     document.querySelectorAll('.comparison-unit').forEach(el => { el.textContent = p.units; });
     $('comparison-goal-help').textContent = lathe
       ? 'Facing allowance moves the intended front face back from the original stock end. Compare the shaft diameter and, after parting, the sampled loose-piece length. Stock held in the chuck is excluded.'
       : goal.mode === 'pocket'
         ? 'Facing lowers the whole top by the allowance. The target cut depth is measured from the original stock top; the pocket depth below the faced surface is ' + fmt((goal.depthMm - (goal.faceAllowanceMm || 0)) / f) + ' ' + p.units + '. Keep surrounding stock and islands at the faced surface.'
         : 'Keep the outlined shape at the faced surface and clear the surrounding material and holes to the target cut depth, measured from the original stock top. Equal allowance and cut depth describes a flat faced surface. Tracing only an edge leaves extra material to clear.';
-    $('operation-summary').textContent = sequence.steps.length ? sequence.steps.length + ' ordered step' + (sequence.steps.length === 1 ? '' : 's') + ' on the same stock. Edit, reorder and simulate the complete sequence in CNC practice, then bring the comparison back here.' : 'In CNC practice, add the first operation, choose its tool and cutting values, then add any next steps. Simulate the complete sequence and capture the comparison before returning here.';
+    if (selected?.orientation === 'bottom') $('comparison-goal-help').textContent = $('comparison-goal-help').textContent.replaceAll('original stock top', 'original stock bottom').replace('whole top', 'whole bottom');
+    $('operation-summary').textContent = setups.length ? setups.length + ' setups on the same material. Each setup keeps its own workholding, operations and goal. Edit and simulate through a selected setup in CNC practice, then bring its comparison back here.' : sequence.steps.length ? sequence.steps.length + ' ordered step' + (sequence.steps.length === 1 ? '' : 's') + ' on the same stock. Edit, reorder and simulate the complete sequence in CNC practice, then bring the comparison back here.' : 'In CNC practice, add the first operation, choose its tool and cutting values, then add any next steps. Simulate the complete sequence and capture the comparison before returning here.';
     $('operation-sequence').replaceChildren();
-    sequence.steps.forEach(s => { const item = element('li'); item.append(element('strong', s.label), element('p', operationText(s.operation, p), 'help')); $('operation-sequence').append(item); });
-    $('operation-sequence').hidden = !sequence.steps.length;
+    if (setups.length) setups.forEach(s => { const item = element('li'); item.append(element('strong', s.label), element('p', fixtureText(s, p), 'help')); s.sequence.steps.forEach((step, i) => item.append(element('p', (i + 1) + '. ' + step.label + ' · ' + operationText(step.operation, p, s.orientation), 'help'))); if (!s.sequence.steps.length) item.append(element('p', 'Add an operation in CNC practice.', 'help')); $('operation-sequence').append(item); });
+    else sequence.steps.forEach(s => { const item = element('li'); item.append(element('strong', s.label), element('p', operationText(s.operation, p), 'help')); $('operation-sequence').append(item); });
+    $('operation-sequence').hidden = !setups.length && !sequence.steps.length;
     $('machine-results').replaceChildren();
     m.results.slice().reverse().forEach(r => { const state = W.resultStatus(p, r); let container = $('machine-results');
       if (state.stale) { const history = element('details', undefined, 'comparison-history'); history.append(element('summary', 'Earlier design · ' + r.kind + ' · review required')); container.append(history); container = history; }
       const box = card(container, (state.stale ? 'Earlier design · review required' : 'Current design') + ' · ' + r.kind, [r.summary, (r.operationCount ? r.operationCount + ' operation' + (r.operationCount === 1 ? '' : 's') + ' · ' : '') + r.programLineCount + ' program lines · ' + (r.accepted ? 'Checks accepted' : 'Checks need review'),
       'Estimated removed volume: ' + fmt(r.removedVolumeMm3 / Math.pow(factor(p), 3)) + ' ' + p.units + '³',
       ...r.diagnostics.map(d => d.level + ': ' + d.message), state.stale ? 'The geometry, setup, sequence or comparison goal changed after this capture. Generate and check the current plan again.' : 'Captured ' + new Date(r.capturedAt).toLocaleString()], state.stale ? 'stale' : !r.accepted || r.comparison && r.comparison.status !== 'within-sample-tolerance' ? 'outside-tolerance' : 'current');
+      if (r.setup) box.append(element('p', 'Setup ' + (r.setup.index + 1) + ' · ' + r.setup.orientation + ' side · ' + (r.setup.outputMaterialFingerprint ? r.setup.index > 0 ? 'Continued from measured material left by earlier setups.' : 'Started from the original stock.' : 'Workholding preflight only; no completed material captured.'), 'help'));
       if (r.comparison) appendComparison(box, r.comparison, p, state.stale);
       else box.append(element('p', 'No material-to-design comparison was captured with this record. Simulate the current sequence to add one.'));
     });
   }
-  function operationText(operation, p) {
-    const labels = { 'profile-out': 'Outside profile', 'profile-in': 'Inside profile', pocket: 'Pocket', 'clear-outside': 'Clear around the shape', drill: 'Drill', turn: 'Turn shaft', face: p.machine === 'lathe' ? 'Face the stock end' : 'Face the stock top', part: 'Part off the finished piece' }, f = factor(p);
-    const depth = operation.kind === 'face' ? 'removed from original ' + (p.machine === 'lathe' ? 'front ' : 'top ') : operation.kind === 'part' ? 'piece length ' : operation.kind === 'turn' ? 'turning length ' : 'depth from original top ';
+  function fixtureText(s, p) { const method = window.AccessDesignWorkholding.methods(p.machine).find(m => m.id === s.fixture.method), label = method?.label || s.fixture.method, measurements = (method?.fields || []).map(field => field.type === 'select' ? field.label + ': ' + (field.options.find(o => o.value === s.fixture.params[field.key])?.label || s.fixture.params[field.key]) : field.label + ': ' + fmt(s.fixture.params[field.key] / (field.unit === 'mm' ? factor(p) : 1)) + (field.unit === 'mm' ? ' ' + p.units : '')); return (s.orientation === 'bottom' ? 'Bottom side' : s.orientation === 'front' ? 'Original front' : 'Top side') + ' · ' + label + (measurements.length ? ' · ' + measurements.join(' · ') : ''); }
+  function operationText(operation, p, orientation) {
+    const labels = { 'profile-out': 'Outside profile', 'profile-in': 'Inside profile', pocket: 'Pocket', 'clear-outside': 'Clear around the shape', drill: 'Drill', turn: 'Turn shaft', face: p.machine === 'lathe' ? 'Face the stock end' : 'Face the stock ' + (orientation === 'bottom' ? 'bottom' : 'top'), part: 'Part off the finished piece' }, f = factor(p);
+    const depth = operation.kind === 'face' ? 'removed from original ' + (p.machine === 'lathe' ? 'front ' : orientation === 'bottom' ? 'bottom ' : 'top ') : operation.kind === 'part' ? 'piece length ' : operation.kind === 'turn' ? 'turning length ' : 'depth from original ' + (orientation === 'bottom' ? 'bottom ' : 'top ');
     return (labels[operation.kind] || operation.kind) + ' · ' + (operation.kind === 'part' ? 'blade width ' : 'tool ') + fmt(operation.toolDiameterMm / f) + ' ' + p.units + ' · ' + depth + fmt(operation.depthMm / f) + ' ' + p.units;
   }
   function comparisonLabel(c) {
@@ -164,13 +175,16 @@
     if (m.checkpoints.length) { heading('Numeracy comparisons'); m.checkpoints.forEach(c => para(c.label + ': estimate ' + c.estimate + ', calculated ' + c.actual + ' ' + c.unit + ' · ' + W.checkpointStatus(p, c).status + '. ' + c.working)); }
     if (m.inspections.length) { heading('Inspection'); m.inspections.forEach(i => para(i.label + ': target ' + fmt(i.nominalMm) + ' mm, measured ' + (i.measuredMm === null ? 'pending' : fmt(i.measuredMm) + ' mm') + ' · ' + W.inspectionStatus(p, i).status + '. ' + i.instrument)); }
     const sequence = W.getSequence(p);
-    if (sequence.steps.length) { heading('Machining sequence'); sequence.steps.forEach((s, i) => para((i + 1) + '. ' + s.label + ': ' + operationText(s.operation, p))); }
+    if (m.setups) { heading('Machining setups'); m.setups.items.forEach((setup, index) => { para((index + 1) + '. ' + setup.label + ' · ' + fixtureText(setup, p)); setup.sequence.steps.forEach((s, i) => para('Step ' + (i + 1) + ': ' + s.label + ' · ' + operationText(s.operation, p, setup.orientation))); }); }
+    else if (sequence.steps.length) { heading('Machining sequence'); sequence.steps.forEach((s, i) => para((i + 1) + '. ' + s.label + ': ' + operationText(s.operation, p))); }
     if (m.results.length) { heading('CNC learning evidence'); m.results.forEach(r => { const state = W.resultStatus(p, r); para(state.status + ': ' + r.summary + ' · ' + (r.accepted ? 'checks accepted' : 'review required')); if (r.comparison) appendComparison(target, r.comparison, p, state.stale); }); }
     if (m.assignment) { heading('Assignment: ' + m.assignment.title); W.assessment(p).criteria.forEach(c => para(c.title + ': ' + (c.score === null ? 'not reviewed' : c.score + '/' + c.maxScore) + ' ' + c.comment)); }
   }
   $('workflow-mode').onchange = e => mutate(p => { p = W.ensure(p); p.workflow.mode = e.target.value; return p; });
-  ['comparison-mode', 'comparison-depth', 'comparison-tolerance', 'comparison-face-allowance'].forEach(id => { $(id).onchange = () => { mutate(p => { const value = (field, key) => $('comparison-' + field).value === comparisonValues[field] ? comparisonOriginal[key] : $('comparison-' + field).valueAsNumber * factor(p); return W.setComparison(p, { mode: p.machine === 'lathe' ? 'retained-solid' : $('comparison-mode').value, depthMm: p.machine === 'lathe' ? null : value('depth', 'depthMm'), toleranceMm: value('tolerance', 'toleranceMm'), faceAllowanceMm: value('face-allowance', 'faceAllowanceMm') }); }); renderResults(get()); }; });
-  $('comparison-confirm').onclick = () => mutate(p => W.setComparison(p, W.getComparison(p)));
+  function saveComparison(p, goal) { if (!p.workflow?.setups) return W.setComparison(p, goal); const setups = W.getSetups(p), index = Math.max(0, setups.items.findIndex(s => s.id === comparisonSetupId)), local = W.setupProject(p, setups.items[index].id); setups.items[index].comparison = W.getComparison(W.setComparison(local, goal)); return W.setSetups(p, setups); }
+  $('comparison-setup').onchange = () => { comparisonSetupId = $('comparison-setup').value; renderResults(get()); };
+  ['comparison-mode', 'comparison-depth', 'comparison-tolerance', 'comparison-face-allowance'].forEach(id => { $(id).onchange = () => { mutate(p => { const value = (field, key) => $('comparison-' + field).value === comparisonValues[field] ? comparisonOriginal[key] : $('comparison-' + field).valueAsNumber * factor(p); return saveComparison(p, { mode: p.machine === 'lathe' ? 'retained-solid' : $('comparison-mode').value, depthMm: p.machine === 'lathe' ? null : value('depth', 'depthMm'), toleranceMm: value('tolerance', 'toleranceMm'), faceAllowanceMm: value('face-allowance', 'faceAllowanceMm') }); }); renderResults(get()); }; });
+  $('comparison-confirm').onclick = () => mutate(p => saveComparison(p, W.getComparison(p.workflow?.setups ? W.setupProject(p, comparisonSetupId) : p)));
   $('shape-choice').onchange = e => mutate(p => { const starter = D.create(e.target.value); p.geometry = starter.geometry; p.machine = starter.machine; return p; });
   $('profile-apply').onclick = () => mutate(p => { const rings = $('profile-points').value.trim().split(/\n\s*\n/).map(group => group.split(/\n/).map(line => { const parts = line.trim().split(/\s*,\s*/); if (parts.length !== 2 || parts.some(x => x.trim() === '')) throw Error('Each outline point needs two numbers: X, Y.'); return parts.map(Number); })); p.geometry = D.fromProfile({ rings, units: p.units, title: p.title }).geometry; return p; });
   function transformProfile(map) { mutate(p => { if (p.geometry.shapeId !== 'profile') throw Error('Open a measured outline first.'); p.geometry = D.fromProfile({ rings: p.geometry.rings.map(r => r.map(map)), units: 'mm', title: p.title }).geometry; return p; }); }

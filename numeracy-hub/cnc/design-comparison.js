@@ -1,9 +1,9 @@
 /* Compare a detached sample of the completed simulator stock with an explicit
    design goal. No toolpath, removal total or intended motion supplies the result. */
 (function(root,factory){
-  if(typeof module==='object'&&module.exports)module.exports=factory(require('../design/design-model.js'),require('../design/design-workflow.js'));
-  else root.AccessDesignComparison=factory(root.AccessDesign,root.AccessDesignWorkflow);
-})(typeof globalThis!=='undefined'?globalThis:this,function(D,W){
+  if(typeof module==='object'&&module.exports)module.exports=factory(require('../design/design-model.js'),require('../design/design-workflow.js'),require('./design-material.js'));
+  else root.AccessDesignComparison=factory(root.AccessDesign,root.AccessDesignWorkflow,root.AccessDesignMaterial);
+})(typeof globalThis!=='undefined'?globalThis:this,function(D,W,Material){
   'use strict';
   const LIMIT=100000, EPS=1e-5;
   const finite=(n,min,max,name)=>{if(typeof n!=='number'||!Number.isFinite(n)||n<min||n>max)throw Error(name+' is outside the supported range.');return n;};
@@ -39,7 +39,7 @@
   }
   function classify(missing,excess,tolerance){return(missing>tolerance+EPS?1:0)|(excess>tolerance+EPS?2:0);}
   function status(r){r.status=r.metrics.mismatchedPercent>EPS?'needs-work':r.toleranceMm+EPS<r.resolutionMm?'resolution-limited':'within-sample-tolerance';}
-  function compareMill(p,s,result){
+  function compareMill(p,s,result,goals){
     const a=s.data,stock=s.stock;
     if(a.kind!=='heightfield')throw Error('This mill snapshot has no material heightfield.');
     for(const key of ['widthMm','heightMm','depthMm'])finite(stock[key],.001,1000000,'Snapshot stock '+key);
@@ -64,6 +64,9 @@
         if(Math.hypot(x-e.x-e.dx*t,y-e.y-e.dy*t)<=boundaryBand+EPS)return true;
       }return false;
     }
+    const topGoal=goals?goals.top:result,bottomGoal=goals?goals.bottom:null;
+    const topTolerance=topGoal?topGoal.toleranceMm:result.toleranceMm,bottomTolerance=bottomGoal?bottomGoal.toleranceMm:result.toleranceMm;
+    const removal=(goal,inside)=>goal?((goal.mode==='pocket'?inside:!inside)?goal.depthMm:(goal.faceAllowanceMm||0)):0;
     const columns=Math.min(48,a.nx),rows=Math.min(48,a.ny),codes=new Uint8Array(columns*rows),m=result.metrics;
     result.resolutionMm=Math.hypot(a.dxMm,a.dyMm);m.sampleCount=count;
     let mismatchArea=0,resolvedMismatchArea=0,insideSamples=0;
@@ -80,11 +83,12 @@
           inside=dist<=R&&!(p.geometry.shapeId==='annulus'&&dist<q.r);
         }
         if(inside)insideSamples++;
-        const removedRegion=result.mode==='pocket'?inside:!inside,expectedTop=removedRegion?-result.depthMm:-result.faceAllowanceMm;
-        const expectedThickness=stock.depthMm+expectedTop,actualThickness=Math.max(0,top[k]-bottom[k]);
-        const overlap=Math.max(0,Math.min(expectedTop,top[k])-Math.max(-stock.depthMm,bottom[k]));
+        const expectedTop=-removal(topGoal,inside),expectedBottom=-stock.depthMm+removal(bottomGoal,inside);
+        const expectedThickness=Math.max(0,expectedTop-expectedBottom),actualThickness=Math.max(0,top[k]-bottom[k]);
+        const overlap=Math.max(0,Math.min(expectedTop,top[k])-Math.max(expectedBottom,bottom[k]));
         const missing=Math.max(0,expectedThickness-overlap),excess=Math.max(0,actualThickness-overlap);
-        const area=a.dxMm*a.dyMm*weightY*((i===0||i===a.nx-1)?.5:1),code=classify(missing,excess,result.toleranceMm);
+        const area=a.dxMm*a.dyMm*weightY*((i===0||i===a.nx-1)?.5:1);
+        const code=goals&&expectedThickness>0?((Math.max(0,expectedTop-Math.max(top[k],expectedBottom))>topTolerance+EPS||Math.max(0,Math.min(bottom[k],expectedTop)-expectedBottom)>bottomTolerance+EPS?1:0)|(Math.max(0,top[k]-Math.max(bottom[k],expectedTop))>topTolerance+EPS||Math.max(0,Math.min(top[k],expectedBottom)-bottom[k])>bottomTolerance+EPS?2:0)):classify(missing,excess,Math.min(topTolerance,bottomTolerance));
         m.desiredVolumeMm3+=expectedThickness*area;m.actualVolumeMm3+=actualThickness*area;m.missingVolumeMm3+=missing*area;m.excessVolumeMm3+=excess*area;
         m.maxUndercutMm=Math.max(m.maxUndercutMm,missing);m.maxExcessMm=Math.max(m.maxExcessMm,excess);
         if(code){mismatchArea+=area;if(!nearBoundary(x,y,rowSegments))resolvedMismatchArea+=area;}
@@ -94,6 +98,7 @@
     m.mismatchedPercent=Math.min(100,100*mismatchArea/(stock.widthMm*stock.heightMm));
     result.overlay={kind:'mill-map',columns,rows,widthMm:stock.widthMm,heightMm:stock.heightMm,cells:Array.from(codes).join('')};
     status(result);
+    if(result.status==='within-sample-tolerance'&&Math.min(topTolerance,bottomTolerance)<result.resolutionMm)result.status='resolution-limited';
     const boundaryOnly=mismatchArea>0&&resolvedMismatchArea===0;
     if(boundaryOnly)result.status='resolution-limited';
     if(!insideSamples){if(!resolvedMismatchArea)result.status='resolution-limited';result.limitations.push('No native sample lies inside the target outline. This grid cannot assess that feature; a matching removal total would not establish its shape.');}
@@ -187,17 +192,31 @@
     if(result.status==='resolution-limited'&&m.mismatchedPercent>EPS)result.observations.push('The remaining discrepancies lie within an axial sample of the desired end faces. Their raw volume and diameter differences are retained, but this sampling cannot resolve the exact face or part-off position.');
     return result;
   }
-  function compare(raw,snapshot,options){
+  function compare(raw,snapshot,options,goals){
     const p=D.validate(raw),goal=settings(p,options),result=base(p,goal),s=checkedSnapshot(snapshot);
     if(!s.complete||s.alarm)return unavailable(result,'incomplete','Finish a successful simulator playback before comparing material. A preflight check alone does not provide a completed result.');
     if(s.machine!==p.machine)return unavailable(result,'unsupported','The material snapshot belongs to a different machine.');
     const checks=D.checks(p).find(c=>!c.ok&&c.id!=='brief');if(checks)return unavailable(result,'unsupported',checks.message);
-    if(p.machine==='mill')compareMill(p,s,result);else compareLathe(p,s,result);
+    if(p.machine==='mill')compareMill(p,s,result,goals);else compareLathe(p,s,result);
     if(result.resolutionMm&&result.toleranceMm<result.resolutionMm)result.limitations.push('The requested tolerance is smaller than the sampling spacing. Even if no mismatch is detected, the simulator cannot establish that tolerance.');
     if(result.status==='needs-work')result.observations.push('Use the difference map or diameter chart to locate the error. Recheck the comparison goal, cut depth, tool size and operation order before regenerating.');
     else if(result.status==='within-sample-tolerance')result.observations.push('No sampled mismatch exceeds the chosen tolerance. This is a simulator comparison, not a measurement of a manufactured part.');
     else if(result.status==='resolution-limited')result.observations.push(result.metrics.mismatchedPercent>0?'Differences are confined to unresolved boundary samples. The raw volumes and map remain visible, but this does not establish either a finished match or a resolved interior overcut.':'No mismatch was detected at the available sample resolution. The grid cannot confirm the requested feature or tolerance.');
     return summary(result);
+  }
+  function compareSetups(raw,setupId,snapshot){
+    const p=D.validate(raw),items=W.getSetups(p).items,index=items.findIndex(s=>s.id===setupId);if(index<0)throw Error('Choose a setup in this project.');
+    const projected=W.setupProject(p,setupId),selected=items[index],goals={top:null,bottom:null};
+    for(const s of items.slice(0,index+1))if(p.machine==='mill')goals[s.orientation]=settings(p,s.comparison);
+    const measured=snapshot.complete?Material.orient(snapshot,p.machine==='mill'?'top':'front'):snapshot;
+    const result=compare(projected,measured,selected.comparison,p.machine==='mill'?goals:undefined);
+    if(p.machine==='mill'){
+      const describe=(side,g)=>side+': '+(g?g.mode+', floor '+fmt(g.depthMm)+' mm, facing '+fmt(g.faceAllowanceMm||0)+' mm, tolerance '+fmt(g.toleranceMm)+' mm':'original uncut stock surface');
+      result.observations.unshift('Cumulative setup goal in the original blank frame. '+describe('Top',goals.top)+'. '+describe('Bottom',goals.bottom)+'. Each side keeps its own tolerance.');
+      result.observations=result.observations.slice(0,8);
+      result.limitations=result.limitations.filter(t=>!t.startsWith('The goal keeps')&&!t.startsWith('The pocket floor'));
+      result.limitations.push('Each depth and facing allowance is measured inward from that side of the ORIGINAL blank. The expected solid is the material between the composed top and bottom surfaces; earlier overcuts are not repaired or ignored by a later setup.');
+    }return summary(result);
   }
   function summary(result){return W.validateComparisonResult(result);}
   function renderSVG(raw,units){
@@ -212,7 +231,7 @@
     const px=z=>x+z/o.lengthMm*width,py=d=>y+height-d/(max||1)*height,points=o.samples.map(q=>fmt(px(q.zMm))+','+fmt(py(q.diameterMm))).join(' ');
     return'<svg xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Simulated diameter along the target length, compared with the design diameter." viewBox="0 0 620 370"><rect x="40" y="30" width="540" height="250" fill="#f0f3f5" stroke="#334155"/><path d="M40,'+fmt(py(o.targetDiameterMm))+'H580" stroke="#17202a" stroke-width="2" stroke-dasharray="6 4"/><polyline points="'+points+'" fill="none" stroke="#1261a0" stroke-width="2"/><g fill="#17202a" font-family="system-ui,sans-serif" font-size="13"><text x="40" y="18">Diameter target: '+show(o.targetDiameterMm)+' '+unit+'</text><text x="40" y="302">0 · design front</text><text x="430" y="302">'+show(o.lengthMm)+' '+unit+' from front</text><text x="40" y="327">Blue: measured simulator diameter · Dashed: design diameter</text><text x="40" y="349">Above target: excess stock · Below target: overcut</text></g></svg>';
   }
-  return Object.freeze({defaults,compare,summary,renderSVG:function(result,units){
+  return Object.freeze({defaults,compare,compareSetups,summary,renderSVG:function(result,units){
     return renderSVG(result,units).replace(/(<svg[^>]*>)/,'$1<title>Simulated material compared with the design goal</title><desc>The figure displays measured simulator samples. Read the accompanying numerical differences and resolution limitations; colour alone does not establish a finished-part match.</desc>');
   }});
 });

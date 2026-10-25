@@ -4,7 +4,7 @@
   const T=window.Trainer, E=window.CNCManual;
   if(!T || !E){const p=document.createElement('p');p.textContent='The machining workspace could not start. Reload in a browser with WebGL enabled.';p.className='mb-status error';document.body.prepend(p);return;}
   const KEY='numeracy-cnc-manual-v1';
-  let saved={schema:1,jobs:{}},machine='mill',state=null,undoStack=[],redoStack=[],busy=false,active=false,mode='rapid',lastResult=null,saveFailed=false,generatedPreview=false,generatedTraining=null;
+  let saved={schema:1,jobs:{}},machine='mill',state=null,undoStack=[],redoStack=[],busy=false,active=false,mode='rapid',lastResult=null,saveFailed=false,generatedPreview=false,generatedTraining=null,generatedSetupChain=null;
   try{const raw=JSON.parse(localStorage.getItem(KEY));if(raw&&raw.schema===1&&raw.jobs&&typeof raw.jobs==='object')saved=raw;}catch(_){/* A damaged saved draft never prevents a new job. */}
   if(!['mill','lathe'].includes(saved.lastMachine))delete saved.lastMachine;
   const $=id=>document.getElementById(id);
@@ -69,10 +69,19 @@
     busy=true;
     try{
       const result=T.previewManual(project);if(!result||!result.accepted)return result;
-      generatedTraining=JSON.parse(JSON.stringify(project));generatedPreview=true;active=true;document.body.classList.add('manual-builder','design-cam-preview');
+      generatedTraining=JSON.parse(JSON.stringify(project));generatedSetupChain=null;generatedPreview=true;active=true;document.body.classList.add('manual-builder','design-cam-preview');
       $('workshop-builder').setAttribute('aria-pressed','true');$('workshop-simulator').setAttribute('aria-pressed','false');
       T.manualPlayback(true);say('Generated operation simulated. Your manual draft and its Undo history are unchanged.','success');window.dispatchEvent(new Event('resize'));
       return result;
+    }catch(error){return{accepted:false,diagnostics:[{level:'error',message:error.message}]};}finally{busy=false;}
+  }
+  function previewGeneratedSetups(chain){
+    if(busy)return{accepted:false,diagnostics:[{level:'error',message:'Wait for the current machining action.'}]};busy=true;
+    try{
+      const result=T.previewSetups(chain);if(!result||!result.accepted)return result;
+      generatedSetupChain=JSON.parse(JSON.stringify(chain));generatedTraining=null;generatedPreview=true;active=true;document.body.classList.add('manual-builder','design-cam-preview');
+      $('workshop-builder').setAttribute('aria-pressed','true');$('workshop-simulator').setAttribute('aria-pressed','false');T.manualPlayback(true);
+      say('Setup chain simulated with the actual material carried between fixtures. Your manual draft and Undo history are unchanged.','success');window.dispatchEvent(new Event('resize'));return result;
     }catch(error){return{accepted:false,diagnostics:[{level:'error',message:error.message}]};}finally{busy=false;}
   }
   function restoreManualPreview(){
@@ -100,7 +109,14 @@
     $('mb-rapid').setAttribute('aria-pressed',String(mode==='rapid'));$('mb-feed-mode').setAttribute('aria-pressed',String(mode==='feed'));$('mb-undo').disabled=!undoStack.length&&!state.actions.length;$('mb-redo').disabled=!redoStack.length;setText('mb-action-count',state.actions.length+' recorded action'+(state.actions.length===1?'':'s'));setText('mb-program-number','O'+String(c.programNumber).padStart(5,'0'));setText('mb-demo-title',lathe?'Try a straight turning pass':'Try milling a slot');setText('mb-demo-copy',lathe?'A guided setup positions the turning tool for a shallow pass. You make the cut with the jog or target controls.':'A guided setup starts the spindle and positions the end mill above the stock. You plunge and move across to cut a slot.');setText('mb-demo',state.actions.length?'Start a fresh guided job':'Position for a first cut');const removed=lastResult&&lastResult.removedVolumeIn3||0,factor=u==='mm'?Math.pow(25.4,3):1;setText('mb-scene-label',(lathe?'LATHE':'MILL')+' · '+(mode==='feed'?'CUT / FEED':'RAPID TRAVEL')+' · '+(state.spindle.on?state.spindle.rpm+' RPM':'SPINDLE STOPPED'));setText('mb-scene-detail',(lathe?'XØ ':'X ')+format(state.position.x)+(lathe?'':' · Y '+format(state.position.y))+' · Z '+format(state.position.z)+' '+u+' · Material removed ≈ '+(removed*factor).toLocaleString('en-CA',{maximumFractionDigits:u==='mm'?1:4})+' '+u+'³ · '+state.actions.length+' actions');renderCode();}
   function setMode(m){mode=m;$('mb-rapid').setAttribute('aria-pressed',String(m==='rapid'));$('mb-feed-mode').setAttribute('aria-pressed',String(m==='feed'));if(state)render();say(m==='feed'?'Feed mode selected. Move the tool to machine the stock.':'Rapid travel selected. Move through clear space.');}
   function enter(m){if(window.CNCStudio&&document.body.classList.contains('teaching-view'))window.CNCStudio.end();generatedPreview=false;document.body.classList.remove('design-cam-preview');active=true;document.body.classList.add('manual-builder');$('workshop-builder').setAttribute('aria-pressed','true');$('workshop-simulator').setAttribute('aria-pressed','false');if(!state||machine!==m)loadDraft(m||saved.lastMachine||T.S.machine||'mill');else{lastResult=preview(state)||lastResult;render();}T.manualPlayback(true);window.dispatchEvent(new Event('resize'));}
-  function exit({play=false}={}){if(!active)return;if(!state){active=false;generatedPreview=false;document.body.classList.remove('manual-builder','design-cam-preview');return;}try{const p=generatedPreview&&generatedTraining?generatedTraining:E.project(state,{complete:true});const v=T.validateManual(p);if(v&&!v.accepted){say(diagnostics(v)||'The full program did not pass the simulator check.','error');return;}T.loadTrainingProject(p);T.manualPlayback(false);active=false;generatedPreview=false;document.body.classList.remove('manual-builder','design-cam-preview');$('workshop-builder').setAttribute('aria-pressed','false');$('workshop-simulator').setAttribute('aria-pressed','true');window.dispatchEvent(new Event('resize'));if(play)$('btn-start').click();}catch(e){say(e.message,'error');}}
+  function exit({play=false}={}){
+    if(!active)return;if(!state&&!generatedPreview){active=false;document.body.classList.remove('manual-builder','design-cam-preview');return;}
+    try{
+      if(generatedPreview&&generatedSetupChain){const v=T.loadSetupPlayback(generatedSetupChain);if(!v.accepted){say(diagnostics(v),'error');return;}}
+      else{const p=generatedPreview&&generatedTraining?generatedTraining:E.project(state,{complete:true}),v=T.validateManual(p);if(v&&!v.accepted){say(diagnostics(v)||'The full program did not pass the simulator check.','error');return;}T.loadTrainingProject(p);}
+      T.manualPlayback(false);active=false;generatedPreview=false;document.body.classList.remove('manual-builder','design-cam-preview');$('workshop-builder').setAttribute('aria-pressed','false');$('workshop-simulator').setAttribute('aria-pressed','true');window.dispatchEvent(new Event('resize'));if(play)$('btn-start').click();
+    }catch(e){say(e.message,'error');}
+  }
   $('workshop-builder').onclick=()=>enter(saved.lastMachine||T.S.machine||'mill');$('workshop-simulator').onclick=()=>exit();$('mb-mill').onclick=()=>{if(machine!=='mill')loadDraft('mill');};$('mb-lathe').onclick=()=>{if(machine!=='lathe')loadDraft('lathe');};$('mb-rapid').onclick=()=>setMode('rapid');$('mb-feed-mode').onclick=()=>setMode('feed');
   $('mb-spindle').onclick=()=>{try{act({type:'spindle',on:!state.spindle.on,rpm:numeric('mb-rpm')});}catch(e){say(e.message,'error');}};$('mb-coolant').onclick=()=>act({type:'coolant',on:!state.coolant});
   $('mb-rpm').addEventListener('change',()=>{try{act({type:'spindle',on:state.spindle.on,rpm:numeric('mb-rpm')});}catch(e){say(e.message,'error');}});$('mb-feed').addEventListener('change',()=>{try{act({type:'feed',value:numeric('mb-feed')});}catch(e){say(e.message,'error');}});
@@ -122,5 +138,5 @@
   const params=new URLSearchParams(location.search),requestedMachine=['mill','lathe'].includes(params.get('machine'))?params.get('machine'):null;
   if(requestedMachine){const b=document.querySelector('#seg-machine [data-v="'+requestedMachine+'"]');if(b)b.click();}
   if(params.get('mode')==='builder')enter(requestedMachine||saved.lastMachine||T.S.machine||'mill');
-  window.CNCBuilder={enter,exit,act,restore,applySetup,previewGenerated,restoreManualPreview,recoverBeforeDesign,isGeneratedPreview:()=>generatedPreview,getState:()=>state,getResult:()=>lastResult,isActive:()=>active,download};
+  window.CNCBuilder={enter,exit,act,restore,applySetup,previewGenerated,previewGeneratedSetups,restoreManualPreview,recoverBeforeDesign,isGeneratedPreview:()=>generatedPreview,getState:()=>state,getResult:()=>lastResult,isActive:()=>active,download};
 })();

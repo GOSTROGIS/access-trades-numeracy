@@ -1,8 +1,8 @@
 /* Design adapters around the existing ACCESS CAD/CAM engines. All plan values are mm. */
 (function(root,factory){
-  if(typeof module==='object'&&module.exports)module.exports=factory(require('../design/design-model.js'),require('../design/design-workflow.js'),require('./cad-engine.js'),require('./cam-engine.js'),require('./manual-engine.js'));
-  else root.AccessDesignCAM=factory(root.AccessDesign,root.AccessDesignWorkflow,root.AccessCAD,root.AccessCAM,root.CNCManual);
-})(typeof globalThis!=='undefined'?globalThis:this,function(D,W,CAD,CAM,E){
+  if(typeof module==='object'&&module.exports)module.exports=factory(require('../design/design-model.js'),require('../design/design-workflow.js'),require('./cad-engine.js'),require('./cam-engine.js'),require('./manual-engine.js'),require('./design-workholding.js'));
+  else root.AccessDesignCAM=factory(root.AccessDesign,root.AccessDesignWorkflow,root.AccessCAD,root.AccessCAM,root.CNCManual,root.AccessDesignWorkholding);
+})(typeof globalThis!=='undefined'?globalThis:this,function(D,W,CAD,CAM,E,H){
   'use strict';
   const MM=25.4, TAU=Math.PI*2;
   const labels={face:'Face the stock',part:'Part off the shaft','clear-outside':'Clear around the shape','profile-out':'Profile outside the target','profile-in':'Finish the inside hole',pocket:'Pocket inside the boundary',drill:'Drill the circular hole',turn:'Rough and finish the shaft'};
@@ -31,8 +31,9 @@
     return p;
   }
   // Fixed original-stock G54. Facing changes the material front, never the work offset.
-  function sequenceFrames(p,steps){
-    let face=0,cutStarted=false;const warnings=[],frames=[];
+  function sequenceFrames(p,steps,options={}){
+    const clearance=p.machine==='lathe'&&options.fixture?H.clearanceMm(options.fixture):15.24;
+    let face=options.faceAllowanceMm||0,cutStarted=false;const warnings=[],frames=[];
     steps.forEach((s,i)=>{
       const q=s.operation,name='Step '+(i+1)+' ('+s.label+'): ',from=face;
       if(q.kind==='face'){
@@ -43,8 +44,8 @@
       }else cutStarted=true;
       if(q.kind==='part'&&i!==steps.length-1)throw Error(name+'parting must be the final operation; the separated part cannot be machined in this setup.');
       if(p.machine==='lathe'){
-        const length=q.kind==='face'?0:q.depthMm,blade=q.kind==='part'?q.toolDiameterMm:0,needed=face+length+blade+15.24;
-        if(needed>p.stock.length+1e-8)throw Error(name+'needs '+Number(needed.toFixed(4))+' mm stickout: '+face+' mm facing + '+length+' mm length + '+blade+' mm blade behind the cut + 15.24 mm chuck clearance. Stock stickout is '+p.stock.length+' mm.');
+        const length=q.kind==='face'?0:q.depthMm,blade=q.kind==='part'?q.toolDiameterMm:0,needed=face+length+blade+clearance;
+        if(needed>p.stock.length+1e-8)throw Error(name+'needs '+Number(needed.toFixed(4))+' mm stickout: '+face+' mm facing + '+length+' mm length + '+blade+' mm blade behind the cut + '+clearance+' mm '+(options.fixture?options.fixture.method:'chuck')+' clearance. Stock stickout is '+p.stock.length+' mm.');
         if(q.kind==='part'&&Math.abs(length-p.geometry.params.h)>.001)warnings.push({level:'warning',message:name+'parting at '+length+' mm produces a piece '+(length<p.geometry.params.h?'shorter':'longer')+' than the '+p.geometry.params.h+' mm design.'});
         if(q.kind==='turn'&&length>p.geometry.params.h+.001)warnings.push({level:'warning',message:name+'turning extends '+Number((length-p.geometry.params.h).toFixed(4))+' mm beyond the design length.'});
       }else if(q.kind!=='face'&&q.depthMm<=face+1e-9)warnings.push({level:'warning',message:name+'cut depth is at or above the already faced surface; it may remove no further material. Depth stays measured from the original stock top.'});
@@ -52,7 +53,7 @@
     });
     return{frames,warnings};
   }
-  function layersFor(p){
+  function layersFor(p,orientation='top'){
     const g=p.geometry,q=g.params,x=p.placement.x/MM,y=p.placement.y/MM,items=[];
     const line=(layer,a,b)=>items.push({layer,seg:{t:'L',a:{x:a[0],y:a[1]},b:{x:b[0],y:b[1]}}});
     const circle=(layer,r,cx,cy)=>items.push({layer,circle:true,seg:{t:'A',c:{x:cx,y:cy},r,a0:0,sw:TAU}});
@@ -62,9 +63,15 @@
     }else{
       const outline=D.outline(p);outline.rings.forEach((ring,i)=>{const layer=(outline.depths&&outline.depths[i]%2?'HOLE':'OUTER')+'_'+i;ring.forEach((v,j)=>{const next=ring[(j+1)%ring.length];line(layer,[x+v[0]/MM,y+v[1]/MM],[x+next[0]/MM,y+next[1]/MM]);});});
     }
+    if(orientation==='bottom'){
+      const height=p.stock.height/MM,flip=a=>({x:a.x,y:height-a.y});
+      for(const item of items){const s=item.seg;item.seg=s.t==='L'?{...s,a:flip(s.a),b:flip(s.b)}:{...s,c:flip(s.c),a0:-s.a0,sw:-s.sw};}
+    }
     return CAD.chain(items);
   }
   function generate(raw,plan){
+    if(plan!==undefined&&raw.workflow&&raw.workflow.setups)throw Error('Choose a setup with generateSetups, or use setupProject for an isolated operation. The setup list is authoritative.');
+    if(plan===undefined&&raw.workflow&&raw.workflow.setups)return generateSetups(raw);
     if(plan===undefined&&raw.workflow&&raw.workflow.sequence)return generateSequence(raw,raw.workflow.sequence);
     if(plan===undefined)plan=raw.workflow&&raw.workflow.operation||defaults(raw);
     const project=planProject(raw,plan),p=project,lathe=p.machine==='lathe',lib={},feed=plan.feedMmPerMin/MM;
@@ -101,10 +108,14 @@
     return CAD.chain(points.map((a,i)=>({layer:'STOCK',seg:{t:'L',a:{x:a[0],y:a[1]},b:{x:points[(i+1)%4][0],y:points[(i+1)%4][1]}}}))).STOCK.contours;
   }
   function generateSequence(raw,sequence){
+    if(raw.workflow&&raw.workflow.setups)throw Error('Choose a setup with generateSetups, or use setupProject for an isolated sequence. The setup list is authoritative.');
+    return buildSequence(raw,sequence);
+  }
+  function buildSequence(raw,sequence,options={}){
     const project=D.validate(W.setSequence(raw,sequence)),p=project,steps=p.workflow.sequence.steps,lathe=p.machine==='lathe';
     if(!steps.length)throw Error('Add at least one operation to the sequence.');
     steps.forEach((s,i)=>{try{planProject(p,s.operation);}catch(error){throw Error('Step '+(i+1)+' ('+s.label+'): '+error.message);}});
-    const context=sequenceFrames(p,steps),lib={},warnings=context.warnings,baseLayers=layersFor(p),allLayers={...baseLayers},ops=[];
+    const context=sequenceFrames(p,steps,options),lib={},warnings=context.warnings,baseLayers=layersFor(p,options.orientation),allLayers={...baseLayers},ops=[];
     allLayers.TARGET={name:'TARGET',contours:Object.values(baseLayers).flatMap(l=>l.contours),circles:[],points:[]};
     const material=plan=>{const feed=plan.feedMmPerMin/MM;return{label:'Student sequence settings',face:[plan.spindleRpm,feed],em:[plan.spindleRpm,feed,feed*.4],spot:[plan.spindleRpm,feed*.4],drill:[plan.spindleRpm,feed],rough:[plan.spindleRpm,feed/plan.spindleRpm],finish:[plan.spindleRpm,feed/plan.spindleRpm],part:[plan.spindleRpm,feed/plan.spindleRpm]};};
     steps.forEach((s,i)=>{const plan=s.operation,tn=i+1,drill=plan.kind==='drill';
@@ -134,15 +145,47 @@
       out=CAM.genMill({layers:allLayers,ops,file:'SHARED DESIGN SEQUENCE',title:plain(p.title),progNo:9201,zero:'stock',margin:0,thick:p.stock.depth/MM,stock:{x:p.stock.width/MM,y:p.stock.height/MM,z:p.stock.depth/MM},keepStockOrigin:true,faceTool:'',faceDepth:0,mat:material(steps[0].operation),lib,maxRpm:Math.max(...steps.map(s=>s.operation.spindleRpm))});
       if(out.error)throw Error(out.error);warnings.push(...(out.warnings||[]).map(message=>({level:'warning',message})));
     }
+    if(options.fixture)warnings.push(...H.checks(p,options.fixture).filter(c=>!c.ok).map(c=>({level:'warning',message:c.message})));
     const lineCount=out.text.split('\n').length;if(lineCount>20000)throw Error('The sequence exceeds 20,000 program lines. Reduce the passes or simplify the outline.');
     const training={id:lathe?'CNC-992':'CNC-991',machine:p.machine,gen:'classic',title:p.title+' · '+steps.length+' ordered steps',text:out.text,stock:out.stock,tools:lib,showToolpath:true,setup:lathe?{method:'chuck3',params:{}}:{method:'vise',params:{grip:Math.max(.05,Math.min(p.stock.depth/MM*.25,.5)),parallels:'jaws'}}};
+    if(options.fixture)training.setup=H.toTrainer(options.fixture,p.machine);
     return{project,plan:steps[0].operation,sequence:p.workflow.sequence,steps:steps.map((s,i)=>({...s,toolNumber:i+1,frame:context.frames[i]})),training,warnings,sourceFingerprint:W.fingerprint(p),programNumber:lathe?9202:9201,lineCount};
   }
+  function generateSetups(raw,throughSetupId){
+    const project=D.validate(raw),plan=W.getSetups(project),items=plan.items;
+    const index=throughSetupId===undefined?items.length-1:items.findIndex(s=>s.id===throughSetupId);
+    if(index<0)throw Error('Choose a setup from this project.');
+    const prefixes=[],face={top:0,bottom:0,front:0};let parted=false;
+    for(let i=0;i<=index;i++){
+      const setup=items[i],state=W.setupState(project,setup.id);
+      if(!state.valid)throw Error('Setup '+(i+1)+' ('+setup.label+'): '+state.issues.join(' '));
+      if(parted)throw Error('Setup '+(i+1)+' ('+setup.label+'): the previous setup parted off the work. Remounting a detached part is not supported; start a separate inspected project.');
+      H.validate(setup.fixture,project.machine);
+      if(project.machine==='mill'?!['top','bottom'].includes(setup.orientation):setup.orientation!=='front')throw Error('The setup orientation is incompatible with this machine.');
+      if(i===0&&setup.orientation!==(project.machine==='mill'?'top':'front'))throw Error('The first setup must use the original stock top or front.');
+      const local=W.setupProject(project,setup.id);let generation;
+      try{generation=buildSequence(local,setup.sequence,{orientation:setup.orientation,fixture:setup.fixture,faceAllowanceMm:face[setup.orientation]});}
+      catch(error){throw Error('Setup '+(i+1)+' ('+setup.label+'): '+error.message);}
+      const last=generation.steps.at(-1);face[setup.orientation]=last.frame.faceAllowanceMm;
+      parted=project.machine==='lathe'&&setup.sequence.steps.some(s=>s.operation.kind==='part');
+      prefixes.push({id:setup.id,label:setup.label,orientation:setup.orientation,fixture:setup.fixture,training:generation.training,generation,sourceFingerprint:W.setupFingerprint(project,setup.id)});
+    }
+    const selected=prefixes.at(-1),generation=selected.generation;
+    return{...generation,version:1,project,setupId:selected.id,setupIndex:index,orientation:selected.orientation,sourceFingerprint:selected.sourceFingerprint,
+      chain:{version:1,setups:prefixes.map(s=>({id:s.id,orientation:s.orientation,training:s.training}))},setups:prefixes,warnings:prefixes.flatMap((s,i)=>s.generation.warnings.map(w=>({...w,message:'Setup '+(i+1)+' ('+s.label+'): '+w.message})))};
+  }
   function record(project,generation,result,simulated,comparison){
-    if(W.fingerprint(project)!==generation.sourceFingerprint)throw Error('The design or operation changed. Generate and check the program again before capturing a result.');
+    if((generation.setupId?W.setupFingerprint(project,generation.setupId):W.fingerprint(project))!==generation.sourceFingerprint)throw Error('The design or operation changed. Generate and check the program again before capturing a result.');
     if(comparison&&!simulated)throw Error('A preflight check cannot capture a completed simulation comparison. Simulate and compare the current program first.');
     const input={kind:simulated?'simulation':'check',operationKind:generation.sequence?'sequence':generation.plan.kind,programNumber:generation.programNumber,programLineCount:generation.lineCount,actionCount:0,accepted:!!result.accepted,removedVolumeMm3:Math.max(0,Number(result.removedVolumeIn3)||0)*Math.pow(MM,3),diagnostics:[...generation.warnings,...(result.diagnostics||[])].map(d=>({level:['info','warning','error'].includes(d.level)?d.level:'info',message:String(d.message||d).slice(0,1000)})).slice(0,50),summary:(simulated?'Completed simulator preview':'Program preflight only; not played')+'. '+(generation.sequence?'Ordered sequence of '+generation.sequence.steps.length+' steps':labels[generation.plan.kind])+'. Removal is a simulator estimate; target dimensions have not been measured.'};
     if(generation.sequence)input.operationCount=generation.sequence.steps.length;if(comparison)input.comparison=comparison;
+    if(generation.setupId){
+      const lineage=simulated?(result.setup||result.setupProvenance):{id:generation.setupId,index:generation.setupIndex,orientation:generation.orientation,inputMaterialFingerprint:null,outputMaterialFingerprint:null};
+      if(!lineage||lineage.id!==generation.setupId||lineage.index!==generation.setupIndex||lineage.orientation!==generation.orientation)throw Error('The result does not belong to this completed setup chain. Run this setup again before capturing.');
+      input.setup=lineage;
+      const setup=generation.setups[generation.setupIndex];
+      input.summary='Setup '+(generation.setupIndex+1)+' '+setup.label+' ('+generation.orientation+'). '+(simulated?'Completed through setup '+(generation.setupIndex+1)+(generation.setupIndex?' using earlier simulated material. ':' from the original stock. '):'Preflight only; no material continuity captured. ')+input.summary;
+    }
     if(comparison)input.summary=input.summary.replace('target dimensions have not been measured.','includes a sampled material comparison; physical dimensions still require inspection.');
     return D.validate(W.recordResult(project,input));
   }
@@ -212,5 +255,5 @@
     });if(pts.length&&Math.hypot(pts[0][0]-pts.at(-1)[0],pts[0][1]-pts.at(-1)[1])<.001)pts.pop();rings.push(pts);});});
     return D.fromProfile({rings,units:'mm',title:options.title||'Imported drawing'});
   }
-  return Object.freeze({kinds,defaults,generate,generateSequence,record,importDrawing});
+  return Object.freeze({kinds,defaults,generate,generateSequence,generateSetups,record,importDrawing});
 });

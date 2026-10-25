@@ -142,4 +142,25 @@ assert.equal(SC.DesignBridge.incomingStatus(legacy).kind, 'conflict');
 assert.throws(() => SC.DesignBridge.importProject(legacy), /learning evidence/);
 assert.equal(M.snapshot(), beforeLegacy);
 assert.equal(M.obj(evidenceId).designProject.workflow.revision, evidenced.workflow.revision);
+// Setup plans and compact material lineage travel through the existing canvas JSON.
+M.reset();
+let planned = Workflow.withMetadata(D.create('plate'));
+const setups = Workflow.getSetups(planned), cut = { kind: 'pocket', toolDiameterMm: 6, depthMm: 2, stepDownMm: 1, feedMmPerMin: 120, spindleRpm: 1800 };
+setups.items[0].sequence = { version: 1, steps: [{ id: 'top-cut', label: 'Top pocket', operation: cut }] };
+const secondSetup = JSON.parse(JSON.stringify(setups.items[0])); secondSetup.id = 'setup-2'; secondSetup.label = 'Bottom setup'; secondSetup.orientation = 'bottom'; secondSetup.fixture.method = 'vise_soft';
+secondSetup.sequence.steps[0].id = 'bottom-cut'; secondSetup.sequence.steps[0].label = 'Bottom pocket'; setups.items.push(secondSetup);
+planned = Workflow.setSetups(planned, setups);
+planned = Workflow.recordResult(planned, { accepted: true, operationKind: 'sequence', operationCount: 1,
+  setup: { id: 'setup-2', index: 1, orientation: 'bottom', inputMaterialFingerprint: 'material-v1-12345678', outputMaterialFingerprint: 'material-v1-87654321' } });
+const plannedId = SC.DesignBridge.importProject(planned), plannedFile = M.exportJSON();
+assert.equal(M.importJSON(plannedFile).ok, true); SC.S.sel = [plannedId];
+const returnedPlan = SC.DesignBridge.selectedProject();
+assert.deepEqual(returnedPlan.workflow.setups, planned.workflow.setups);
+assert.deepEqual(returnedPlan.workflow.results[0].setup, planned.workflow.results[0].setup);
+assert.equal(Workflow.resultStatus(returnedPlan, returnedPlan.workflow.results[0]).status, 'current');
+M.obj(plannedId).params.l += 1;
+const changedPlan = SC.DesignBridge.selectedProject();
+assert.deepEqual(changedPlan.workflow.setups, planned.workflow.setups);
+assert.equal(Workflow.resultStatus(changedPlan, changedPlan.workflow.results[0]).status, 'stale');
+assert.ok(changedPlan.workflow.revision > returnedPlan.workflow.revision);
 console.log('PASS: canvas bridge preserves pages, units, metadata, JSON roundtrip, selection rules, and undo/redo; project links require acceptance and invalid imports do not mutate the drawing.');

@@ -362,6 +362,7 @@ table.ofs input { width: 64px; background: transparent; border: 1px solid var(--
 
 <script src="cad-engine.js"></script>
 <script src="cam-engine.js"></script>
+<script src="design-material.js"></script>
 <script>
 /* three.js r128, MIT licence, https://threejs.org */
 /**
@@ -4325,14 +4326,20 @@ const SETUPS = (function () {
     let sim;
     if (geo.machine === 'mill') {
       sim = new HeightSim(s.x, s.y, s.z);
-      if (ctx.op1) {
+      if (ctx.initialMaterial) {
+        Object.assign(sim,AccessDesignMaterial.native(ctx.initialMaterial));
+        out.push.apply(out,materialContactFindings(geo,sim));
+      } else if (ctx.op1) {
         const s1 = new HeightSim(s.x, s.y, s.z);
         for (const st of ctx.op1.steps) if (st.k === 'move') { const t = ctx.op1.tools[st.tool]; if (t) s1.cut(ctx.op1.tipOf(st.a, st.tool), ctx.op1.tipOf(st.b, st.tool), Math.max((t.dia || 0) / 2, 0.01), t.prof); }
         sim = s1.flipped();
         ctx.op2Sim = s1.flipped();   // a separate copy: the dry run below cuts into sim
         out.push.apply(out, op2Findings(geo, sim));
       }
-    } else sim = new RadiusSim(s.dia / 2, geo.stockZ0, s.stickout + (s.extra || 0));
+    } else {
+      sim = new RadiusSim(s.dia / 2, geo.stockZ0, s.stickout + (s.extra || 0));
+      if(ctx.initialMaterial){Object.assign(sim,AccessDesignMaterial.native(ctx.initialMaterial));out.push.apply(out,materialContactFindings(geo,sim));}
+    }
     for (let n = 0; n < ctx.steps.length; n++) {
       const st = ctx.steps[n]; if (st.k !== 'move') continue;
       const t = ctx.tools[st.tool]; if (!t) continue;
@@ -4403,6 +4410,41 @@ const SETUPS = (function () {
         why: refs(['general_clamping_force_and_support', 'R', 0], ['general_sequence_and_two_operation_work', 'R', 2]), fix: 'Grip on faces Op 1 did not cut, or add a soft jaw or step that fits the machined edge.' });
     });
     return out;
+  }
+
+  /* Contact is assessed against actual incoming material, in the seated fixture
+     frame. These are geometric checks; no clamping-force claim is made. */
+  function materialContactFindings(geo,sim){
+    const out=[],add=(code,title,what,fix)=>out.push({level:'crash',code,step:null,title,what,fix,why:[]});
+    if(geo.machine==='mill'){
+      const supports=geo.boxes.filter(b=>b.kind==='parallel'||b.kind==='plate'||(b.kind==='floor'&&!geo.boxes.some(q=>q.kind==='parallel'))||(b.kind==='table'&&geo.method==='clamps'&&geo.info.parH<=.01));
+      for(const b of supports){let total=0,contact=0;
+        for(let j=0;j<sim.ny;j++)for(let i=0;i<sim.nx;i++){const x=i*sim.dx,y=j*sim.dy;if(x<b.x0||x>b.x1||y<b.y0||y>b.y1)continue;total++;const k=j*sim.nx+i;if(sim.h[k]>sim.b[k]+1e-6&&Math.abs(sim.b[k]-b.z1)<=.005)contact++;}
+        if(!total||contact/total<.6)add('SETUP-SUPPORT','Insufficient support on '+b.name,(total?Math.round(100*contact/total):0)+'% of the sampled support area touches the remaining material.','Move the support beneath intact material or choose a fixture that supports the machined lower surface.');
+      }
+      if(geo.method==='vise'||geo.method==='vise_soft')for(const [label,j] of [['moving jaw',0],['fixed jaw',sim.ny-1]]){let total=0,contact=0;
+        for(let i=0;i<sim.nx;i++){const x=i*sim.dx;if(x<geo.info.cx-geo.info.hw||x>geo.info.cx+geo.info.hw)continue;total++;const k=j*sim.nx+i,overlap=Math.min(sim.h[k],geo.info.jawTop)-Math.max(sim.b[k],geo.info.floor);if(overlap>=.05)contact++;}
+        if(!total||contact/total<.6)add('SETUP-GRIP','Insufficient material at the '+label,(total?Math.round(100*contact/total):0)+'% of the sampled jaw length has at least 1.27 mm of material engagement.','Choose intact gripping faces, suitable soft jaws, or a different setup.');
+      }
+      for(const b of geo.boxes.filter(b=>b.kind==='clamp')){let total=0,contact=0;
+        for(let j=0;j<sim.ny;j++)for(let i=0;i<sim.nx;i++){const x=i*sim.dx,y=j*sim.dy;if(x<b.x0||x>b.x1||y<b.y0||y>b.y1)continue;total++;const k=j*sim.nx+i;if(sim.h[k]>sim.b[k]+1e-6&&Math.abs(sim.h[k]-b.z0)<=.005)contact++;}
+        if(!total||contact/total<.6)add('SETUP-CLAMP','The '+b.name+' does not bear on enough material',(total?Math.round(100*contact/total):0)+'% of its sampled nose contact remains.','Move the clamp onto a supported, intact surface and adjust its height.');
+      }
+      for(const b of geo.boxes.filter(b=>b.kind==='edgeclamp')){let total=0,contact=0;
+        for(let i=0;i<sim.nx;i++){const x=i*sim.dx;if(x<b.x0||x>b.x1)continue;total++;if(Math.min(sim.h[i],b.z1)-Math.max(sim.b[i],b.z0)>=.01)contact++;}
+        if(!total||contact/total<.6)add('SETUP-CLAMP','The '+b.name+' lacks remaining edge contact',(total?Math.round(100*contact/total):0)+'% of its sampled edge retains material engagement.','Move the edge clamp to a supported edge that remains on the part.');
+      }
+      if(geo.seatingOffset>1e-6||(geo.clampContacts||[]).some(c=>Math.abs(c.surface)>1e-6))out.push({level:'note',code:'SETUP-SEAT',step:null,title:'Fixture seated against measured material',what:'Supports and jaws are raised '+(geo.seatingOffset*25.4).toFixed(3)+' mm to the lowest remaining surface. '+(geo.clampContacts&&geo.clampContacts.length?'Strap noses follow their measured upper contact surfaces at Z '+geo.clampContacts.map(c=>(c.surface*25.4).toFixed(3)).join(', ')+' mm. ':'')+'The original stock datum is retained.',fix:'Review the resulting support contacts and tool clearances.',why:[]});
+    }else{
+      const grip=geo.bands.find(b=>b.kind==='jaws'||b.kind==='collet'),lo=grip?grip.z0:0,hi=grip?grip.z1:0;let total=0,contact=0;
+      for(let k=0;k<sim.n;k++){const z=sim.z0+k*sim.dz;if(z<lo||z>hi)continue;total++;if(Math.abs(sim.r[k]-geo.info.R)<=.005)contact++;}
+      if(!total||contact/total<.6)add('SETUP-GRIP','Insufficient material in the chuck or collet grip',(total?Math.round(100*contact/total):0)+'% of the sampled original gripping zone retains the fixture diameter.','Choose a fixture and explicit gripping datum that match the remaining part.');
+      if(geo.method==='tail'){const k=Math.round((geo.info.zt-sim.z0)/sim.dz);if(k<0||k>=sim.n||sim.r[k]<=1e-4)add('SETUP-CENTRE','The tailstock centre has no remaining contact','Previous machining removed the material at the modelled centre point.','Use a supported contact point that remains on the part.');}
+      if(geo.method==='steady'){
+        let total=0,contact=0;for(let k=0;k<sim.n;k++){const z=sim.z0+k*sim.dz;if(z<geo.info.zs-.2||z>geo.info.zs+.2)continue;total++;if(Math.abs(sim.r[k]-geo.info.R)<=.005)contact++;}
+        if(!total||contact/total<.6)add('SETUP-REST','The steady-rest fingers do not contact enough remaining material',(total?Math.round(100*contact/total):0)+'% of the sampled finger width retains the original diameter. This trainer models the fingers at that diameter; a smaller turned surface leaves a radial gap.','Move the rest to an intact original diameter that remains on the part, or choose another supported fixture.');
+      }
+    }return out;
   }
 
   function check(ctx) {
@@ -4607,6 +4649,7 @@ const Scene3D = (() => {
       this.R = dia / 2; this.z0 = z0; this.z1 = z1;
       this.dz = 0.005; this.n = Math.ceil((z1 - z0) / this.dz) + 1;
       this.r = new Float32Array(this.n).fill(this.R); this.c = new Int16Array(this.n).fill(-1);
+      this.r0 = null;
       this.seg = 40;
       this.group = new THREE.Group();
       this.parts = [];
@@ -4635,7 +4678,7 @@ const Scene3D = (() => {
       this.group.add(this.mesh);
       this.refresh();
     }
-    reset() { this.r.fill(this.R); this.c.fill(-1); this.parts.forEach(p => p.parent && p.parent.remove(p)); this.parts = []; this.detachedProfiles = []; this.refresh(); }
+    reset() { if(this.r0)this.r.set(this.r0);else this.r.fill(this.R); this.c.fill(-1); this.parts.forEach(p => p.parent && p.parent.remove(p)); this.parts = []; this.detachedProfiles = []; this.refresh(); }
     refresh() {
       const { n, seg, pos, col } = this, cols = this.colors || [];
       let last = 0;
@@ -5102,8 +5145,8 @@ const Scene3D = (() => {
       .map(o => ({o,position:o.position.clone(),quaternion:o.quaternion.clone(),scale:o.scale.clone(),visible:o.visible}));
     const materials = [];
     if (M.fixMeshes) Object.values(M.fixMeshes).forEach(list => list.forEach(o => materials.push({o,material:o.material})));
-    return {root,M,arrays,groups,objects,materials,stockState:{h0:stock.h0,b0:stock.b0,colors:stock.colors,parts:stock.parts && stock.parts.slice(),detachedProfiles:stock.detachedProfiles && stock.detachedProfiles.slice()},
-      machineState:{path:M.path,curTool:M.curTool,toolLen:M.toolLen,setup:M.setup},
+    return {root,M,arrays,groups,objects,materials,stockState:{h0:stock.h0,b0:stock.b0,r0:stock.r0,colors:stock.colors,parts:stock.parts && stock.parts.slice(),detachedProfiles:stock.detachedProfiles && stock.detachedProfiles.slice()},
+      machineState:{path:M.path,curTool:M.curTool,toolLen:M.toolLen,setup:M.setup,materialOrientation:M.materialOrientation,setupProvenance:M.setupProvenance},
       camera:{r:controls.r,th:controls.th,ph:controls.ph,target:controls.target.clone(),userMoved:controls.userMoved,follow}};
   }
   function restoreManualScene(saved) {
@@ -5124,7 +5167,7 @@ const Scene3D = (() => {
     if (!M || !M.stock) throw Error('There is no simulated stock to measure.');
     const s = M.stock, mm = 25.4;
     const copy = values => Array.from(values, n => Number(n) * mm);
-    const common = {format:'access-simulated-material',version:1,source:'scene-stock',units:'mm',machine:M.type,
+    const common = {format:'access-simulated-material',version:1,source:'scene-stock',units:'mm',machine:M.type,orientation:M.materialOrientation||(M.type==='mill'?'top':'front'),
       complete:!!meta.complete,alarm:meta.alarm || null,program:String(meta.program || '')};
     if (M.type === 'mill') {
       if (!Number.isInteger(s.nx) || !Number.isInteger(s.ny) || s.nx*s.ny > 100000) throw Error('The simulated stock exceeds the material snapshot limit.');
@@ -5147,6 +5190,7 @@ const Scene3D = (() => {
     const isMill = ctx.machine === 'mill', s = ctx.setup.stock;
     const stock = isMill ? new MillStock(s.x, s.y, s.z, false)
       : new LatheStock(s.dia, ctx.setup.fixture.stockZ0, s.stickout + (s.extra || 0), false);
+    if(ctx.initialMaterial)AccessDesignMaterial.seed(stock,ctx.initialMaterial,false);
     const diagnostics = [];
     let separatedVolume = 0;
     function volume() {
@@ -5306,6 +5350,7 @@ const Scene3D = (() => {
     if (S.gen === 'mazatrol' && p && p.group === 'Conversational' && S.conv) stock = convStock();
     const st0 = stock || (S.machine === 'mill' ? { x: 7, y: 5, z: 1 } : { dia: 1.5, stickout: 3.6, extra: 0.03 });
     const fixture = SETUPS.build(S.machine, st0, setupSel(p), model);
+    if(p&&p.initialMaterial)AccessDesignMaterial.seatFixture(fixture,p.initialMaterial);
     const setup = S.machine === 'mill' ? millSetup(model, st0, fixture) : latheSetup(model, st0, fixture);
     S.stockFrame = Object.assign({}, setup.wcs[54]);
     if (p && p.wcs) Object.keys(p.wcs).forEach(k => { const d = p.wcs[k]; setup.wcs[k] = { x: setup.wcs[54].x + (d.dx || 0), y: setup.wcs[54].y + (d.dy || 0), z: setup.wcs[54].z + (d.dz || 0) }; });
@@ -5338,13 +5383,16 @@ const Scene3D = (() => {
       op1 = { steps: r1.steps, tools: t1, tipOf: tipWith(t1), name: of.o5 + ' ' + of.title };
     }
     try {
-      S.setupCheck = SETUPS.check({ geo: fx, steps: res.steps, tools: S.tools, tipOf: tipWith(S.tools), label: lineLabel, op1 });
+      S.setupCheck = SETUPS.check({ geo: fx, steps: res.steps, tools: S.tools, tipOf: tipWith(S.tools), label: lineLabel, op1,initialMaterial:p&&p.initialMaterial });
       S.setupCheck.op1 = op1 ? op1.name : null;
     } catch (e) { S.setupCheck = { findings: [], crash: 0, warn: 0, error: String(e) }; }
-    if (S.machine === 'mill' && Scene3D.M && Scene3D.M.stock && Scene3D.M.stock.setInitial) {
+    if(p&&p.initialMaterial&&Scene3D.M){
+      AccessDesignMaterial.seed(Scene3D.M.stock,p.initialMaterial,true);Scene3D.M.stock.reset();
+    }else if (S.machine === 'mill' && Scene3D.M && Scene3D.M.stock && Scene3D.M.stock.setInitial) {
       if (S.setupCheck.op2Sim) Scene3D.M.stock.setInitial(S.setupCheck.op2Sim);
       else if (Scene3D.M.stock.h0) { Scene3D.M.stock.h0 = null; Scene3D.M.stock.b0 = null; Scene3D.M.stock.reset(); }
     }
+    if(Scene3D.M){Scene3D.M.materialOrientation=p&&p.setupProvenance?p.setupProvenance.orientation:(S.machine==='mill'?'top':'front');Scene3D.M.setupProvenance=p&&p.setupProvenance||null;if(!(p&&p.initialMaterial)&&S.machine==='lathe')Scene3D.M.stock.r0=null;}
     const hit = S.setupCheck.findings.filter(f => f.obstacle && f.level !== 'note').map(f => f.obstacle);
     Scene3D.highlight(hit);
     const b = document.getElementById('btn-setup');
@@ -6010,7 +6058,7 @@ const Scene3D = (() => {
   let manualSceneSignature = null;
   const manualProgramKey = 'MANUAL-PREVIEW';
 
-  function manualContext(project) {
+  function manualContext(project, transfer) {
     if (!project || !['mill','lathe'].includes(project.machine) || typeof project.text !== 'string' || !/^\s*O\s*\d+/m.test(project.text)) throw Error('Choose a machine and a program with an O number.');
     if (project.text.length > 250000) throw Error('This practice program is too long. Start a new program before adding more moves.');
     const e = JSON.parse(JSON.stringify(project)), machine = e.machine, gen = e.gen || 'classic';
@@ -6032,19 +6080,21 @@ const Scene3D = (() => {
       t.prof = machine === 'mill' ? TOOLING.profile(t) : null;
     });
     const fixture = SETUPS.build(machine, stock, e.setup || null, model);
+    const initialMaterial=transfer&&transfer.initialMaterial||null;
+    if(initialMaterial)AccessDesignMaterial.seatFixture(fixture,initialMaterial);
     const setup = machine === 'mill' ? millSetup(model, stock, fixture) : latheSetup(model, stock, fixture);
     const frame = setup.wcs[54];
     const tipOf = (p, tn) => machine === 'mill'
       ? {x:p.x-frame.x, y:p.y-frame.y, z:p.z-(tools[tn] ? tools[tn].len || 0 : 0)-frame.z}
       : {z:p.z, r:p.x/2};
     const result = CNC.run({text:e.text, library:{}, machine, gen, model, tools, wcs:setup.wcs, startTool:machine === 'mill' ? 0 : 1});
-    return { e, machine, gen, model, stock, tools, setup, tipOf, result,
-      signature:JSON.stringify({machine,gen,stock,tools:e.tools,setup:e.setup || null}) };
+    return { e, machine, gen, model, stock, tools, setup, tipOf, result,initialMaterial,setupProvenance:transfer&&transfer.setupProvenance||null,
+      signature:JSON.stringify({machine,gen,stock,tools:e.tools,setup:e.setup || null,input:initialMaterial?AccessDesignMaterial.fingerprint(initialMaterial):null,orientation:transfer&&transfer.setupProvenance&&transfer.setupProvenance.orientation}) };
   }
 
-  function checkManual(project) {
+  function checkManual(project,transfer) {
     try {
-      const ctx = manualContext(project), diagnostics = [];
+      const ctx = manualContext(project,transfer), diagnostics = [];
       const add = (level, message, code, line) => diagnostics.push({level,message,code:code || 'CHECK',line:line === undefined ? null : line});
       if (ctx.result.alarm) add('error', ctx.result.alarm.msg, 'COMPILE', ctx.result.alarm.line + 1);
       if (ctx.result.steps.length > 10000) add('error','This practice program has too many moves. Start a new program.','LIMIT');
@@ -6054,30 +6104,31 @@ const Scene3D = (() => {
       });
       let check = null, material = {removedVolumeIn3:0, volumeApproximate:true};
       if (!diagnostics.some(d => d.level === 'error')) {
-        check = SETUPS.check({geo:ctx.setup.fixture, steps:ctx.result.steps, tools:ctx.tools, tipOf:ctx.tipOf, label:st => 'line ' + (st.line + 1)});
-        check.findings.filter(f => f.level !== 'note').forEach(f => add(f.level === 'crash' ? 'error' : 'warning', f.title + '. ' + f.what + ' ' + f.fix, f.code, f.step ? f.step.line + 1 : undefined));
-        material = Scene3D.validateMaterialPath({machine:ctx.machine,setup:ctx.setup,tools:ctx.tools,steps:ctx.result.steps,tipOf:ctx.tipOf});
+        check = SETUPS.check({geo:ctx.setup.fixture, steps:ctx.result.steps, tools:ctx.tools, tipOf:ctx.tipOf, label:st => 'line ' + (st.line + 1),initialMaterial:ctx.initialMaterial});
+        check.findings.filter(f => f.level !== 'note'||f.code==='SETUP-SEAT').forEach(f => add(f.level === 'crash' ? 'error' : f.level==='note'?'info':'warning', f.title + '. ' + f.what + ' ' + f.fix, f.code, f.step ? f.step.line + 1 : undefined));
+        material = Scene3D.validateMaterialPath({machine:ctx.machine,setup:ctx.setup,tools:ctx.tools,steps:ctx.result.steps,tipOf:ctx.tipOf,initialMaterial:ctx.initialMaterial});
         material.diagnostics.forEach(d => { if (!diagnostics.some(x => x.code === d.code && x.line === d.line)) diagnostics.push(d); });
       }
       const accepted = !diagnostics.some(d => d.level === 'error');
-      return {ctx,check,public:{accepted,diagnostics,removedVolumeIn3:material.removedVolumeIn3,volumeApproximate:true,stepCount:ctx.result.steps.length,positionUnits:'inches'}};
+      return {ctx,check,public:{accepted,diagnostics,removedVolumeIn3:material.removedVolumeIn3,volumeApproximate:true,stepCount:ctx.result.steps.length,positionUnits:'inches',workholding:{method:ctx.setup.fixture.method,seatingOffsetMm:(ctx.setup.fixture.seatingOffset||0)*25.4,checks:check?check.findings.filter(f=>f.level!=='note'||f.code==='SETUP-SEAT').map(f=>({code:f.code,level:f.level,message:f.title+'. '+f.what})):[]}}};
     } catch (error) {
       return {public:{accepted:false,diagnostics:[{level:'error',code:'INPUT',line:null,message:error.message || String(error)}],removedVolumeIn3:0,volumeApproximate:true,positionUnits:'inches'}};
     }
   }
 
-  function previewManual(project) {
-    const verified = checkManual(project);
+  function previewManual(project,transfer) {
+    const verified = checkManual(project,transfer);
     if (!verified.public.accepted) return Object.assign(verified.public,{snapshot:window.Trainer.trainingSnapshot()});
     const ctx = verified.ctx, e = ctx.e;
     const before = Object.assign({},S,{setupByKey:Object.assign({},S.setupByKey),msgs:S.msgs.slice()});
     const sceneBefore = Scene3D.captureManualScene(), signatureBefore = manualSceneSignature;
     const oldIndex = LIB.findIndex(p=>p.key===manualProgramKey), oldEntry = oldIndex>=0 ? LIB[oldIndex] : null;
-    const bannerBefore = {hidden:el.banner.hidden,className:el.banner.className,text:el.bannerText.textContent,scroll:el.editor.scrollTop};
+    const bannerBefore = {hidden:el.banner.hidden,className:el.banner.className,text:el.bannerText.textContent,scroll:el.editor.scrollTop,single:el.single.checked};
     try {
     const reusable = S.progKey === manualProgramKey && manualSceneSignature === ctx.signature && Scene3D.M && Scene3D.M.type === ctx.machine;
     const o = +/^\s*O\s*(\d+)/m.exec(e.text)[1];
     const entry = {key:manualProgramKey,o,o5:'O'+String(o).padStart(5,'0'),machine:ctx.machine,group:'Manual program builder',set:'manual',title:e.title || 'Manual practice',text:e.text,stock:e.stock,setup:e.setup,tools:e.tools,useLib:false,startTool:ctx.machine === 'mill' ? 0 : 1};
+    entry.initialMaterial=ctx.initialMaterial;entry.setupProvenance=ctx.setupProvenance;
     const old = LIB.findIndex(p => p.key === manualProgramKey);
     if (old < 0) LIB.push(entry); else LIB[old] = entry;
     S.running = false; S.manualPlayback = false; S.skipStops = false;
@@ -6094,6 +6145,7 @@ const Scene3D = (() => {
     }
     setEditorText(e.text); el.prog.textContent = entry.o5; S.edited = false;
     compile(); S.result.notes = S.result.notes.filter(n => !/ended without M30 or M02/.test(n.msg)); renderAlarmsTab(); resetRun();
+    const inputMaterialFingerprint=transfer?AccessDesignMaterial.fingerprint(Scene3D.materialSnapshot({complete:true,program:'SETUP-INPUT'})):null;
     const single = el.single.checked; el.single.checked = false;
     S.skipStops = true; S.running = true;
     advance(1e12);
@@ -6109,7 +6161,7 @@ const Scene3D = (() => {
     const snapshot = window.Trainer.trainingSnapshot(), frame = S.wcsCtl[54];
     const workPositionInches = S.machine === 'mill' ? {x:snapshot.position.x,y:snapshot.position.y,z:snapshot.position.z}
       : {x:S.pos.x-frame.x,z:S.pos.z-frame.z,radius:(S.pos.x-frame.x)/2};
-    return Object.assign(verified.public,{snapshot,materialSnapshot:window.Trainer.simulatedMaterial(),workPositionInches,sceneReused:!!reusable,spindleRpm:S.rpm,coolant:S.coolant});
+    return Object.assign(verified.public,{snapshot,materialSnapshot:window.Trainer.simulatedMaterial(),inputMaterialFingerprint,workPositionInches,sceneReused:!!reusable,spindleRpm:S.rpm,coolant:S.coolant});
     } catch (error) {
       const current=LIB.findIndex(p=>p.key===manualProgramKey);
       if(oldEntry) LIB[current]=oldEntry; else if(current>=0) LIB.splice(current,1);
@@ -6120,9 +6172,64 @@ const Scene3D = (() => {
       setEditorText(S.text);el.editor.scrollTop=bannerBefore.scroll;el.prog.textContent=currentProg().o5;
       renderOffsets();renderLegend();renderAlarmsTab();updateReadouts();highlight();
       el.banner.hidden=bannerBefore.hidden;el.banner.className=bannerBefore.className;el.bannerText.textContent=bannerBefore.text;
+      el.single.checked=bannerBefore.single;
       Scene3D.render();
       return {accepted:false,diagnostics:[{level:'error',code:'PREVIEW',line:null,message:'The preview could not complete. Your previous work is unchanged. '+(error.message||String(error))}],snapshot:window.Trainer.trainingSnapshot(),removedVolumeIn3:0,volumeApproximate:true,positionUnits:'inches'};
     }
+  }
+
+  function captureSetupTransaction(){return{state:Object.assign({},S,{setupByKey:Object.assign({},S.setupByKey),msgs:S.msgs.slice()}),scene:Scene3D.captureManualScene(),library:LIB.slice(),signature:manualSceneSignature,banner:{hidden:el.banner.hidden,className:el.banner.className,text:el.bannerText.textContent,single:el.single.checked,scroll:el.editor.scrollTop}};}
+  function restoreSetupTransaction(saved){
+    for(const k of Object.keys(S))if(!(k in saved.state))delete S[k];Object.assign(S,saved.state);
+    LIB.splice(0,LIB.length,...saved.library);manualSceneSignature=saved.signature;Scene3D.restoreManualScene(saved.scene);
+    setSeg('seg-machine',S.machine);setSeg('seg-gen',S.gen);fillModels();fillPrograms();applySkin();setEditorText(S.text);el.prog.textContent=currentProg().o5;
+    renderOffsets();renderLegend();renderAlarmsTab();updateReadouts();highlight();el.banner.hidden=saved.banner.hidden;el.banner.className=saved.banner.className;el.bannerText.textContent=saved.banner.text;el.single.checked=saved.banner.single;el.editor.scrollTop=saved.banner.scroll;Scene3D.render();
+  }
+  function setupChain(raw){
+    if(!raw||raw.version!==1||!Array.isArray(raw.setups)||!raw.setups.length||raw.setups.length>4)throw Error('A setup chain needs one to four ordered setups.');
+    const chain=JSON.parse(JSON.stringify(raw)),ids=new Set(),machine=chain.setups[0].training&&chain.setups[0].training.machine,stock=JSON.stringify(chain.setups[0].training&&chain.setups[0].training.stock);
+    if(chain.setups[0].orientation!==(machine==='mill'?'top':'front'))throw Error('The first setup must establish the original top or front datum.');
+    for(const s of chain.setups){
+      if(typeof s.id!=='string'||!s.id.length||s.id.length>100||ids.has(s.id))throw Error('Setup IDs must be unique and bounded.');ids.add(s.id);
+      if(!s.training||s.training.machine!==machine||JSON.stringify(s.training.stock)!==stock)throw Error('All setups must retain the same machine and original stock dimensions.');
+      if(!(machine==='mill'?['top','bottom']:['front']).includes(s.orientation))throw Error('Unsupported setup orientation. Use top/bottom milling or the original lathe front.');
+      const method=s.training.setup&&s.training.setup.method;
+      if(!(machine==='mill'?['vise','vise_soft','clamps','plate']:['chuck3','chuck4','soft','collet','tail','steady']).includes(method))throw Error('Choose an explicit supported fixture for every setup. Between-centres and lathe reversal need a different stock frame.');
+      if(s.training.setup.op2Of)throw Error('A measured setup chain cannot also reconstruct stock through a legacy op2 reference.');
+    }return chain;
+  }
+  function previewSetups(raw){
+    let chain;try{chain=setupChain(raw);}catch(error){return{accepted:false,diagnostics:[{level:'error',code:'SETUP-INPUT',line:null,message:error.message}],completedSetups:[]};}
+    const before=captureSetupTransaction(),completed=[];let prior=null,result=null,current=null;
+    try{
+      for(let index=0;index<chain.setups.length;index++){
+        current=chain.setups[index];
+        if(prior&&prior.machine==='lathe'&&prior.data.detachedParts)throw Error('A parted-off piece cannot continue into another setup without an explicit remounting datum.');
+        const input=prior?AccessDesignMaterial.orient(prior,current.orientation):null;
+        const provenance={id:current.id,index,orientation:current.orientation,inputMaterialFingerprint:input?AccessDesignMaterial.fingerprint(input):null,outputMaterialFingerprint:null};
+        result=previewManual(current.training,{initialMaterial:input,setupProvenance:provenance});
+        if(!result.accepted){const error=Error('Setup '+current.id+' did not pass its material and workholding checks.');error.diagnostics=result.diagnostics;throw error;}
+        if(!result.materialSnapshot.complete)throw Error('Setup '+current.id+' did not complete. Later setups cannot use partial material.');
+        if(provenance.inputMaterialFingerprint&&result.inputMaterialFingerprint!==provenance.inputMaterialFingerprint)throw Error('The material measured at the start of setup '+current.id+' differs from the preceding setup output.');
+        prior=result.materialSnapshot;provenance.outputMaterialFingerprint=AccessDesignMaterial.fingerprint(prior);
+        if(!provenance.inputMaterialFingerprint)provenance.inputMaterialFingerprint=result.inputMaterialFingerprint;
+        Scene3D.M.setupProvenance=Object.assign({},provenance);currentProg().setupProvenance=Object.assign({},provenance);
+        completed.push({id:current.id,index,orientation:current.orientation,accepted:true,simulated:true,inputMaterialFingerprint:provenance.inputMaterialFingerprint,outputMaterialFingerprint:provenance.outputMaterialFingerprint,diagnostics:result.diagnostics,workholding:result.workholding,removedVolumeIn3:result.removedVolumeIn3,stepCount:result.stepCount});
+      }
+      const setup=Object.assign({},Scene3D.M.setupProvenance),canonical=AccessDesignMaterial.orient(prior,prior.machine==='mill'?'top':'front');canonical.setup=setup;
+      return Object.assign({},result,{setup,completedSetups:completed,materialSnapshot:canonical,setupMaterialSnapshot:prior,diagnostics:completed.flatMap(s=>s.diagnostics.map(d=>Object.assign({},d,{setupId:s.id}))),workholding:completed.map(s=>({id:s.id,...s.workholding}))});
+    }catch(error){restoreSetupTransaction(before);return{accepted:false,diagnostics:(error.diagnostics||[{level:'error',code:'SETUP-CHAIN',line:null,message:error.message}]).map(d=>Object.assign({},d,current?{setupId:current.id}:{})),failedSetupId:current&&current.id,completedSetups:[],snapshot:window.Trainer.trainingSnapshot()};}
+  }
+  function validateSetups(raw){
+    const before=captureSetupTransaction();try{
+      const result=previewSetups(raw);return{accepted:result.accepted,diagnostics:result.diagnostics,failedSetupId:result.failedSetupId,workholding:result.workholding||[],completedSetups:(result.completedSetups||[]).map(s=>Object.assign({},s,{simulated:false,inputMaterialFingerprint:null,outputMaterialFingerprint:null})),setup:result.setup?Object.assign({},result.setup,{inputMaterialFingerprint:null,outputMaterialFingerprint:null}):undefined};
+    }finally{restoreSetupTransaction(before);}
+  }
+  function loadSetupPlayback(raw,index){
+    const chain=setupChain(raw),n=index===undefined?chain.setups.length-1:index;
+    if(!Number.isInteger(n)||n<0||n>=chain.setups.length)throw Error('Choose a setup within this chain.');
+    const result=previewSetups({version:1,setups:chain.setups.slice(0,n+1)});if(!result.accepted)return result;
+    resetRun();Scene3D.M.stock.refresh();S.manualPlayback=false;updateReadouts();Scene3D.render();return Object.assign({},result,{snapshot:window.Trainer.trainingSnapshot()});
   }
 
   /* ---------------- API for the file and tool dialogs (workshop.js) ---------------- */
@@ -6131,7 +6238,8 @@ const Scene3D = (() => {
     validateManual: project => checkManual(project).public,
     previewManual,
     replayManual: previewManual,
-    simulatedMaterial: () => Scene3D.materialSnapshot({complete:S.finished&&!S.alarm,alarm:S.alarm,program:S.progKey}),
+    previewSetups,validateSetups,loadSetupPlayback,
+    simulatedMaterial: () => {const s=Scene3D.materialSnapshot({complete:S.finished&&!S.alarm,alarm:S.alarm,program:S.progKey});if(Scene3D.M.setupProvenance)s.setup=Object.assign({},Scene3D.M.setupProvenance,{outputMaterialFingerprint:s.complete?AccessDesignMaterial.fingerprint(s):null});return s;},
 
     loadTrainingProject(e) {
       if (!e || !/^CNC-\d{3}$/.test(e.id) || !['mill','lathe'].includes(e.machine) || !e.tools || !e.stock || typeof e.text !== 'string') throw Error('Invalid training project');
@@ -6750,6 +6858,7 @@ const Scene3D = (() => {
 <script src="access-brand.js"></script>
 <script src="manual-engine.js"></script>
 <script src="manual-builder.js"></script>
+<script src="design-workholding.js"></script>
 <script src="../design/design-workflow.js"></script>
 <script src="../design/design-geometry.js"></script>
 <script src="../design/design-model.js"></script>
