@@ -14,8 +14,13 @@
   };
   function finite(value, label, minimum, maximum) {
     if (typeof value !== 'number' || !Number.isFinite(value)) throw Error(label + ' must be a finite number.');
-    if (minimum !== undefined && value < minimum) throw Error(label + ' must be at least ' + minimum + '.');
-    if (maximum !== undefined && value > maximum) throw Error(label + ' must be no more than ' + maximum + '.');
+    // Unit scaling can put an exact decimal boundary a few binary ULPs away
+    // (24 * 25.4 is 609.5999999999999). Accept only that arithmetic noise;
+    // keep the input unchanged and reject dimensions genuinely outside the limit.
+    const tolerance = bound => 8 * Number.EPSILON * Math.max(1, Math.abs(value), Math.abs(bound));
+    const display = bound => Number(bound.toPrecision(12));
+    if (minimum !== undefined && value < minimum - tolerance(minimum)) throw Error(label + ' must be at least ' + display(minimum) + '.');
+    if (maximum !== undefined && value > maximum + tolerance(maximum)) throw Error(label + ' must be no more than ' + display(maximum) + '.');
     return value;
   }
   function unitScale(units) {

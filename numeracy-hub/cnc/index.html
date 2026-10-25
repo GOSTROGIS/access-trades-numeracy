@@ -260,6 +260,7 @@ table.ofs input { width: 64px; background: transparent; border: 1px solid var(--
 <link rel="stylesheet" href="training-studio.css">
 <link rel="stylesheet" href="access-theme.css">
 <link rel="stylesheet" href="manual-builder.css">
+<link rel="stylesheet" href="design-bridge.css">
 </head>
 <body>
 
@@ -359,6 +360,9 @@ table.ofs input { width: 64px; background: transparent; border: 1px solid var(--
   <div class="wbody" id="tools-body"></div>
 </dialog>
 
+<script src="cad-engine.js"></script>
+<script src="cam-engine.js"></script>
+<script src="design-material.js"></script>
 <script>
 /* three.js r128, MIT licence, https://threejs.org */
 /**
@@ -3398,521 +3402,7 @@ if (typeof module !== 'undefined') module.exports = CNC;
    Group codes follow the Autodesk DXF Reference (LINE, ARC, CIRCLE,
    LWPOLYLINE, POLYLINE/VERTEX, SPLINE, ELLIPSE, POINT, INSERT, $INSUNITS).
    =================================================================== */
-const CAD = (() => {
-  'use strict';
-  const TAU = Math.PI * 2;
-  const P = (x, y) => ({ x, y });
-
-  /* ---------- segment helpers ---------- */
-  // L: { t:'L', a, b }   A: { t:'A', c, r, a0, sw }  (sw > 0 = counterclockwise)
-  function arcPt(s, f) { const th = s.a0 + s.sw * f; return P(s.c.x + s.r * Math.cos(th), s.c.y + s.r * Math.sin(th)); }
-  function start(s) { return s.t === 'L' ? s.a : arcPt(s, 0); }
-  function end(s) { return s.t === 'L' ? s.b : arcPt(s, 1); }
-  function reverse(s) { return s.t === 'L' ? { t: 'L', a: s.b, b: s.a } : { t: 'A', c: s.c, r: s.r, a0: s.a0 + s.sw, sw: -s.sw }; }
-  function segLen(s) { return s.t === 'L' ? Math.hypot(s.b.x - s.a.x, s.b.y - s.a.y) : Math.abs(s.sw) * s.r; }
-  function flatten(s, chord) {
-    if (s.t === 'L') return [s.a, s.b];
-    const n = Math.max(2, Math.ceil(Math.abs(s.sw) * s.r / (chord || 0.01)), Math.ceil(Math.abs(s.sw) / 0.2));
-    const out = []; for (let i = 0; i <= n; i++) out.push(arcPt(s, i / n)); return out;
-  }
-  function bulgeArc(a, b, bulge) {
-    const dx = b.x - a.x, dy = b.y - a.y, d = Math.hypot(dx, dy);
-    if (Math.abs(bulge) < 1e-9 || d < 1e-12) return { t: 'L', a, b };
-    const th = 4 * Math.atan(bulge), k = d / 2 * (1 - bulge * bulge) / (2 * bulge);
-    const c = P((a.x + b.x) / 2 - dy / d * k, (a.y + b.y) / 2 + dx / d * k);
-    return { t: 'A', c, r: Math.hypot(a.x - c.x, a.y - c.y), a0: Math.atan2(a.y - c.y, a.x - c.x), sw: th };
-  }
-
-  /* ---------- transforms (blocks, OCS mirror, units) ---------- */
-  function xform(item, T) {
-    // T: { m: [a, b, c, d], tx, ty } maps p -> (a x + b y + tx, c x + d y + ty)
-    const f = p => P(T.m[0] * p.x + T.m[1] * p.y + T.tx, T.m[2] * p.x + T.m[3] * p.y + T.ty);
-    const det = T.m[0] * T.m[3] - T.m[1] * T.m[2];
-    const o = Object.assign({}, item);
-    if (item.point) { o.point = f(item.point); return o; }
-    const s = item.seg;
-    if (s.t === 'L') { o.seg = { t: 'L', a: f(s.a), b: f(s.b) }; return o; }
-    const sx = Math.hypot(T.m[0], T.m[2]), sy = Math.hypot(T.m[1], T.m[3]);
-    if (Math.abs(sx - sy) > 1e-6 * Math.max(sx, sy)) {
-      // non-uniform scale turns arcs into ellipses: keep the shape as short lines
-      o.seg = null; o.circle = false; o.poly = flatten(s, 0.002).map(f); return o;
-    }
-    const c = f(s.c), p0 = f(arcPt(s, 0));
-    o.seg = { t: 'A', c, r: s.r * sx, a0: Math.atan2(p0.y - c.y, p0.x - c.x), sw: det < 0 ? -s.sw : s.sw };
-    return o;
-  }
-  const IDENT = { m: [1, 0, 0, 1], tx: 0, ty: 0 };
-  const MIRROR_X = { m: [-1, 0, 0, 1], tx: 0, ty: 0 };
-  function compose(A, B) { // A after B
-    return { m: [A.m[0] * B.m[0] + A.m[1] * B.m[2], A.m[0] * B.m[1] + A.m[1] * B.m[3], A.m[2] * B.m[0] + A.m[3] * B.m[2], A.m[2] * B.m[1] + A.m[3] * B.m[3]],
-      tx: A.m[0] * B.tx + A.m[1] * B.ty + A.tx, ty: A.m[2] * B.tx + A.m[3] * B.ty + A.ty };
-  }
-
-  /* ---------- file sniffing ---------- */
-  // DWG version strings from the Open Design Alliance DWG specification, section 3.2.1
-  const DWG_VERSIONS = { AC1015: 'AutoCAD 2000', AC1018: 'AutoCAD 2004', AC1021: 'AutoCAD 2007', AC1024: 'AutoCAD 2010', AC1027: 'AutoCAD 2013', AC1032: 'AutoCAD 2018' };
-  function sniff(name, bytes) {
-    const ext = (name.includes('.') ? name.split('.').pop() : '').toLowerCase();
-    const head = String.fromCharCode.apply(null, Array.from(bytes.slice(0, 24)));
-    if (/^AC10\d\d/.test(head)) return { kind: 'dwg', version: head.slice(0, 6), release: DWG_VERSIONS[head.slice(0, 6)] || 'an older or unlisted release' };
-    if (head.startsWith('AutoCAD Binary DXF')) return { kind: 'dxf', binary: true };
-    if (ext === 'dxf') return { kind: 'dxf' };
-    if (ext === 'svg') return { kind: 'svg' };
-    if (ext === 'csv') return { kind: 'csv' };
-    if (ext === 'stl') return { kind: 'stl' };
-    if (['step', 'stp'].includes(ext)) return { kind: 'step' };
-    if (['iges', 'igs'].includes(ext)) return { kind: 'iges' };
-    if (['obj', '3mf', 'sldprt', 'ipt', 'f3d', 'x_t', 'dwf', 'pdf'].includes(ext)) return { kind: 'unsupported', ext };
-    if (['nc', 'ngc', 'tap', 'txt', 'cnc', 'eia', 'gcode', 'min', 'mpf', 'iso', 'prg', 'g', ''].includes(ext)) return { kind: 'gcode' };
-    const text = new TextDecoder().decode(bytes.slice(0, 4000));
-    if (/^\s*0\s*\r?\n\s*SECTION/.test(text)) return { kind: 'dxf' };
-    if (/<svg[\s>]/i.test(text)) return { kind: 'svg' };
-    if (/[GM]\d/.test(text)) return { kind: 'gcode' };
-    return { kind: 'unknown', ext };
-  }
-
-  /* ---------- DXF ---------- */
-  // $INSUNITS values from the Autodesk DXF Reference header variables page
-  const UNIT_NAMES = { 0: 'unitless', 1: 'inches', 4: 'millimetres', 5: 'centimetres', 6: 'metres' };
-  const UNIT_TO_IN = { 1: 1, 4: 1 / 25.4, 5: 1 / 2.54, 6: 1 / 0.0254 };
-
-  /* Binary DXF: a 22-byte sentinel, then group codes (2-byte little-endian from R13 on, 1 byte before)
-     followed by values typed by group code range (Autodesk DXF Reference, Group Code Value Types). */
-  function valueType(c) {
-    if ((c >= 10 && c <= 59) || (c >= 110 && c <= 149) || (c >= 210 && c <= 239) || (c >= 460 && c <= 469) || (c >= 1010 && c <= 1059)) return 'd';
-    if ((c >= 60 && c <= 79) || (c >= 170 && c <= 179) || (c >= 270 && c <= 289) || (c >= 370 && c <= 389) || (c >= 400 && c <= 409) || (c >= 1060 && c <= 1070)) return 'i16';
-    if ((c >= 90 && c <= 99) || (c >= 420 && c <= 429) || (c >= 440 && c <= 459) || c === 1071) return 'i32';
-    if (c >= 160 && c <= 169) return 'i64';
-    if (c >= 290 && c <= 299) return 'b';
-    if ((c >= 310 && c <= 319) || c === 1004) return 'bin';
-    return 's';
-  }
-  function binaryDxfPairs(bytes) {
-    const dv = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength), pairs = [];
-    let p = 22;
-    // R13+ files use 2-byte codes: the first pair is 0 / SECTION, so byte 23 is 0 in that case
-    const wide = bytes[p + 1] === 0;
-    const td = new TextDecoder('latin1');
-    while (p < bytes.length - 1) {
-      let code;
-      if (wide) { code = dv.getInt16(p, true); p += 2; } else { code = bytes[p]; p += 1; if (code === 255) { code = dv.getInt16(p, true); p += 2; } }
-      const t = valueType(code);
-      let v;
-      if (t === 'd') { v = String(dv.getFloat64(p, true)); p += 8; }
-      else if (t === 'i16') { v = String(dv.getInt16(p, true)); p += 2; }
-      else if (t === 'i32') { v = String(dv.getInt32(p, true)); p += 4; }
-      else if (t === 'i64') { v = String(dv.getInt32(p, true)); p += 8; }
-      else if (t === 'b') { v = String(bytes[p]); p += 1; }
-      else if (t === 'bin') { const n = bytes[p]; p += 1 + n; v = ''; }
-      else { let e = p; while (e < bytes.length && bytes[e] !== 0) e++; v = td.decode(bytes.subarray(p, e)); p = e + 1; }
-      pairs.push([code, v]);
-      if (code === 0 && v === 'EOF') break;
-    }
-    return pairs;
-  }
-  function textPairs(text) {
-    const lines = text.split(/\r\n|\r|\n/);
-    const pairs = [];
-    for (let i = 0; i + 1 < lines.length; i += 2) {
-      const code = parseInt(lines[i].trim(), 10);
-      if (isNaN(code)) { i -= 1; continue; }
-      pairs.push([code, lines[i + 1].replace(/^\s+|\s+$/g, '')]);
-    }
-    return pairs;
-  }
-
-  function parseDXF(src) {
-    const pairs = typeof src === 'string' ? textPairs(src) : Array.isArray(src) ? src : binaryDxfPairs(src);
-    const out = { insunits: null, acadver: null, items: [], skipped: {}, warnings: [] };
-    const blocks = {};
-    const skip = t => { out.skipped[t] = (out.skipped[t] || 0) + 1; };
-
-    function readEntity(k) {
-      const type = pairs[k][1], g = [];
-      k++;
-      while (k < pairs.length && pairs[k][0] !== 0) { g.push(pairs[k]); k++; }
-      return { type, g, next: k };
-    }
-    const num = (g, code, def) => { const f = g.find(p => p[0] === code); return f ? parseFloat(f[1]) : def; };
-    const str = (g, code, def) => { const f = g.find(p => p[0] === code); return f ? f[1] : def; };
-    const all = (g, code) => g.filter(p => p[0] === code).map(p => parseFloat(p[1]));
-
-    // an extrusion direction of (0,0,-1) mirrors the object coordinate system in X
-    const ocsMirror = g => num(g, 230, 1) < 0;
-
-    function entitiesToItems(ents, sink, depth) {
-      for (let e = 0; e < ents.length; e++) {
-        const { type, g } = ents[e];
-        const layer = str(g, 8, '0');
-        const mir = ocsMirror(g);
-        const push = (item, ocs) => sink.push(ocs && mir ? xform(item, MIRROR_X) : item);
-        if (type === 'LINE') push({ layer, seg: { t: 'L', a: P(num(g, 10, 0), num(g, 20, 0)), b: P(num(g, 11, 0), num(g, 21, 0)) } }, false);
-        else if (type === 'CIRCLE') push({ layer, seg: { t: 'A', c: P(num(g, 10, 0), num(g, 20, 0)), r: num(g, 40, 0), a0: 0, sw: TAU }, circle: true }, true);
-        else if (type === 'ARC') {
-          const a0 = num(g, 50, 0) * Math.PI / 180, a1 = num(g, 51, 0) * Math.PI / 180;
-          let sw = a1 - a0; while (sw <= 0) sw += TAU;
-          push({ layer, seg: { t: 'A', c: P(num(g, 10, 0), num(g, 20, 0)), r: num(g, 40, 0), a0, sw } }, true);
-        } else if (type === 'POINT') push({ layer, point: P(num(g, 10, 0), num(g, 20, 0)) }, false);
-        else if (type === 'LWPOLYLINE') {
-          const closed = (num(g, 70, 0) & 1) === 1, verts = [];
-          g.forEach(([c, v]) => {
-            if (c === 10) verts.push({ x: parseFloat(v), y: 0, b: 0 });
-            else if (c === 20 && verts.length) verts[verts.length - 1].y = parseFloat(v);
-            else if (c === 42 && verts.length) verts[verts.length - 1].b = parseFloat(v);
-          });
-          polyToItems(verts, closed, layer, mir, sink);
-        } else if (type === 'POLYLINE') {
-          const flags = num(g, 70, 0);
-          const verts = [];
-          while (e + 1 < ents.length && ents[e + 1].type === 'VERTEX') { e++; const vg = ents[e].g; verts.push({ x: num(vg, 10, 0), y: num(vg, 20, 0), b: num(vg, 42, 0) }); }
-          if (e + 1 < ents.length && ents[e + 1].type === 'SEQEND') e++;
-          if (flags & (16 | 64)) { skip('POLYLINE mesh'); continue; }
-          polyToItems(verts, (flags & 1) === 1, layer, mir, sink);
-        } else if (type === 'SPLINE') {
-          const pts = splinePoints(g);
-          if (pts.length < 2) { out.warnings.push('A spline on layer ' + layer + ' had no usable points and was skipped.'); continue; }
-          for (let k = 1; k < pts.length; k++) sink.push({ layer, seg: { t: 'L', a: pts[k - 1], b: pts[k] }, fromCurve: 'spline' });
-        } else if (type === 'ELLIPSE') {
-          const c = P(num(g, 10, 0), num(g, 20, 0)), mj = P(num(g, 11, 1), num(g, 21, 0)), k = num(g, 40, 1);
-          let t0 = num(g, 41, 0), t1 = num(g, 42, TAU); while (t1 <= t0) t1 += TAU;
-          const mn = P(-mj.y * k, mj.x * k), n = Math.max(24, Math.ceil((t1 - t0) / TAU * 360));
-          let prev = null;
-          for (let s = 0; s <= n; s++) { const t = t0 + (t1 - t0) * s / n, p = P(c.x + mj.x * Math.cos(t) + mn.x * Math.sin(t), c.y + mj.y * Math.cos(t) + mn.y * Math.sin(t)); if (prev) sink.push({ layer, seg: { t: 'L', a: prev, b: p }, fromCurve: 'ellipse' }); prev = p; }
-        } else if (type === 'INSERT') {
-          const name = str(g, 2, ''), blk = blocks[name];
-          if (!blk) { skip('INSERT of a missing block'); continue; }
-          if (depth > 8) { out.warnings.push('Blocks nested more than 8 deep were not expanded.'); continue; }
-          const sx = num(g, 41, 1), sy = num(g, 42, 1), rot = num(g, 50, 0) * Math.PI / 180;
-          const cols = Math.max(1, num(g, 70, 1)), rows = Math.max(1, num(g, 71, 1)), cs = num(g, 44, 0), rs = num(g, 45, 0);
-          const inner = []; entitiesToItems(blk.ents, inner, depth + 1);
-          const cr = Math.cos(rot), sr = Math.sin(rot);
-          for (let r = 0; r < rows; r++) for (let cc = 0; cc < cols; cc++) {
-            let T = { m: [sx, 0, 0, sy], tx: -sx * blk.base.x + cc * cs, ty: -sy * blk.base.y + r * rs };
-            T = compose({ m: [cr, -sr, sr, cr], tx: num(g, 10, 0), ty: num(g, 20, 0) }, T);
-            if (mir) T = compose(MIRROR_X, T);
-            inner.forEach(it => { const o = xform(it, T); if (it.layer === '0') o.layer = layer; sink.push(o); });
-          }
-        } else if (['SEQEND', 'VERTEX', 'ATTRIB', 'ATTDEF'].includes(type)) { /* read with their owner */ }
-        else skip(type);
-      }
-    }
-    function polyToItems(verts, closed, layer, mir, sink) {
-      const n = verts.length; if (n < 2) return;
-      const last = closed ? n : n - 1;
-      for (let k = 0; k < last; k++) {
-        const a = verts[k], b = verts[(k + 1) % n];
-        if (Math.hypot(b.x - a.x, b.y - a.y) < 1e-12) continue;
-        let it = { layer, seg: bulgeArc(P(a.x, a.y), P(b.x, b.y), a.b || 0) };
-        if (mir) it = xform(it, MIRROR_X);
-        sink.push(it);
-      }
-    }
-    function splinePoints(g) {
-      const deg = num(g, 71, 3), knots = all(g, 40), w = all(g, 41);
-      const cx = all(g, 10), cy = all(g, 20), fx = all(g, 11), fy = all(g, 21);
-      const ctrl = cx.map((x, k) => P(x, cy[k] || 0));
-      if (ctrl.length > deg && knots.length === ctrl.length + deg + 1) {
-        const W = ctrl.map((_, k) => (w.length === ctrl.length ? w[k] : 1));
-        const u0 = knots[deg], u1 = knots[ctrl.length];
-                const n = Math.min(1000, Math.max(ctrl.length * 12, 64));
-        const pts = [];
-        for (let s = 0; s <= n; s++) pts.push(deBoor(deg, knots, ctrl, W, u0 + (u1 - u0) * s / n, u1));
-        return pts;
-      }
-      if (fx.length >= 2) { out.warnings.push('A spline was drawn through its fit points only (no control points were stored).'); return fx.map((x, k) => P(x, fy[k] || 0)); }
-      return [];
-    }
-    function deBoor(p, U, C, W, u, uMax) {
-      let k = p; while (k < C.length - 1 && !(u >= U[k] && u < U[k + 1])) k++;
-      if (u >= uMax) k = C.length - 1;
-      const d = []; for (let j = 0; j <= p; j++) { const c = C[j + k - p], wt = W[j + k - p]; d.push([c.x * wt, c.y * wt, wt]); }
-      for (let r = 1; r <= p; r++) for (let j = p; j >= r; j--) {
-        const den = U[j + 1 + k - r] - U[j + k - p]; const a = den === 0 ? 0 : (u - U[j + k - p]) / den;
-        d[j] = [(1 - a) * d[j - 1][0] + a * d[j][0], (1 - a) * d[j - 1][1] + a * d[j][1], (1 - a) * d[j - 1][2] + a * d[j][2]];
-      }
-      return P(d[p][0] / d[p][2], d[p][1] / d[p][2]);
-    }
-
-    // header and blocks are read before entities so INSERTs can be expanded
-    let section = null, i = 0;
-    const entityList = [];
-    while (i < pairs.length) {
-      const [c, v] = pairs[i];
-      if (c === 0 && v === 'SECTION') { section = (pairs[i + 1] || [])[1]; i += 2; continue; }
-      if (c === 0 && v === 'ENDSEC') { section = null; i++; continue; }
-      if (section === 'HEADER' && c === 9) {
-        if (v === '$INSUNITS') out.insunits = parseInt((pairs[i + 1] || [0, '0'])[1], 10);
-        if (v === '$ACADVER') out.acadver = (pairs[i + 1] || [0, ''])[1];
-        i++; continue;
-      }
-      if (section === 'BLOCKS' && c === 0 && v === 'BLOCK') {
-        const hdr = readEntity(i); i = hdr.next;
-        const name = str(hdr.g, 2, ''), base = P(num(hdr.g, 10, 0), num(hdr.g, 20, 0)), ents = [];
-        while (i < pairs.length && !(pairs[i][0] === 0 && pairs[i][1] === 'ENDBLK')) { const en = readEntity(i); ents.push(en); i = en.next; }
-        if (i < pairs.length) i = readEntity(i).next;
-        blocks[name] = { base, ents };
-        continue;
-      }
-      if (section === 'ENTITIES' && c === 0) { const en = readEntity(i); entityList.push(en); i = en.next; continue; }
-      i++;
-    }
-    const raw = [];
-    entitiesToItems(entityList, raw, 0);
-    raw.forEach(it => {
-      if (it.poly) { for (let k = 1; k < it.poly.length; k++) out.items.push({ layer: it.layer, seg: { t: 'L', a: it.poly[k - 1], b: it.poly[k] } }); }
-      else out.items.push(it);
-    });
-    return out;
-  }
-
-  /* ---------- DWG: LibreDWG database (from loaders.js) rewritten as DXF group codes ---------- */
-  function dwgToPairs(db) {
-    const P2 = [], deg = r => r * 180 / Math.PI;
-    const put = (c, v) => P2.push([c, String(v)]);
-    const pt = (c, p) => { put(c, p ? p.x : 0); put(c + 10, p ? p.y : 0); };
-    const records = (db.tables && db.tables.BLOCK_RECORD && db.tables.BLOCK_RECORD.entries) || [];
-    const model = records.find(b => /^\*model_space$/i.test(b.name));
-    function ent(e) {
-      const L = e.layer || '0', neg = e.extrusionDirection && e.extrusionDirection.z < 0;
-      const head = t => { put(0, t); put(8, L); };
-      const ext = () => { if (neg) { put(210, 0); put(220, 0); put(230, -1); } };
-      switch (e.type) {
-        case 'LINE': head('LINE'); pt(10, e.startPoint); pt(11, e.endPoint); break;
-        case 'CIRCLE': head('CIRCLE'); pt(10, e.center); put(40, e.radius); ext(); break;
-        case 'ARC': head('ARC'); pt(10, e.center); put(40, e.radius); put(50, deg(e.startAngle)); put(51, deg(e.endAngle)); ext(); break;
-        case 'POINT': head('POINT'); pt(10, e.position); break;
-        case 'LWPOLYLINE': case 'POLYLINE2D': {
-          const closed = e.type === 'LWPOLYLINE' ? (e.flag & 0x200) !== 0 : (e.flag & 1) !== 0;
-          head('LWPOLYLINE'); put(70, closed ? 1 : 0); ext();
-          (e.vertices || []).forEach(v => { put(10, v.x); put(20, v.y); if (v.bulge) put(42, v.bulge); });
-          break;
-        }
-        case 'ELLIPSE': head('ELLIPSE'); pt(10, e.center); pt(11, e.majorAxisEndPoint); put(40, e.axisRatio); put(41, e.startAngle || 0); put(42, e.endAngle || Math.PI * 2); break;
-        case 'SPLINE':
-          head('SPLINE'); put(71, e.degree || 3);
-          (e.knots || []).forEach(k => put(40, k)); (e.weights || []).forEach(w => put(41, w));
-          (e.controlPoints || []).forEach(c => pt(10, c)); (e.fitPoints || []).forEach(c => pt(11, c));
-          break;
-        case 'INSERT':
-          head('INSERT'); put(2, e.name); pt(10, e.insertionPoint); put(41, e.xScale || 1); put(42, e.yScale || 1); put(50, deg(e.rotation || 0));
-          if (e.columnCount > 1) { put(70, e.columnCount); put(44, e.columnSpacing || 0); }
-          if (e.rowCount > 1) { put(71, e.rowCount); put(45, e.rowSpacing || 0); }
-          ext(); break;
-        default: head(e.type || 'UNKNOWN');
-      }
-    }
-    put(0, 'SECTION'); put(2, 'HEADER');
-    if (db.header && db.header.INSUNITS !== undefined) { put(9, '$INSUNITS'); put(70, db.header.INSUNITS); }
-    put(0, 'ENDSEC');
-    put(0, 'SECTION'); put(2, 'BLOCKS');
-    records.filter(b => !/^\*(model|paper)_space/i.test(b.name)).forEach(b => {
-      put(0, 'BLOCK'); put(2, b.name); pt(10, b.basePoint);
-      (b.entities || []).forEach(ent);
-      put(0, 'ENDBLK');
-    });
-    put(0, 'ENDSEC');
-    put(0, 'SECTION'); put(2, 'ENTITIES');
-    (db.entities || []).filter(e => !model || e.ownerBlockRecordSoftId === model.handle).forEach(ent);
-    put(0, 'ENDSEC'); put(0, 'EOF');
-    return P2;
-  }
-
-  /* ---------- STL (ASCII or binary) and meshes ---------- */
-  function parseSTL(bytes) {
-    const head = new TextDecoder('latin1').decode(bytes.subarray(0, Math.min(bytes.length, 512)));
-    const dv = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
-    let tris;
-    const nBin = bytes.length >= 84 ? dv.getUint32(80, true) : -1;
-    if (nBin >= 0 && 84 + nBin * 50 === bytes.length) {
-      tris = new Float32Array(nBin * 9);
-      for (let t = 0; t < nBin; t++) for (let k = 0; k < 9; k++) tris[t * 9 + k] = dv.getFloat32(84 + t * 50 + 12 + k * 4, true);
-    } else if (/^\s*solid/i.test(head)) {
-      const txt = new TextDecoder('latin1').decode(bytes), v = [], re = /vertex\s+(\S+)\s+(\S+)\s+(\S+)/g;
-      let m; while ((m = re.exec(txt))) v.push(+m[1], +m[2], +m[3]);
-      tris = new Float32Array(v.length - v.length % 9); tris.set(v.slice(0, tris.length));
-    } else throw new Error('This STL file could not be read.');
-    return { tris, name: 'stl' };
-  }
-  function meshFromOcct(res) {
-    const all = [];
-    (res.meshes || []).forEach(m => {
-      const p = m.attributes.position.array, ix = m.index.array;
-      for (let i = 0; i < ix.length; i++) { const k = ix[i] * 3; all.push(p[k], p[k + 1], p[k + 2]); }
-    });
-    return { tris: Float32Array.from(all), name: 'step' };
-  }
-  function meshBBox(tris) {
-    const b = { minx: Infinity, miny: Infinity, minz: Infinity, maxx: -Infinity, maxy: -Infinity, maxz: -Infinity };
-    for (let i = 0; i < tris.length; i += 3) {
-      const x = tris[i], y = tris[i + 1], z = tris[i + 2];
-      if (x < b.minx) b.minx = x; if (x > b.maxx) b.maxx = x; if (y < b.miny) b.miny = y; if (y > b.maxy) b.maxy = y; if (z < b.minz) b.minz = z; if (z > b.maxz) b.maxz = z;
-    }
-    return b;
-  }
-  // scale, then turn so the chosen axis points up (+Z)
-  function orientMesh(tris, k, up) {
-    const o = new Float32Array(tris.length);
-    for (let i = 0; i < tris.length; i += 3) {
-      let x = tris[i] * k, y = tris[i + 1] * k, z = tris[i + 2] * k;
-      if (up === '+X') [x, y, z] = [-z, y, x]; else if (up === '-X') [x, y, z] = [z, y, -x];
-      else if (up === '+Y') [x, y, z] = [x, -z, y]; else if (up === '-Y') [x, y, z] = [x, z, -y];
-      else if (up === '-Z') [x, y, z] = [x, -y, -z];
-      o[i] = x; o[i + 1] = y; o[i + 2] = z;
-    }
-    return o;
-  }
-
-  /* ---------- SVG (browser only: the live DOM flattens the paths) ---------- */
-  const SVG_UNITS = { in: 1, mm: 1 / 25.4, cm: 1 / 2.54, pt: 1 / 72, pc: 1 / 6, px: 1 / 96 };
-  function parseSVG(text, doc) {
-    const out = { items: [], skipped: {}, warnings: [], insunits: 1 };
-    const parsed = new DOMParser().parseFromString(text, 'image/svg+xml');
-    const root = parsed.documentElement;
-    if (!root || root.nodeName.toLowerCase() !== 'svg') { out.warnings.push('This SVG file could not be read.'); return out; }
-    const host = doc.createElement('div');
-    host.style.cssText = 'position:absolute;left:-10000px;top:0;width:10px;height:10px;overflow:hidden;visibility:hidden';
-    host.appendChild(doc.importNode(root, true)); doc.body.appendChild(host);
-    const svg = host.querySelector('svg');
-    try {
-      let k = 1 / 96; const wAttr = (svg.getAttribute('width') || '').trim(), m = /^([\d.]+)\s*(in|mm|cm|pt|pc|px)?$/.exec(wAttr);
-      const vb = (svg.getAttribute('viewBox') || '').trim().split(/[\s,]+/).map(Number);
-      if (m && vb.length === 4 && vb[2] > 0) k = parseFloat(m[1]) * SVG_UNITS[m[2] || 'px'] / vb[2];
-      else if (m && m[2]) k = SVG_UNITS[m[2]];
-      out.unitNote = m && m[2] ? 'taken from the width attribute (' + wAttr + ')' : 'assumed to be 96 px per inch';
-      const rootInv = svg.getScreenCTM().inverse();
-      svg.querySelectorAll('path,rect,circle,ellipse,line,polyline,polygon').forEach(el => {
-        const g = el.closest('g[id]'), layer = (g && g.id) || 'svg';
-        const ctm = rootInv.multiply(el.getScreenCTM());
-        const map = p => { const q = p.matrixTransform(ctm); return P(q.x * k, -q.y * k); };
-        const tag = el.nodeName.toLowerCase();
-        if (tag === 'circle' && Math.abs(ctm.b) < 1e-9 && Math.abs(ctm.c) < 1e-9 && Math.abs(Math.abs(ctm.a) - Math.abs(ctm.d)) < 1e-9) {
-          const c = svg.createSVGPoint(); c.x = +el.getAttribute('cx') || 0; c.y = +el.getAttribute('cy') || 0;
-          out.items.push({ layer, seg: { t: 'A', c: map(c), r: (+el.getAttribute('r') || 0) * Math.abs(ctm.a) * k, a0: 0, sw: TAU }, circle: true });
-          return;
-        }
-        const len = el.getTotalLength ? el.getTotalLength() : 0;
-        if (!(len > 0)) return;
-        const step = Math.max(len / 4000, 0.005 / k), n = Math.ceil(len / step);
-        let prev = null;
-        for (let s = 0; s <= n; s++) {
-          const q = map(el.getPointAtLength(Math.min(len, s * step)));
-          if (prev) {
-            const d = Math.hypot(q.x - prev.x, q.y - prev.y);
-            if (d > step * k * 3) { prev = q; continue; }       // jump between subpaths
-            if (d > 1e-9) out.items.push({ layer, seg: { t: 'L', a: prev, b: q }, fromCurve: 'svg' });
-          }
-          prev = q;
-        }
-      });
-    } finally { host.remove(); }
-    return out;
-  }
-
-  /* ---------- CSV hole lists: x,y[,dia] ---------- */
-  function parseCSV(text) {
-    const out = { items: [], skipped: {}, warnings: [], insunits: 0 };
-    text.split(/\r?\n/).forEach((ln, i) => {
-      const f = ln.split(/[,;\t]/).map(s => s.trim()).filter(s => s !== '');
-      if (f.length < 2) return;
-      const v = f.slice(0, 3).map(Number);
-      if (!isFinite(v[0]) || !isFinite(v[1])) { if (i > 0) out.warnings.push('Line ' + (i + 1) + ' was skipped: ' + ln.slice(0, 40)); return; }
-      if (f.length >= 3 && isFinite(v[2]) && v[2] > 0) out.items.push({ layer: 'CSV holes', seg: { t: 'A', c: P(v[0], v[1]), r: v[2] / 2, a0: 0, sw: TAU }, circle: true });
-      else out.items.push({ layer: 'CSV holes', point: P(v[0], v[1]) });
-    });
-    return out;
-  }
-
-  function scaleItems(items, k) {
-    if (k === 1) return items;
-    const T = { m: [k, 0, 0, k], tx: 0, ty: 0 };
-    return items.map(it => xform(it, T));
-  }
-
-  /* ---------- chain segments into contours ---------- */
-  function chain(items, tol) {
-    tol = tol || 0.0002;
-    const byLayer = {};
-    items.forEach(it => {
-      const L = byLayer[it.layer] || (byLayer[it.layer] = { segs: [], points: [], circles: [] });
-      if (it.point) L.points.push(it.point);
-      else if (it.circle) L.circles.push({ c: it.seg.c, r: it.seg.r });
-      else if (it.seg && segLen(it.seg) > 1e-9) L.segs.push(it.seg);
-    });
-    const layers = {};
-    Object.keys(byLayer).forEach(name => {
-      const L = byLayer[name], segs = L.segs, used = new Array(segs.length).fill(false), contours = [];
-      const near = (p, q) => Math.abs(p.x - q.x) <= tol && Math.abs(p.y - q.y) <= tol;
-      const cell = Math.max(tol * 4, 1e-4), grid = new Map();
-      const key = (x, y) => Math.floor(x / cell) + ',' + Math.floor(y / cell);
-      segs.forEach((s, k) => { [start(s), end(s)].forEach(p => { const kk = key(p.x, p.y); if (!grid.has(kk)) grid.set(kk, []); grid.get(kk).push(k); }); });
-      const find = p => {
-        const cx = Math.floor(p.x / cell), cy = Math.floor(p.y / cell);
-        for (let dx = -1; dx <= 1; dx++) for (let dy = -1; dy <= 1; dy++) {
-          const list = grid.get((cx + dx) + ',' + (cy + dy)); if (!list) continue;
-          for (const k of list) if (!used[k]) { if (near(start(segs[k]), p)) return { k, rev: false }; if (near(end(segs[k]), p)) return { k, rev: true }; }
-        }
-        return null;
-      };
-      for (let k0 = 0; k0 < segs.length; k0++) {
-        if (used[k0]) continue;
-        used[k0] = true; const c = [segs[k0]];
-        for (;;) { if (near(end(c[c.length - 1]), start(c[0])) && c.length > 1) break; const f = find(end(c[c.length - 1])); if (!f) break; used[f.k] = true; c.push(f.rev ? reverse(segs[f.k]) : segs[f.k]); }
-        if (!near(end(c[c.length - 1]), start(c[0]))) {
-          for (;;) { const f = find(start(c[0])); if (!f) break; used[f.k] = true; c.unshift(f.rev ? segs[f.k] : reverse(segs[f.k])); }
-        }
-        const full = c.length === 1 && c[0].t === 'A' && Math.abs(Math.abs(c[0].sw) - TAU) < 1e-9;
-        contours.push(makeContour(c, full || (c.length > 1 && near(end(c[c.length - 1]), start(c[0])))));
-      }
-      L.circles.forEach(ci => contours.push(makeContour([{ t: 'A', c: ci.c, r: ci.r, a0: 0, sw: TAU }], true, ci)));
-      layers[name] = { name, contours, points: L.points, circles: L.circles };
-    });
-    return layers;
-  }
-  // Douglas-Peucker on runs of straight segments: flattened curves become fewer, longer lines
-  function simplify(segs, tol) {
-    const out = []; let run = [];
-    const flush = () => {
-      if (!run.length) return;
-      const pts = [run[0].a].concat(run.map(s => s.b));
-      const keep = new Array(pts.length).fill(false); keep[0] = keep[pts.length - 1] = true;
-      const stack = [[0, pts.length - 1]];
-      while (stack.length) {
-        const [i, j] = stack.pop(); let dm = -1, k = -1;
-        const a = pts[i], b = pts[j], vx = b.x - a.x, vy = b.y - a.y, L = Math.hypot(vx, vy) || 1e-12;
-        for (let m = i + 1; m < j; m++) { const d = L > 1e-9 ? Math.abs((pts[m].x - a.x) * vy - (pts[m].y - a.y) * vx) / L : Math.hypot(pts[m].x - a.x, pts[m].y - a.y); if (d > dm) { dm = d; k = m; } }
-        if (dm > tol) { keep[k] = true; stack.push([i, k], [k, j]); }
-      }
-      let prev = pts[0];
-      for (let m = 1; m < pts.length; m++) if (keep[m]) { out.push({ t: 'L', a: prev, b: pts[m] }); prev = pts[m]; }
-      run = [];
-    };
-    segs.forEach(s => { if (s.t === 'L') run.push(s); else { flush(); out.push(s); } });
-    flush();
-    return out;
-  }
-  function makeContour(segs, closed, circle) {
-    if (segs.length > 2) segs = simplify(segs, 0.0005);
-    const pts = []; segs.forEach((s, i) => { const f = flatten(s, 0.005); (i ? f.slice(1) : f).forEach(p => pts.push(p)); });
-    if (closed && pts.length > 1) pts.pop();
-    let area = 0; for (let i = 0; i < pts.length; i++) { const a = pts[i], b = pts[(i + 1) % pts.length]; area += a.x * b.y - b.x * a.y; }
-    area /= 2;
-    let len = 0; segs.forEach(s => { len += segLen(s); });
-    return { segs, closed, area: closed ? area : 0, pts, bbox: bbox(pts), length: len, circle: circle || null };
-  }
-  function bbox(pts) {
-    const b = { minx: Infinity, miny: Infinity, maxx: -Infinity, maxy: -Infinity };
-    pts.forEach(p => { if (p.x < b.minx) b.minx = p.x; if (p.y < b.miny) b.miny = p.y; if (p.x > b.maxx) b.maxx = p.x; if (p.y > b.maxy) b.maxy = p.y; });
-    return b;
-  }
-  function layersBBox(layers, names) {
-    const pts = [];
-    names.forEach(n => { const L = layers[n]; if (!L) return; L.contours.forEach(c => { pts.push(P(c.bbox.minx, c.bbox.miny), P(c.bbox.maxx, c.bbox.maxy)); }); L.points.forEach(p => pts.push(p)); });
-    return pts.length ? bbox(pts) : null;
-  }
-
-  return { sniff, parseDXF, dwgToPairs, parseSTL, meshFromOcct, meshBBox, orientMesh, parseSVG, parseCSV, scaleItems, chain, flatten, reverse, start, end, segLen, arcPt, bbox, layersBBox, UNIT_NAMES, UNIT_TO_IN, DWG_VERSIONS };
-})();
-if (typeof module !== 'undefined') module.exports = CAD;
+const CAD = window.AccessCAD;
 
 /* loaders.js: on-demand DWG and STEP readers, loaded from jsDelivr only when such a file is opened.
  * DWG: @mlightcad/libredwg-web (GPL-3.0). STEP/IGES: occt-import-js (LGPL-2.1). Neither is bundled.
@@ -4207,415 +3697,7 @@ if (typeof module !== 'undefined') module.exports = TOOLING;
    drill, engrave/follow. Lathe: face, G71 rough, G70 finish, part-off.
    Feeds and speeds are the trainer's training values, scaled by tool size.
    =================================================================== */
-const CAM = (() => {
-  'use strict';
-  const P = (x, y) => ({ x, y });
-  const f = v => { const s = (Math.round(v * 10000) / 10000).toFixed(4).replace(/0+$/, ''); return s === '-0.' ? '0.' : s; };
-  const sub = (a, b) => P(a.x - b.x, a.y - b.y), add = (a, b) => P(a.x + b.x, a.y + b.y), mul = (a, k) => P(a.x * k, a.y * k);
-  const unit = v => { const L = Math.hypot(v.x, v.y) || 1; return P(v.x / L, v.y / L); };
-
-  /* ---------- geometry helpers ---------- */
-  function segDist(p, a, b) {
-    const vx = b.x - a.x, vy = b.y - a.y, L2 = vx * vx + vy * vy;
-    let t = L2 > 0 ? ((p.x - a.x) * vx + (p.y - a.y) * vy) / L2 : 0; t = t < 0 ? 0 : t > 1 ? 1 : t;
-    return Math.hypot(a.x + vx * t - p.x, a.y + vy * t - p.y);
-  }
-  function edgesOf(polys) { const E = []; polys.forEach(pts => { for (let i = 0; i < pts.length; i++) E.push([pts[i], pts[(i + 1) % pts.length]]); }); return E; }
-  function distTo(E, p) { let d = Infinity; for (const [a, b] of E) { const q = segDist(p, a, b); if (q < d) d = q; } return d; }
-  function inside(E, p) { let c = false; for (const [a, b] of E) { if ((a.y > p.y) !== (b.y > p.y) && p.x < a.x + (p.y - a.y) * (b.x - a.x) / (b.y - a.y)) c = !c; } return c; }
-  function tangentAt(s, atEnd) {
-    if (s.t === 'L') return unit(sub(s.b, s.a));
-    const th = s.a0 + (atEnd ? s.sw : 0), sg = s.sw > 0 ? 1 : -1;
-    return P(-Math.sin(th) * sg, Math.cos(th) * sg);
-  }
-  function translateSeg(s, d) { return s.t === 'L' ? { t: 'L', a: add(s.a, d), b: add(s.b, d) } : { t: 'A', c: add(s.c, d), r: s.r, a0: s.a0, sw: s.sw }; }
-  function orient(segs, wantCCW) {
-    const pts = []; segs.forEach(s => CAD.flatten(s, 0.01).forEach(p => pts.push(p)));
-    let a = 0; for (let i = 0; i < pts.length; i++) { const p = pts[i], q = pts[(i + 1) % pts.length]; a += p.x * q.y - q.x * p.y; }
-    return (a > 0) === wantCCW ? segs.slice() : segs.slice().reverse().map(CAD.reverse);
-  }
-  // start the loop at the middle of its longest straight side (or longest arc)
-  function splitAtBest(segs) {
-    let best = -1, bestLen = -1, bestIsLine = false;
-    segs.forEach((s, i) => { const L = CAD.segLen(s), isL = s.t === 'L'; if ((isL && !bestIsLine) || (isL === bestIsLine && L > bestLen)) { best = i; bestLen = L; bestIsLine = isL; } });
-    const s = segs[best];
-    let h1, h2;
-    if (s.t === 'L') { const m = mul(add(s.a, s.b), 0.5); h1 = { t: 'L', a: s.a, b: m }; h2 = { t: 'L', a: m, b: s.b }; }
-    else { h1 = { t: 'A', c: s.c, r: s.r, a0: s.a0, sw: s.sw / 2 }; h2 = { t: 'A', c: s.c, r: s.r, a0: s.a0 + s.sw / 2, sw: s.sw / 2 }; }
-    return [h2].concat(segs.slice(best + 1), segs.slice(0, best), [h1]);
-  }
-  function segCode(s) {
-    const e = CAD.end(s);
-    if (s.t === 'L') return 'G01 X' + f(e.x) + ' Y' + f(e.y);
-    const a = CAD.start(s);
-    return (s.sw < 0 ? 'G02' : 'G03') + ' X' + f(e.x) + ' Y' + f(e.y) + ' I' + f(s.c.x - a.x) + ' J' + f(s.c.y - a.y);
-  }
-
-  function rdp(pts, tol) {
-    if (pts.length < 3) return pts.slice();
-    const keep = new Array(pts.length).fill(false); keep[0] = keep[pts.length - 1] = true;
-    const st = [[0, pts.length - 1]];
-    while (st.length) {
-      const [i, j] = st.pop(); const a = pts[i], b = pts[j], L = Math.hypot(b.x - a.x, b.y - a.y);
-      let dm = -1, km = -1;
-      for (let m = i + 1; m < j; m++) { const d = L > 1e-12 ? Math.abs((pts[m].x - a.x) * (b.y - a.y) - (pts[m].y - a.y) * (b.x - a.x)) / L : Math.hypot(pts[m].x - a.x, pts[m].y - a.y); if (d > dm) { dm = d; km = m; } }
-      if (dm > tol) { keep[km] = true; st.push([i, km], [km, j]); }
-    }
-    return pts.filter((_, i) => keep[i]);
-  }
-
-  /* ---------- feeds and speeds ---------- */
-  function speeds(tool, mat, maxRpm) {
-    const ref = tool.type === 'face' ? [mat.face, 2.0, mat.face[1] / 2] : tool.type === 'drill' ? [mat.drill, 0.201, mat.drill[1]] : tool.type === 'spot' ? [mat.spot, 0.5, mat.spot[1]] : [mat.em, 0.5, mat.em[2]];
-    const [rv, rd, plunge0] = ref, dia = Math.max(tool.dia || rd, 0.01);
-    const rpm = Math.max(100, Math.min(maxRpm, Math.round(rv[0] * rd / dia)));
-    const k = rpm / rv[0];
-    return { rpm, feed: Math.max(0.5, Math.round(rv[1] * k * 10) / 10), plunge: Math.max(0.3, Math.round(plunge0 * k * 10) / 10) };
-  }
-
-  /* ---------- mill ---------- */
-  function genMill(job) {
-    const W = [], L = [], mat = job.mat, top0 = 0;
-    const names = job.ops.filter(o => o.op !== 'none').map(o => o.layer);
-    const bb = CAD.layersBBox(job.layers, [...new Set(names)]);
-    if (!bb) return { error: 'Choose an operation for at least one layer that has geometry.' };
-    const m = job.margin;
-    const shift = P(m - bb.minx, m - bb.miny);
-    const stock = { x: +(bb.maxx - bb.minx + 2 * m).toFixed(4), y: +(bb.maxy - bb.miny + 2 * m).toFixed(4), z: job.thick };
-    const progShift = job.zero === 'drawing' ? P(0, 0) : shift;
-    const wcs = job.zero === 'drawing' ? { 54: { dx: shift.x, dy: shift.y, dz: 0 } } : null;
-    const top = job.faceDepth > 0 && job.faceTool ? -job.faceDepth : top0;
-    const clear = top0 + 0.1;
-    const tools = job.lib;
-    const used = new Set();
-
-    L.push('%', 'O' + String(job.progNo).padStart(5, '0') + ' (' + job.title + ')', '(GENERATED BY THE ACCESS CNC TRAINER FROM ' + job.file + ')',
-      '(STOCK ' + f(stock.x) + ' X ' + f(stock.y) + ' X ' + f(stock.z) + ')',
-      job.zero === 'drawing' ? '(G54 X0 Y0 = DRAWING ORIGIN, Z0 = TOP OF STOCK)' : '(G54 X0 Y0 = LOWER LEFT OF STOCK, Z0 = TOP OF STOCK)',
-      '(MATERIAL: ' + mat.label.toUpperCase() + '. FEEDS AND SPEEDS ARE TRAINING VALUES)',
-      'G20 G17 G40 G49 G80 G90 G94');
-
-    const geo = segs => segs.map(s => translateSeg(s, progShift));
-    let curTool = null;
-    function toolOn(tn, at) {
-      const t = tools[tn]; if (!t) { W.push('T' + tn + ' is not in the tool library.'); return null; }
-      used.add(tn);
-      const sp = speeds(t, mat, job.maxRpm);
-      if (curTool !== tn) {
-        if (curTool !== null) toolOff();
-        L.push('(' + t.name.toUpperCase().replace(/[()]/g, '') + ')', 'T' + tn + ' M06', 'G00 G90 G54 X' + f(at.x) + ' Y' + f(at.y), 'S' + sp.rpm + ' M03', 'G43 H' + String(tn).padStart(2, '0') + ' Z' + f(clear + 0.9) + ' M08', 'Z' + f(clear));
-        curTool = tn;
-      } else L.push('G00 X' + f(at.x) + ' Y' + f(at.y));
-      return { t, sp };
-    }
-    function toolOff() { L.push('G00 Z1. M09', 'M05', 'G91 G28 Z0.', 'G90', 'M01'); curTool = null; }
-    const levelsOf = (depth, step) => { const n = Math.max(1, Math.ceil(depth / Math.max(step, 0.005) - 1e-9)), out = []; for (let i = 1; i <= n; i++) out.push(top - depth * i / n); return out; };
-
-    // ---- face the top
-    if (job.faceDepth > 0 && job.faceTool) {
-      const t = tools[job.faceTool];
-      if (t) {
-        const r = t.dia / 2, x0 = -(r + 0.2), x1 = stock.x + r + 0.2, step = t.dia * 0.75;
-        const o = job.zero === 'drawing' ? mul(shift, -1) : P(0, 0);
-        let y = Math.min(r * 0.6, stock.y / 2);
-        const ts = toolOn(job.faceTool, add(o, P(x0, y)));
-        L.push('(FACE THE TOP ' + f(job.faceDepth) + ' DEEP)', 'G01 Z' + f(top) + ' F' + ts.sp.plunge, 'X' + f(o.x + x1) + ' F' + ts.sp.feed);
-        let dir = 1;
-        while (y + r < stock.y - 1e-6) { y = Math.min(y + step, stock.y - r * 0.6); dir = -dir; L.push('G00 Y' + f(o.y + y), 'G01 X' + f(o.x + (dir > 0 ? x1 : x0))); if (y >= stock.y - r * 0.6 - 1e-6) break; }
-        L.push('G00 Z' + f(clear));
-      }
-    }
-
-    // ---- profile pass with G41 and quarter-arc lead in/out
-    function profilePass(segsIn, side, tn, levels, E, label) {
-      const t = tools[tn]; if (!t) return;
-      const r = t.dia / 2, segs = splitAtBest(orient(segsIn, side === 'in'));
-      let small = false;
-      segs.forEach(s => { if (s.t === 'A' && s.sw > 0 && s.r < r - 1e-6) small = s.r; });
-      if (small !== false) { W.push(label + ': a concave radius of ' + f(small) + ' is smaller than the tool radius (' + f(r) + '). The pass was left out. Pick a smaller tool.'); return; }
-      // the tool centre runs r from the wall: check it stays r clear of every other boundary
-      if (E) {
-        let gouge = false;
-        for (const s of segs) {
-          const pts = CAD.flatten(s, 0.02), L0 = CAD.segLen(s);
-          for (let i = 0; i < pts.length - 1 && !gouge; i++) {
-            const a = pts[i], b = pts[i + 1], m = mul(add(a, b), 0.5), u = unit(sub(b, a)), along = (i + 0.5) / (pts.length - 1) * L0;
-            if (along < r * 1.05 || L0 - along < r * 1.05) continue;
-            if (distTo(E, add(m, P(-u.y * r, u.x * r))) < r - 0.003) gouge = true;
-          }
-          if (gouge) break;
-        }
-        if (gouge) { W.push(label + ': the ' + f(t.dia) + ' tool does not fit between this wall and the next one. The pass was left out. Pick a smaller tool.'); return; }
-      }
-      const Pt = CAD.start(segs[0]), tg = tangentAt(segs[0], false), n = P(-tg.y, tg.x);
-      let rho = r + 0.1, lin = 0.1;
-      if (E && side === 'in') {
-        while (rho > r + 0.021 && distTo(E, add(Pt, mul(n, rho))) < rho - 1e-4) rho -= 0.01;
-        if (distTo(E, add(Pt, mul(n, rho))) < rho - 1e-4) W.push(label + ': there is little room for the lead-in arc. Check the start of the finish pass.');
-      }
-      const Q = add(Pt, mul(n, rho)), B = sub(Q, mul(tg, rho)), D = add(Q, mul(tg, rho));
-      if (E && side === 'in') while (lin > 0.02 && distTo(E, add(B, mul(n, lin))) < r) lin -= 0.01;
-      const A = add(B, mul(n, lin)), Eo = add(D, mul(n, lin));
-      const ts = toolOn(tn, A);
-      let prev = top;
-      levels.forEach((z, i) => {
-        L.push('(' + label + ' Z' + f(z) + ')');
-        if (i) L.push('G00 X' + f(A.x) + ' Y' + f(A.y));
-        L.push('G00 Z' + f(Math.min(clear, prev + 0.05)), 'G01 Z' + f(z) + ' F' + ts.sp.plunge,
-          'G41 D' + String(tn).padStart(2, '0') + ' G01 X' + f(B.x) + ' Y' + f(B.y) + ' F' + ts.sp.feed,
-          'G03 X' + f(Pt.x) + ' Y' + f(Pt.y) + ' I' + f(Q.x - B.x) + ' J' + f(Q.y - B.y));
-        segs.forEach(s => L.push(segCode(s)));
-        L.push('G03 X' + f(D.x) + ' Y' + f(D.y) + ' I' + f(Q.x - Pt.x) + ' J' + f(Q.y - Pt.y), 'G40 G01 X' + f(Eo.x) + ' Y' + f(Eo.y), 'G00 Z' + f(clear));
-        prev = z;
-      });
-    }
-
-    // ---- pocket: zigzag rough inside the region, then finish each wall
-    function pocket(op, contours, tn) {
-      const t = tools[tn]; if (!t) return;
-      const r = t.dia / 2, allow = op.finish ? 0.01 : 0, rr = r + allow;
-      const segsList = contours.map(c => geo(c.segs));
-      const polys = segsList.map(segs => { const pts = []; segs.forEach((s, i) => { const fl = CAD.flatten(s, 0.005); (i ? fl.slice(1) : fl).forEach(p => pts.push(p)); }); pts.pop(); return pts; });
-      const E = edgesOf(polys);
-      const pb = CAD.bbox([].concat(...polys));
-      const so = Math.max(0.01, t.dia * (op.stepover || 50) / 100);
-      const yLo = pb.miny + rr, yHi = pb.maxy - rr;
-      const rows = []; if (yHi < yLo) rows.push((pb.miny + pb.maxy) / 2); else { const n = Math.max(1, Math.ceil((yHi - yLo) / so)); for (let i = 0; i <= n; i++) rows.push(yLo + (yHi - yLo) * i / n); }
-      const valid = p => inside(E, p) && distTo(E, p) >= rr - 1e-7;
-      const runs = [];
-      rows.forEach((y, ri) => {
-        const near = E.filter(([a, b]) => Math.min(a.y, b.y) - rr <= y && Math.max(a.y, b.y) + rr >= y);
-        const xs = []; E.forEach(([a, b]) => { if ((a.y > y) !== (b.y > y)) xs.push(a.x + (y - a.y) * (b.x - a.x) / (b.y - a.y)); }); xs.sort((p, q) => p - q);
-        const ok = x => distTo(near, P(x, y)) >= rr - 1e-7;
-        for (let k = 0; k + 1 < xs.length; k += 2) {
-          const x0 = xs[k], x1 = xs[k + 1], h = 0.01, n = Math.max(2, Math.ceil((x1 - x0) / h));
-          let runStart = null, lastOk = null;
-          const refine = (bad, good) => { for (let it = 0; it < 14; it++) { const mid = (bad + good) / 2; if (ok(mid)) good = mid; else bad = mid; } return good; };
-          for (let s = 0; s <= n; s++) {
-            const x = x0 + (x1 - x0) * s / n, v = s > 0 && s < n && ok(x);
-            if (v && runStart === null) runStart = refine(x0 + (x1 - x0) * (s - 1) / n, x);
-            if (v) lastOk = x;
-            if (!v && runStart !== null) { const xe = refine(x, lastOk); runs.push({ y, ri, a: Math.min(runStart, xe), b: Math.max(runStart, xe) }); runStart = null; }
-          }
-        }
-      });
-      const label = 'POCKET ' + op.layer.toUpperCase();
-      if (!runs.length) { W.push(label + ': the ' + f(t.dia) + ' tool does not fit inside this pocket. Pick a smaller tool.'); return; }
-      // order runs: zigzag, link with a feed move when the straight link stays inside the cleared region
-      const linkOk = (p, q) => { const n = Math.max(2, Math.ceil(Math.hypot(q.x - p.x, q.y - p.y) / 0.01)); for (let i = 1; i < n; i++) { const s = add(p, mul(sub(q, p), i / n)); if (!valid(s)) return false; } return true; };
-      const left = runs.slice(), path = [];
-      let cur = left.shift(), dir = 1;
-      path.push({ a: P(cur.a, cur.y), b: P(cur.b, cur.y), link: false });
-      while (left.length) {
-        const end = path[path.length - 1].b;
-        let bi = -1, bd = Infinity, bFlip = false, bLink = false;
-        left.forEach((rn, i) => {
-          [[P(rn.a, rn.y), false], [P(rn.b, rn.y), true]].forEach(([p, flip]) => {
-            const d = Math.hypot(p.x - end.x, p.y - end.y), lk = d < so * 1.6 && linkOk(end, p);
-            const score = d + (lk ? 0 : 100);
-            if (score < bd) { bd = score; bi = i; bFlip = flip; bLink = lk; }
-          });
-        });
-        const rn = left.splice(bi, 1)[0];
-        path.push(bFlip ? { a: P(rn.b, rn.y), b: P(rn.a, rn.y), link: bLink } : { a: P(rn.a, rn.y), b: P(rn.b, rn.y), link: bLink });
-        dir = -dir;
-      }
-      const levels = levelsOf(op.depth, op.step);
-      const ts = toolOn(tn, path[0].a);
-      let prev = top;
-      levels.forEach((z, li) => {
-        L.push('(' + label + ' ROUGH Z' + f(z) + ')');
-        if (li) L.push('G00 X' + f(path[0].a.x) + ' Y' + f(path[0].a.y));
-        L.push('G00 Z' + f(Math.min(clear, prev + 0.05)), 'G01 Z' + f(z) + ' F' + ts.sp.plunge, 'G01 X' + f(path[0].b.x) + ' Y' + f(path[0].b.y) + ' F' + ts.sp.feed);
-        for (let i = 1; i < path.length; i++) {
-          const s = path[i];
-          if (s.link) L.push('G01 X' + f(s.a.x) + ' Y' + f(s.a.y));
-          else L.push('G00 Z' + f(clear), 'X' + f(s.a.x) + ' Y' + f(s.a.y), 'Z' + f(Math.min(clear, prev + 0.05)), 'G01 Z' + f(z) + ' F' + ts.sp.plunge, 'F' + ts.sp.feed);
-          L.push('G01 X' + f(s.b.x) + ' Y' + f(s.b.y));
-        }
-        L.push('G00 Z' + f(clear));
-        prev = z;
-      });
-      if (op.finish) {
-        const Eraw = edgesOf(polys);
-        segsList.forEach((segs, i) => {
-          const probe = CAD.flatten(segs[0], 0.01)[0];
-          let depthIn = 0; polys.forEach((pp, j) => { if (j !== i && inside(edgesOf([pp]), probe)) depthIn++; });
-          profilePass(segs, depthIn % 2 === 0 ? 'in' : 'out', tn, levels, Eraw, label + (depthIn % 2 ? ' ISLAND' : ' WALL') + ' FINISH');
-        });
-      }
-    }
-
-    // ---- spot and drill
-    function drill(op, layer) {
-      const holes = layer.circles.map(c => ({ p: add(c.c, progShift), d: c.r * 2 })).concat(layer.points.map(p => ({ p: add(p, progShift), d: null })));
-      if (!holes.length) { W.push('DRILL ' + op.layer + ': this layer has no circles or points.'); return; }
-      const order = [], left = holes.slice(); let at = P(0, 0);
-      while (left.length) { let bi = 0, bd = Infinity; left.forEach((h, i) => { const d = Math.hypot(h.p.x - at.x, h.p.y - at.y); if (d < bd) { bd = d; bi = i; } }); const h = left.splice(bi, 1)[0]; order.push(h); at = h.p; }
-      const dt = tools[op.tool]; if (!dt) return;
-      const sizes = [...new Set(order.filter(h => h.d).map(h => h.d.toFixed(4)))];
-      sizes.forEach(s => { if (Math.abs(+s - dt.dia) > 0.0005) W.push('DRILL ' + op.layer + ': the drawing has ' + s + ' holes. T' + op.tool + ' is ' + f(dt.dia) + '. Check the drill size.'); });
-      if (op.spot && tools[op.spot]) {
-        const st = tools[op.spot], half = ((st.ang || 90) / 2) * Math.PI / 180, ts = toolOn(op.spot, order[0].p);
-        const spotD = Math.max(...order.map(h => h.d || dt.dia));
-        const z = top - (spotD / 2 + 0.01) / Math.tan(half);
-        L.push('(SPOT ' + order.length + ' HOLES, LAYER ' + op.layer.toUpperCase() + ')', 'G98 G81 Z' + f(z) + ' R' + f(clear) + ' F' + ts.sp.feed);
-        order.slice(1).forEach(h => L.push('X' + f(h.p.x) + ' Y' + f(h.p.y)));
-        L.push('G80');
-      }
-      const ts = toolOn(op.tool, order[0].p);
-      L.push('(DRILL ' + order.length + ' HOLES ' + f(op.depth) + ' DEEP TO THE DRILL POINT)', 'G98 G83 Z' + f(top - op.depth) + ' R' + f(clear) + ' Q' + f(Math.max(dt.dia * 0.75, 0.05)) + ' F' + ts.sp.feed);
-      order.slice(1).forEach(h => L.push('X' + f(h.p.x) + ' Y' + f(h.p.y)));
-      L.push('G80');
-    }
-
-    // ---- engrave / follow the line with the tool centre
-    function engrave(op, contours) {
-      const tn = op.tool; if (!tools[tn]) return;
-      const levels = levelsOf(op.depth, op.step);
-      contours.forEach((c, ci) => {
-        const segs = geo(c.segs), s0 = CAD.start(segs[0]), ts = toolOn(tn, s0);
-        let prev = top;
-        levels.forEach((z, li) => {
-          L.push('(FOLLOW ' + op.layer.toUpperCase() + ' CONTOUR ' + (ci + 1) + ' Z' + f(z) + ')');
-          if (li) L.push('G00 X' + f(s0.x) + ' Y' + f(s0.y));
-          L.push('G00 Z' + f(Math.min(clear, prev + 0.05)), 'G01 Z' + f(z) + ' F' + ts.sp.plunge, 'F' + ts.sp.feed);
-          segs.forEach(s => L.push(segCode(s)));
-          L.push('G00 Z' + f(clear)); prev = z;
-        });
-      });
-    }
-
-    job.ops.forEach(op => {
-      const layer = job.layers[op.layer]; if (!layer || op.op === 'none') return;
-      const closed = layer.contours.filter(c => c.closed);
-      const label = (op.op === 'profile-out' ? 'OUTSIDE PROFILE ' : 'INSIDE PROFILE ') + op.layer.toUpperCase();
-      if (op.op === 'profile-out' || op.op === 'profile-in') {
-        if (!closed.length) { W.push(label + ': this layer has no closed outlines.'); return; }
-        const levels = levelsOf(op.depth, op.step);
-        closed.forEach((c, i) => profilePass(geo(c.segs), op.op === 'profile-in' ? 'in' : 'out', op.tool, levels, edgesOf([geo(c.segs).reduce((acc, s, k) => acc.concat((k ? CAD.flatten(s, 0.005).slice(1) : CAD.flatten(s, 0.005))), [])]), label + (closed.length > 1 ? ' ' + (i + 1) : '')));
-      } else if (op.op === 'pocket') {
-        if (!closed.length) { W.push('POCKET ' + op.layer + ': this layer has no closed outlines.'); return; }
-        pocket(op, closed, op.tool);
-      } else if (op.op === 'drill') drill(op, layer);
-      else if (op.op === 'engrave') engrave(op, layer.contours.filter(c => !c.circle || true));
-      const allOpen = layer.contours.filter(c => !c.closed).length;
-      if (allOpen && (op.op === 'pocket' || op.op.startsWith('profile'))) W.push(op.layer + ': ' + allOpen + ' open chain(s) were ignored. Close the outline in CAD, or use Follow line.');
-    });
-    if (curTool !== null) toolOff();
-    L.push('G91 G28 Y0.', 'G90', 'M30', '%');
-    return { text: L.join('\n'), stock, wcs, warnings: [...new Set(W)], toolsUsed: [...used] };
-  }
-
-  /* ---------- lathe ---------- */
-  function genLathe(job) {
-    const W = [], L = [], mat = job.mat, tools = job.lib;
-    const layer = job.layers[job.layer];
-    if (!layer || !layer.contours.length) return { error: 'The chosen layer has no profile.' };
-    const c = layer.contours.slice().sort((a, b) => (b.bbox.maxx - b.bbox.minx) - (a.bbox.maxx - a.bbox.minx))[0];
-    const onAxis = s => { const a = CAD.start(s), e = CAD.end(s); return Math.abs(a.y) < 1e-4 && Math.abs(e.y) < 1e-4; };
-    let segs = c.segs.slice();
-    if (c.closed) {
-      const k = segs.findIndex(onAxis);
-      if (k < 0) return { error: 'This closed outline does not sit on the centre line (Y0). Draw the upper half of the part with the centre line along X.' };
-      segs = segs.slice(k + 1).concat(segs.slice(0, k + 1));
-    }
-    while (segs.length && onAxis(segs[segs.length - 1])) segs.pop();
-    while (segs.length && onAxis(segs[0])) segs.shift();
-    if (!segs.length) return { error: 'No profile is left after removing the centre line.' };
-    if (CAD.start(segs[0]).x < CAD.end(segs[segs.length - 1]).x) segs = segs.reverse().map(CAD.reverse);
-    // drop the front face (from the centre line up) and the back face (down to the centre line)
-    while (segs.length > 1 && segs[0].t === 'L' && Math.abs(CAD.start(segs[0]).y) < 1e-4) segs.shift();
-    while (segs.length > 1 && segs[segs.length - 1].t === 'L' && Math.abs(CAD.end(segs[segs.length - 1]).y) < 1e-4) segs.pop();
-    const pts = []; segs.forEach(s => CAD.flatten(s, 0.005).forEach(p => pts.push(p)));
-    if (pts.some(p => p.y < -1e-4)) return { error: 'Part of the profile is below the centre line. Draw only the upper half (Y = radius).' };
-    const xmax = Math.max(c.bbox.maxx, ...pts.map(p => p.x)), xmin = Math.min(...pts.map(p => p.x));
-    for (let i = 1; i < pts.length; i++) {
-      if (pts[i].x > pts[i - 1].x + 1e-5) return { error: 'The profile turns back toward the front face near Z' + f(pts[i].x - xmax) + '. G71 type I needs Z to keep moving toward the chuck. Undercuts like this need a back-turning tool.' };
-    }
-    // grooves: where the diameter drops below what is already reached nearer the front face
-    let rh = 0; const hull = pts.map(p => { rh = Math.max(rh, p.y); return { x: p.x, y: rh }; });
-    const grooves = []; let gs = -1;
-    for (let i = 0; i <= pts.length; i++) {
-      const low = i < pts.length && pts[i].y < hull[i].y - 1e-3;
-      if (low && gs < 0) gs = i;
-      if (!low && gs >= 0) { grooves.push({ s: gs - 1, e: Math.min(i, pts.length - 1) }); gs = -1; }
-    }
-    if (grooves.length && !(job.groove && tools[job.groove])) return { error: 'The profile has ' + grooves.length + ' groove(s), where the diameter gets smaller toward the chuck. Choose a groove tool so the trainer can rough and finish them.' };
-    const Z = x => x - xmax, X = y => 2 * y;
-    const maxDia = 2 * Math.max(...pts.map(p => p.y)), length = xmax - xmin;
-    const stockDia = Math.ceil((maxDia + 0.05) / 0.0625) * 0.0625;
-    const partW = job.part && tools[job.part] ? (tools[job.part].width || 0.12) : 0;
-    const stock = { dia: +stockDia.toFixed(4), stickout: +(length + partW + 0.6).toFixed(3), extra: job.face ? 0.03 : 0 };
-    const clr = f(stockDia + 0.1);
-    const two = job.gen === 'fanuc' || job.gen === 'mazatrol';
-    L.push('%', 'O' + String(job.progNo).padStart(5, '0') + ' (' + job.title + ')', '(GENERATED BY THE ACCESS CNC TRAINER FROM ' + job.file + ')',
-      '(BAR ' + f(stockDia) + ' DIA. Z0 = FINISHED FACE. X = DIAMETER)', '(MATERIAL: ' + mat.label.toUpperCase() + '. FEEDS AND SPEEDS ARE TRAINING VALUES)',
-      'G18 G20 G40 G54 G80 G99', 'G28 U0. W0.', 'G50 S' + job.maxRpm);
-    const tc = n => 'T' + String(n).padStart(2, '0') + String(n).padStart(2, '0');
-    const nm = n => '(' + (tools[n] ? tools[n].name.toUpperCase().replace(/[()]/g, '') : 'T' + n) + ')';
-    if (job.face && tools[job.rough]) L.push('(FACE)', nm(job.rough), tc(job.rough), 'G96 S' + mat.rough[0] + ' M03', 'G00 X' + clr + ' Z0.1 M08', 'G01 Z0. F' + mat.finish[1], 'X-0.062', 'G00 Z0.1', 'X' + clr, 'G28 U0. W0.', 'M01');
-    const s0 = CAD.start(segs[0]);
-    const prof = ['N100 G00 X' + f(X(s0.y)), 'G01 Z' + f(Z(s0.x)) + ' F' + mat.finish[1]];
-    if (!grooves.length) {
-      segs.forEach(s => {
-        const e = CAD.end(s);
-        if (s.t === 'L') prof.push('X' + f(X(e.y)) + ' Z' + f(Z(e.x)));
-        else { const a = CAD.start(s); prof.push((s.sw < 0 ? 'G02' : 'G03') + ' X' + f(X(e.y)) + ' Z' + f(Z(e.x)) + ' I' + f(s.c.y - a.y) + ' K' + f(s.c.x - a.x)); prof.push('G01'); }
-      });
-      if (prof[prof.length - 1] === 'G01') prof.pop();
-    } else {
-      // G71/G70 follow the outside envelope. The grooves are cut afterwards with the grooving tool.
-      rdp(hull, 0.0005).slice(1).forEach(p => prof.push('X' + f(X(p.y)) + ' Z' + f(Z(p.x))));
-    }
-    prof.push('N200 G01 X' + clr);
-    if (tools[job.rough]) {
-      L.push('(ROUGH WITH G71)', nm(job.rough), tc(job.rough), 'G96 S' + mat.rough[0] + ' M03', 'G00 X' + clr + ' Z0.1 M08');
-      if (two) L.push('G71 U0.05 R0.02', 'G71 P100 Q200 U0.02 W0.005 F' + mat.rough[1]);
-      else L.push('G71 P100 Q200 U0.02 W0.005 D0.05 F' + mat.rough[1]);
-      prof.forEach(x => L.push(x));
-      L.push('G00 X' + clr + ' Z0.1', 'G28 U0. W0.', 'M01');
-    }
-    if (tools[job.finish]) {
-      if (!tools[job.rough]) prof.forEach(x => L.push(x));
-      L.push('(FINISH WITH G70)', nm(job.finish), tc(job.finish), 'G96 S' + mat.finish[0] + ' M03', 'G00 X' + clr + ' Z0.1 M08', 'G70 P100 Q200', 'G00 X' + clr + ' Z0.1 M09', 'G28 U0. W0.', 'M01');
-    }
-    if (grooves.length) {
-      const gt = tools[job.groove], w = gt.width || 0.125;
-      const rAt = z => { // profile radius at part Z (z <= 0), interpolated
-        const x = z + xmax;
-        for (let i = 1; i < pts.length; i++) { const a = pts[i - 1], b = pts[i]; if (x <= a.x + 1e-9 && x >= b.x - 1e-9) { if (Math.abs(a.x - b.x) < 1e-9) return Math.max(a.y, b.y); return a.y + (b.y - a.y) * (a.x - x) / (a.x - b.x); } }
-        return 0;
-      };
-      const spanMax = (zc) => { let m = 0; const a = zc - w + 1e-4, b = zc - 1e-4; for (let z = a; z <= b + 1e-9; z += 0.0025) m = Math.max(m, rAt(Math.min(z, b))); return Math.max(m, rAt(b)); };
-      L.push('(GROOVES WITH ' + f(w) + ' WIDE GROOVING TOOL)', nm(job.groove), tc(job.groove), 'G96 S' + mat.part[0] + ' M03', 'G00 X' + clr + ' Z0.1 M08');
-      grooves.forEach((g, gi) => {
-        const zF = Z(pts[g.s].x), zB = Z(pts[g.e].x), width = zF - zB, top = hull[g.s].y;
-        const cl = f(2 * (top + 0.05));
-        if (width < w - 1e-4) { W.push('Groove ' + (gi + 1) + ' at Z' + f(zF) + ' is ' + f(width) + ' wide. The grooving tool is ' + f(w) + ' wide, so the groove was left out. Use a narrower tool.'); return; }
-        let bottom = Infinity; for (let i = g.s; i <= g.e; i++) bottom = Math.min(bottom, pts[i].y);
-        L.push('(GROOVE ' + (gi + 1) + ': Z' + f(zF) + ' TO Z' + f(zB) + ', BOTTOM DIA ' + f(2 * bottom) + ')', 'G00 Z' + f(zF), 'X' + cl);
-        const plunges = []; for (let z = zF; z > zB + w - 1e-6; z -= w * 0.8) plunges.push(z); if (!plunges.length || plunges[plunges.length - 1] > zB + w + 1e-6) plunges.push(zB + w);
-        plunges.forEach(z => L.push('G00 Z' + f(z), 'G01 X' + f(2 * (spanMax(z) + 0.005)) + ' F' + mat.part[1], 'G00 X' + cl));
-        const fin = []; for (let z = zF; z >= zB + w - 1e-6; z -= 0.01) fin.push({ x: z, y: spanMax(z) }); fin.push({ x: zB + w, y: spanMax(zB + w) });
-        const fp = rdp(fin, 0.0005);
-        L.push('G00 Z' + f(fp[0].x), 'G01 X' + f(2 * fp[0].y) + ' F' + mat.part[1]);
-        fp.slice(1).forEach(p => L.push('X' + f(2 * p.y) + ' Z' + f(p.x)));
-        L.push('G00 X' + cl);
-      });
-      L.push('G00 X' + clr + ' Z0.1 M09', 'G28 U0. W0.', 'M01');
-    }
-    if (job.part && tools[job.part]) {
-      L.push('(PART OFF AT Z' + f(-length) + ', ' + f(partW) + ' WIDE BLADE)', nm(job.part), tc(job.part), 'G96 S' + mat.part[0] + ' M03', 'G00 X' + clr + ' Z0.1 M08', 'Z' + f(-length), 'G01 X-0.03 F' + mat.part[1], 'G00 X' + clr, 'Z0.1 M09', 'G28 U0. W0.');
-    }
-    if (stockDia > 6) W.push('The bar is ' + f(stockDia) + ' in. diameter. Check it fits the chuck of the selected lathe.');
-    L.push('M30', '%');
-    return { text: L.join('\n'), stock, warnings: W, length, maxDia, grooves: grooves.length };
-  }
-
-  return { genMill, genLathe, speeds };
-})();
-if (typeof module !== 'undefined') module.exports = CAM;
+const CAM = window.AccessCAM;
 
 /* ===================================================================
    CAM3D: programs from a 3D mesh (STL, or STEP/IGES through loaders.js).
@@ -5244,14 +4326,20 @@ const SETUPS = (function () {
     let sim;
     if (geo.machine === 'mill') {
       sim = new HeightSim(s.x, s.y, s.z);
-      if (ctx.op1) {
+      if (ctx.initialMaterial) {
+        Object.assign(sim,AccessDesignMaterial.native(ctx.initialMaterial));
+        out.push.apply(out,materialContactFindings(geo,sim));
+      } else if (ctx.op1) {
         const s1 = new HeightSim(s.x, s.y, s.z);
         for (const st of ctx.op1.steps) if (st.k === 'move') { const t = ctx.op1.tools[st.tool]; if (t) s1.cut(ctx.op1.tipOf(st.a, st.tool), ctx.op1.tipOf(st.b, st.tool), Math.max((t.dia || 0) / 2, 0.01), t.prof); }
         sim = s1.flipped();
         ctx.op2Sim = s1.flipped();   // a separate copy: the dry run below cuts into sim
         out.push.apply(out, op2Findings(geo, sim));
       }
-    } else sim = new RadiusSim(s.dia / 2, geo.stockZ0, s.stickout + (s.extra || 0));
+    } else {
+      sim = new RadiusSim(s.dia / 2, geo.stockZ0, s.stickout + (s.extra || 0));
+      if(ctx.initialMaterial){Object.assign(sim,AccessDesignMaterial.native(ctx.initialMaterial));out.push.apply(out,materialContactFindings(geo,sim));}
+    }
     for (let n = 0; n < ctx.steps.length; n++) {
       const st = ctx.steps[n]; if (st.k !== 'move') continue;
       const t = ctx.tools[st.tool]; if (!t) continue;
@@ -5322,6 +4410,41 @@ const SETUPS = (function () {
         why: refs(['general_clamping_force_and_support', 'R', 0], ['general_sequence_and_two_operation_work', 'R', 2]), fix: 'Grip on faces Op 1 did not cut, or add a soft jaw or step that fits the machined edge.' });
     });
     return out;
+  }
+
+  /* Contact is assessed against actual incoming material, in the seated fixture
+     frame. These are geometric checks; no clamping-force claim is made. */
+  function materialContactFindings(geo,sim){
+    const out=[],add=(code,title,what,fix)=>out.push({level:'crash',code,step:null,title,what,fix,why:[]});
+    if(geo.machine==='mill'){
+      const supports=geo.boxes.filter(b=>b.kind==='parallel'||b.kind==='plate'||(b.kind==='floor'&&!geo.boxes.some(q=>q.kind==='parallel'))||(b.kind==='table'&&geo.method==='clamps'&&geo.info.parH<=.01));
+      for(const b of supports){let total=0,contact=0;
+        for(let j=0;j<sim.ny;j++)for(let i=0;i<sim.nx;i++){const x=i*sim.dx,y=j*sim.dy;if(x<b.x0||x>b.x1||y<b.y0||y>b.y1)continue;total++;const k=j*sim.nx+i;if(sim.h[k]>sim.b[k]+1e-6&&Math.abs(sim.b[k]-b.z1)<=.005)contact++;}
+        if(!total||contact/total<.6)add('SETUP-SUPPORT','Insufficient support on '+b.name,(total?Math.round(100*contact/total):0)+'% of the sampled support area touches the remaining material.','Move the support beneath intact material or choose a fixture that supports the machined lower surface.');
+      }
+      if(geo.method==='vise'||geo.method==='vise_soft')for(const [label,j] of [['moving jaw',0],['fixed jaw',sim.ny-1]]){let total=0,contact=0;
+        for(let i=0;i<sim.nx;i++){const x=i*sim.dx;if(x<geo.info.cx-geo.info.hw||x>geo.info.cx+geo.info.hw)continue;total++;const k=j*sim.nx+i,overlap=Math.min(sim.h[k],geo.info.jawTop)-Math.max(sim.b[k],geo.info.floor);if(overlap>=.05)contact++;}
+        if(!total||contact/total<.6)add('SETUP-GRIP','Insufficient material at the '+label,(total?Math.round(100*contact/total):0)+'% of the sampled jaw length has at least 1.27 mm of material engagement.','Choose intact gripping faces, suitable soft jaws, or a different setup.');
+      }
+      for(const b of geo.boxes.filter(b=>b.kind==='clamp')){let total=0,contact=0;
+        for(let j=0;j<sim.ny;j++)for(let i=0;i<sim.nx;i++){const x=i*sim.dx,y=j*sim.dy;if(x<b.x0||x>b.x1||y<b.y0||y>b.y1)continue;total++;const k=j*sim.nx+i;if(sim.h[k]>sim.b[k]+1e-6&&Math.abs(sim.h[k]-b.z0)<=.005)contact++;}
+        if(!total||contact/total<.6)add('SETUP-CLAMP','The '+b.name+' does not bear on enough material',(total?Math.round(100*contact/total):0)+'% of its sampled nose contact remains.','Move the clamp onto a supported, intact surface and adjust its height.');
+      }
+      for(const b of geo.boxes.filter(b=>b.kind==='edgeclamp')){let total=0,contact=0;
+        for(let i=0;i<sim.nx;i++){const x=i*sim.dx;if(x<b.x0||x>b.x1)continue;total++;if(Math.min(sim.h[i],b.z1)-Math.max(sim.b[i],b.z0)>=.01)contact++;}
+        if(!total||contact/total<.6)add('SETUP-CLAMP','The '+b.name+' lacks remaining edge contact',(total?Math.round(100*contact/total):0)+'% of its sampled edge retains material engagement.','Move the edge clamp to a supported edge that remains on the part.');
+      }
+      if(geo.seatingOffset>1e-6||(geo.clampContacts||[]).some(c=>Math.abs(c.surface)>1e-6))out.push({level:'note',code:'SETUP-SEAT',step:null,title:'Fixture seated against measured material',what:'Supports and jaws are raised '+(geo.seatingOffset*25.4).toFixed(3)+' mm to the lowest remaining surface. '+(geo.clampContacts&&geo.clampContacts.length?'Strap noses follow their measured upper contact surfaces at Z '+geo.clampContacts.map(c=>(c.surface*25.4).toFixed(3)).join(', ')+' mm. ':'')+'The original stock datum is retained.',fix:'Review the resulting support contacts and tool clearances.',why:[]});
+    }else{
+      const grip=geo.bands.find(b=>b.kind==='jaws'||b.kind==='collet'),lo=grip?grip.z0:0,hi=grip?grip.z1:0;let total=0,contact=0;
+      for(let k=0;k<sim.n;k++){const z=sim.z0+k*sim.dz;if(z<lo||z>hi)continue;total++;if(Math.abs(sim.r[k]-geo.info.R)<=.005)contact++;}
+      if(!total||contact/total<.6)add('SETUP-GRIP','Insufficient material in the chuck or collet grip',(total?Math.round(100*contact/total):0)+'% of the sampled original gripping zone retains the fixture diameter.','Choose a fixture and explicit gripping datum that match the remaining part.');
+      if(geo.method==='tail'){const k=Math.round((geo.info.zt-sim.z0)/sim.dz);if(k<0||k>=sim.n||sim.r[k]<=1e-4)add('SETUP-CENTRE','The tailstock centre has no remaining contact','Previous machining removed the material at the modelled centre point.','Use a supported contact point that remains on the part.');}
+      if(geo.method==='steady'){
+        let total=0,contact=0;for(let k=0;k<sim.n;k++){const z=sim.z0+k*sim.dz;if(z<geo.info.zs-.2||z>geo.info.zs+.2)continue;total++;if(Math.abs(sim.r[k]-geo.info.R)<=.005)contact++;}
+        if(!total||contact/total<.6)add('SETUP-REST','The steady-rest fingers do not contact enough remaining material',(total?Math.round(100*contact/total):0)+'% of the sampled finger width retains the original diameter. This trainer models the fingers at that diameter; a smaller turned surface leaves a radial gap.','Move the rest to an intact original diameter that remains on the part, or choose another supported fixture.');
+      }
+    }return out;
   }
 
   function check(ctx) {
@@ -5526,9 +4649,11 @@ const Scene3D = (() => {
       this.R = dia / 2; this.z0 = z0; this.z1 = z1;
       this.dz = 0.005; this.n = Math.ceil((z1 - z0) / this.dz) + 1;
       this.r = new Float32Array(this.n).fill(this.R); this.c = new Int16Array(this.n).fill(-1);
+      this.r0 = null;
       this.seg = 40;
       this.group = new THREE.Group();
       this.parts = [];
+      this.detachedProfiles = [];
       if (buildGeometry) this.build();
     }
     zAt(k) { return this.z0 + k * this.dz; }
@@ -5553,7 +4678,7 @@ const Scene3D = (() => {
       this.group.add(this.mesh);
       this.refresh();
     }
-    reset() { this.r.fill(this.R); this.c.fill(-1); this.parts.forEach(p => p.parent && p.parent.remove(p)); this.parts = []; this.refresh(); }
+    reset() { if(this.r0)this.r.set(this.r0);else this.r.fill(this.R); this.c.fill(-1); this.parts.forEach(p => p.parent && p.parent.remove(p)); this.parts = []; this.detachedProfiles = []; this.refresh(); }
     refresh() {
       const { n, seg, pos, col } = this, cols = this.colors || [];
       let last = 0;
@@ -5629,6 +4754,10 @@ const Scene3D = (() => {
         mesh.castShadow = true;
         grp.add(mesh);
       }
+      // Keep native measured radii before removing the separated material from
+      // the mounted bar. Include the cut gap and one trailing zero where present;
+      // a rendered mesh is not a reliable record of the finished dimensions.
+      this.detachedProfiles.push({z0:this.zAt(gap),dz:this.dz,z1:this.z1,r:this.r.slice(gap,Math.min(this.n,last+2))});
       for (let k = gap + 1; k < this.n; k++) this.r[k] = 0;
       this.dirty = true;
       return { group: grp, zStart: pts.length ? pts[0].z : 0, zEnd: pts.length ? pts[pts.length - 1].z : 0, rMax: Math.max(...pts.map(p => p.r), 0) };
@@ -6016,8 +5145,8 @@ const Scene3D = (() => {
       .map(o => ({o,position:o.position.clone(),quaternion:o.quaternion.clone(),scale:o.scale.clone(),visible:o.visible}));
     const materials = [];
     if (M.fixMeshes) Object.values(M.fixMeshes).forEach(list => list.forEach(o => materials.push({o,material:o.material})));
-    return {root,M,arrays,groups,objects,materials,stockState:{h0:stock.h0,b0:stock.b0,colors:stock.colors,parts:stock.parts && stock.parts.slice()},
-      machineState:{path:M.path,curTool:M.curTool,toolLen:M.toolLen,setup:M.setup},
+    return {root,M,arrays,groups,objects,materials,stockState:{h0:stock.h0,b0:stock.b0,r0:stock.r0,colors:stock.colors,parts:stock.parts && stock.parts.slice(),detachedProfiles:stock.detachedProfiles && stock.detachedProfiles.slice()},
+      machineState:{path:M.path,curTool:M.curTool,toolLen:M.toolLen,setup:M.setup,materialOrientation:M.materialOrientation,setupProvenance:M.setupProvenance},
       camera:{r:controls.r,th:controls.th,ph:controls.ph,target:controls.target.clone(),userMoved:controls.userMoved,follow}};
   }
   function restoreManualScene(saved) {
@@ -6032,11 +5161,36 @@ const Scene3D = (() => {
     M.stock.refresh();
   }
 
+  /* Detached measurements of the stock actually changed by playback. These arrays
+     are never reconstructed from a toolpath, expected geometry or removed volume. */
+  function materialSnapshot(meta) {
+    if (!M || !M.stock) throw Error('There is no simulated stock to measure.');
+    const s = M.stock, mm = 25.4;
+    const copy = values => Array.from(values, n => Number(n) * mm);
+    const common = {format:'access-simulated-material',version:1,source:'scene-stock',units:'mm',machine:M.type,orientation:M.materialOrientation||(M.type==='mill'?'top':'front'),
+      complete:!!meta.complete,alarm:meta.alarm || null,program:String(meta.program || '')};
+    if (M.type === 'mill') {
+      if (!Number.isInteger(s.nx) || !Number.isInteger(s.ny) || s.nx*s.ny > 100000) throw Error('The simulated stock exceeds the material snapshot limit.');
+      return Object.assign(common,{stock:{widthMm:s.sx*mm,heightMm:s.sy*mm,depthMm:s.sz*mm},
+        data:{kind:'heightfield',nx:s.nx,ny:s.ny,dxMm:s.dx*mm,dyMm:s.dy*mm,topMm:copy(s.h),bottomMm:copy(s.b)}});
+    }
+    if (M.type === 'lathe') {
+      if (!Number.isInteger(s.n) || s.n > 100000) throw Error('The simulated stock exceeds the material snapshot limit.');
+      const profiles=s.detachedProfiles||[];
+      if(profiles.length>12||profiles.reduce((n,p)=>n+p.r.length,0)>100000)throw Error('The separated material exceeds the comparison snapshot limit.');
+      return Object.assign(common,{stock:{diameterMm:s.R*2*mm,lengthMm:M.setup.stock.stickout*mm},
+        data:{kind:'radial-profile',z0Mm:s.z0*mm,dzMm:s.dz*mm,frontZMm:M.setup.stock.stickout*mm,stockEndZMm:s.z1*mm,radiiMm:copy(s.r),detachedParts:profiles.length,
+          detachedProfiles:profiles.map(p=>({z0Mm:p.z0*mm,dzMm:p.dz*mm,stockEndZMm:p.z1*mm,radiiMm:copy(p.r)}))}});
+    }
+    throw Error('This simulator does not expose measurable stock for this machine.');
+  }
+
   /* Exact-resolution, detached stock check for manual program previews. */
   function validateMaterialPath(ctx) {
     const isMill = ctx.machine === 'mill', s = ctx.setup.stock;
     const stock = isMill ? new MillStock(s.x, s.y, s.z, false)
       : new LatheStock(s.dia, ctx.setup.fixture.stockZ0, s.stickout + (s.extra || 0), false);
+    if(ctx.initialMaterial)AccessDesignMaterial.seed(stock,ctx.initialMaterial,false);
     const diagnostics = [];
     let separatedVolume = 0;
     function volume() {
@@ -6087,7 +5241,7 @@ const Scene3D = (() => {
     return { diagnostics, removedVolumeIn3:Math.max(0, initialVolume-volume()-separatedVolume), volumeApproximate:true };
   }
 
-  return { captureManualScene, restoreManualScene, validateMaterialPath, init, buildMill, buildLathe, highlight, setTool, setPath, setPathProgress, setPose, setCoolant, view, render, setDoors, setPathVisible, get M() { return M; } };
+  return { captureManualScene, restoreManualScene, materialSnapshot, validateMaterialPath, init, buildMill, buildLathe, highlight, setTool, setPath, setPathProgress, setPose, setCoolant, view, render, setDoors, setPathVisible, get M() { return M; } };
 })();
 
 /* ===================================================================
@@ -6196,6 +5350,7 @@ const Scene3D = (() => {
     if (S.gen === 'mazatrol' && p && p.group === 'Conversational' && S.conv) stock = convStock();
     const st0 = stock || (S.machine === 'mill' ? { x: 7, y: 5, z: 1 } : { dia: 1.5, stickout: 3.6, extra: 0.03 });
     const fixture = SETUPS.build(S.machine, st0, setupSel(p), model);
+    if(p&&p.initialMaterial)AccessDesignMaterial.seatFixture(fixture,p.initialMaterial);
     const setup = S.machine === 'mill' ? millSetup(model, st0, fixture) : latheSetup(model, st0, fixture);
     S.stockFrame = Object.assign({}, setup.wcs[54]);
     if (p && p.wcs) Object.keys(p.wcs).forEach(k => { const d = p.wcs[k]; setup.wcs[k] = { x: setup.wcs[54].x + (d.dx || 0), y: setup.wcs[54].y + (d.dy || 0), z: setup.wcs[54].z + (d.dz || 0) }; });
@@ -6228,13 +5383,16 @@ const Scene3D = (() => {
       op1 = { steps: r1.steps, tools: t1, tipOf: tipWith(t1), name: of.o5 + ' ' + of.title };
     }
     try {
-      S.setupCheck = SETUPS.check({ geo: fx, steps: res.steps, tools: S.tools, tipOf: tipWith(S.tools), label: lineLabel, op1 });
+      S.setupCheck = SETUPS.check({ geo: fx, steps: res.steps, tools: S.tools, tipOf: tipWith(S.tools), label: lineLabel, op1,initialMaterial:p&&p.initialMaterial });
       S.setupCheck.op1 = op1 ? op1.name : null;
     } catch (e) { S.setupCheck = { findings: [], crash: 0, warn: 0, error: String(e) }; }
-    if (S.machine === 'mill' && Scene3D.M && Scene3D.M.stock && Scene3D.M.stock.setInitial) {
+    if(p&&p.initialMaterial&&Scene3D.M){
+      AccessDesignMaterial.seed(Scene3D.M.stock,p.initialMaterial,true);Scene3D.M.stock.reset();
+    }else if (S.machine === 'mill' && Scene3D.M && Scene3D.M.stock && Scene3D.M.stock.setInitial) {
       if (S.setupCheck.op2Sim) Scene3D.M.stock.setInitial(S.setupCheck.op2Sim);
       else if (Scene3D.M.stock.h0) { Scene3D.M.stock.h0 = null; Scene3D.M.stock.b0 = null; Scene3D.M.stock.reset(); }
     }
+    if(Scene3D.M){Scene3D.M.materialOrientation=p&&p.setupProvenance?p.setupProvenance.orientation:(S.machine==='mill'?'top':'front');Scene3D.M.setupProvenance=p&&p.setupProvenance||null;if(!(p&&p.initialMaterial)&&S.machine==='lathe')Scene3D.M.stock.r0=null;}
     const hit = S.setupCheck.findings.filter(f => f.obstacle && f.level !== 'note').map(f => f.obstacle);
     Scene3D.highlight(hit);
     const b = document.getElementById('btn-setup');
@@ -6900,7 +6058,7 @@ const Scene3D = (() => {
   let manualSceneSignature = null;
   const manualProgramKey = 'MANUAL-PREVIEW';
 
-  function manualContext(project) {
+  function manualContext(project, transfer) {
     if (!project || !['mill','lathe'].includes(project.machine) || typeof project.text !== 'string' || !/^\s*O\s*\d+/m.test(project.text)) throw Error('Choose a machine and a program with an O number.');
     if (project.text.length > 250000) throw Error('This practice program is too long. Start a new program before adding more moves.');
     const e = JSON.parse(JSON.stringify(project)), machine = e.machine, gen = e.gen || 'classic';
@@ -6922,19 +6080,21 @@ const Scene3D = (() => {
       t.prof = machine === 'mill' ? TOOLING.profile(t) : null;
     });
     const fixture = SETUPS.build(machine, stock, e.setup || null, model);
+    const initialMaterial=transfer&&transfer.initialMaterial||null;
+    if(initialMaterial)AccessDesignMaterial.seatFixture(fixture,initialMaterial);
     const setup = machine === 'mill' ? millSetup(model, stock, fixture) : latheSetup(model, stock, fixture);
     const frame = setup.wcs[54];
     const tipOf = (p, tn) => machine === 'mill'
       ? {x:p.x-frame.x, y:p.y-frame.y, z:p.z-(tools[tn] ? tools[tn].len || 0 : 0)-frame.z}
       : {z:p.z, r:p.x/2};
     const result = CNC.run({text:e.text, library:{}, machine, gen, model, tools, wcs:setup.wcs, startTool:machine === 'mill' ? 0 : 1});
-    return { e, machine, gen, model, stock, tools, setup, tipOf, result,
-      signature:JSON.stringify({machine,gen,stock,tools:e.tools,setup:e.setup || null}) };
+    return { e, machine, gen, model, stock, tools, setup, tipOf, result,initialMaterial,setupProvenance:transfer&&transfer.setupProvenance||null,
+      signature:JSON.stringify({machine,gen,stock,tools:e.tools,setup:e.setup || null,input:initialMaterial?AccessDesignMaterial.fingerprint(initialMaterial):null,orientation:transfer&&transfer.setupProvenance&&transfer.setupProvenance.orientation}) };
   }
 
-  function checkManual(project) {
+  function checkManual(project,transfer) {
     try {
-      const ctx = manualContext(project), diagnostics = [];
+      const ctx = manualContext(project,transfer), diagnostics = [];
       const add = (level, message, code, line) => diagnostics.push({level,message,code:code || 'CHECK',line:line === undefined ? null : line});
       if (ctx.result.alarm) add('error', ctx.result.alarm.msg, 'COMPILE', ctx.result.alarm.line + 1);
       if (ctx.result.steps.length > 10000) add('error','This practice program has too many moves. Start a new program.','LIMIT');
@@ -6944,30 +6104,31 @@ const Scene3D = (() => {
       });
       let check = null, material = {removedVolumeIn3:0, volumeApproximate:true};
       if (!diagnostics.some(d => d.level === 'error')) {
-        check = SETUPS.check({geo:ctx.setup.fixture, steps:ctx.result.steps, tools:ctx.tools, tipOf:ctx.tipOf, label:st => 'line ' + (st.line + 1)});
-        check.findings.filter(f => f.level !== 'note').forEach(f => add(f.level === 'crash' ? 'error' : 'warning', f.title + '. ' + f.what + ' ' + f.fix, f.code, f.step ? f.step.line + 1 : undefined));
-        material = Scene3D.validateMaterialPath({machine:ctx.machine,setup:ctx.setup,tools:ctx.tools,steps:ctx.result.steps,tipOf:ctx.tipOf});
+        check = SETUPS.check({geo:ctx.setup.fixture, steps:ctx.result.steps, tools:ctx.tools, tipOf:ctx.tipOf, label:st => 'line ' + (st.line + 1),initialMaterial:ctx.initialMaterial});
+        check.findings.filter(f => f.level !== 'note'||f.code==='SETUP-SEAT').forEach(f => add(f.level === 'crash' ? 'error' : f.level==='note'?'info':'warning', f.title + '. ' + f.what + ' ' + f.fix, f.code, f.step ? f.step.line + 1 : undefined));
+        material = Scene3D.validateMaterialPath({machine:ctx.machine,setup:ctx.setup,tools:ctx.tools,steps:ctx.result.steps,tipOf:ctx.tipOf,initialMaterial:ctx.initialMaterial});
         material.diagnostics.forEach(d => { if (!diagnostics.some(x => x.code === d.code && x.line === d.line)) diagnostics.push(d); });
       }
       const accepted = !diagnostics.some(d => d.level === 'error');
-      return {ctx,check,public:{accepted,diagnostics,removedVolumeIn3:material.removedVolumeIn3,volumeApproximate:true,stepCount:ctx.result.steps.length,positionUnits:'inches'}};
+      return {ctx,check,public:{accepted,diagnostics,removedVolumeIn3:material.removedVolumeIn3,volumeApproximate:true,stepCount:ctx.result.steps.length,positionUnits:'inches',workholding:{method:ctx.setup.fixture.method,seatingOffsetMm:(ctx.setup.fixture.seatingOffset||0)*25.4,checks:check?check.findings.filter(f=>f.level!=='note'||f.code==='SETUP-SEAT').map(f=>({code:f.code,level:f.level,message:f.title+'. '+f.what})):[]}}};
     } catch (error) {
       return {public:{accepted:false,diagnostics:[{level:'error',code:'INPUT',line:null,message:error.message || String(error)}],removedVolumeIn3:0,volumeApproximate:true,positionUnits:'inches'}};
     }
   }
 
-  function previewManual(project) {
-    const verified = checkManual(project);
+  function previewManual(project,transfer) {
+    const verified = checkManual(project,transfer);
     if (!verified.public.accepted) return Object.assign(verified.public,{snapshot:window.Trainer.trainingSnapshot()});
     const ctx = verified.ctx, e = ctx.e;
     const before = Object.assign({},S,{setupByKey:Object.assign({},S.setupByKey),msgs:S.msgs.slice()});
     const sceneBefore = Scene3D.captureManualScene(), signatureBefore = manualSceneSignature;
     const oldIndex = LIB.findIndex(p=>p.key===manualProgramKey), oldEntry = oldIndex>=0 ? LIB[oldIndex] : null;
-    const bannerBefore = {hidden:el.banner.hidden,className:el.banner.className,text:el.bannerText.textContent,scroll:el.editor.scrollTop};
+    const bannerBefore = {hidden:el.banner.hidden,className:el.banner.className,text:el.bannerText.textContent,scroll:el.editor.scrollTop,single:el.single.checked};
     try {
     const reusable = S.progKey === manualProgramKey && manualSceneSignature === ctx.signature && Scene3D.M && Scene3D.M.type === ctx.machine;
     const o = +/^\s*O\s*(\d+)/m.exec(e.text)[1];
     const entry = {key:manualProgramKey,o,o5:'O'+String(o).padStart(5,'0'),machine:ctx.machine,group:'Manual program builder',set:'manual',title:e.title || 'Manual practice',text:e.text,stock:e.stock,setup:e.setup,tools:e.tools,useLib:false,startTool:ctx.machine === 'mill' ? 0 : 1};
+    entry.initialMaterial=ctx.initialMaterial;entry.setupProvenance=ctx.setupProvenance;
     const old = LIB.findIndex(p => p.key === manualProgramKey);
     if (old < 0) LIB.push(entry); else LIB[old] = entry;
     S.running = false; S.manualPlayback = false; S.skipStops = false;
@@ -6984,6 +6145,7 @@ const Scene3D = (() => {
     }
     setEditorText(e.text); el.prog.textContent = entry.o5; S.edited = false;
     compile(); S.result.notes = S.result.notes.filter(n => !/ended without M30 or M02/.test(n.msg)); renderAlarmsTab(); resetRun();
+    const inputMaterialFingerprint=transfer?AccessDesignMaterial.fingerprint(Scene3D.materialSnapshot({complete:true,program:'SETUP-INPUT'})):null;
     const single = el.single.checked; el.single.checked = false;
     S.skipStops = true; S.running = true;
     advance(1e12);
@@ -6999,7 +6161,7 @@ const Scene3D = (() => {
     const snapshot = window.Trainer.trainingSnapshot(), frame = S.wcsCtl[54];
     const workPositionInches = S.machine === 'mill' ? {x:snapshot.position.x,y:snapshot.position.y,z:snapshot.position.z}
       : {x:S.pos.x-frame.x,z:S.pos.z-frame.z,radius:(S.pos.x-frame.x)/2};
-    return Object.assign(verified.public,{snapshot,workPositionInches,sceneReused:!!reusable,spindleRpm:S.rpm,coolant:S.coolant});
+    return Object.assign(verified.public,{snapshot,materialSnapshot:window.Trainer.simulatedMaterial(),inputMaterialFingerprint,workPositionInches,sceneReused:!!reusable,spindleRpm:S.rpm,coolant:S.coolant});
     } catch (error) {
       const current=LIB.findIndex(p=>p.key===manualProgramKey);
       if(oldEntry) LIB[current]=oldEntry; else if(current>=0) LIB.splice(current,1);
@@ -7010,9 +6172,64 @@ const Scene3D = (() => {
       setEditorText(S.text);el.editor.scrollTop=bannerBefore.scroll;el.prog.textContent=currentProg().o5;
       renderOffsets();renderLegend();renderAlarmsTab();updateReadouts();highlight();
       el.banner.hidden=bannerBefore.hidden;el.banner.className=bannerBefore.className;el.bannerText.textContent=bannerBefore.text;
+      el.single.checked=bannerBefore.single;
       Scene3D.render();
       return {accepted:false,diagnostics:[{level:'error',code:'PREVIEW',line:null,message:'The preview could not complete. Your previous work is unchanged. '+(error.message||String(error))}],snapshot:window.Trainer.trainingSnapshot(),removedVolumeIn3:0,volumeApproximate:true,positionUnits:'inches'};
     }
+  }
+
+  function captureSetupTransaction(){return{state:Object.assign({},S,{setupByKey:Object.assign({},S.setupByKey),msgs:S.msgs.slice()}),scene:Scene3D.captureManualScene(),library:LIB.slice(),signature:manualSceneSignature,banner:{hidden:el.banner.hidden,className:el.banner.className,text:el.bannerText.textContent,single:el.single.checked,scroll:el.editor.scrollTop}};}
+  function restoreSetupTransaction(saved){
+    for(const k of Object.keys(S))if(!(k in saved.state))delete S[k];Object.assign(S,saved.state);
+    LIB.splice(0,LIB.length,...saved.library);manualSceneSignature=saved.signature;Scene3D.restoreManualScene(saved.scene);
+    setSeg('seg-machine',S.machine);setSeg('seg-gen',S.gen);fillModels();fillPrograms();applySkin();setEditorText(S.text);el.prog.textContent=currentProg().o5;
+    renderOffsets();renderLegend();renderAlarmsTab();updateReadouts();highlight();el.banner.hidden=saved.banner.hidden;el.banner.className=saved.banner.className;el.bannerText.textContent=saved.banner.text;el.single.checked=saved.banner.single;el.editor.scrollTop=saved.banner.scroll;Scene3D.render();
+  }
+  function setupChain(raw){
+    if(!raw||raw.version!==1||!Array.isArray(raw.setups)||!raw.setups.length||raw.setups.length>4)throw Error('A setup chain needs one to four ordered setups.');
+    const chain=JSON.parse(JSON.stringify(raw)),ids=new Set(),machine=chain.setups[0].training&&chain.setups[0].training.machine,stock=JSON.stringify(chain.setups[0].training&&chain.setups[0].training.stock);
+    if(chain.setups[0].orientation!==(machine==='mill'?'top':'front'))throw Error('The first setup must establish the original top or front datum.');
+    for(const s of chain.setups){
+      if(typeof s.id!=='string'||!s.id.length||s.id.length>100||ids.has(s.id))throw Error('Setup IDs must be unique and bounded.');ids.add(s.id);
+      if(!s.training||s.training.machine!==machine||JSON.stringify(s.training.stock)!==stock)throw Error('All setups must retain the same machine and original stock dimensions.');
+      if(!(machine==='mill'?['top','bottom']:['front']).includes(s.orientation))throw Error('Unsupported setup orientation. Use top/bottom milling or the original lathe front.');
+      const method=s.training.setup&&s.training.setup.method;
+      if(!(machine==='mill'?['vise','vise_soft','clamps','plate']:['chuck3','chuck4','soft','collet','tail','steady']).includes(method))throw Error('Choose an explicit supported fixture for every setup. Between-centres and lathe reversal need a different stock frame.');
+      if(s.training.setup.op2Of)throw Error('A measured setup chain cannot also reconstruct stock through a legacy op2 reference.');
+    }return chain;
+  }
+  function previewSetups(raw){
+    let chain;try{chain=setupChain(raw);}catch(error){return{accepted:false,diagnostics:[{level:'error',code:'SETUP-INPUT',line:null,message:error.message}],completedSetups:[]};}
+    const before=captureSetupTransaction(),completed=[];let prior=null,result=null,current=null;
+    try{
+      for(let index=0;index<chain.setups.length;index++){
+        current=chain.setups[index];
+        if(prior&&prior.machine==='lathe'&&prior.data.detachedParts)throw Error('A parted-off piece cannot continue into another setup without an explicit remounting datum.');
+        const input=prior?AccessDesignMaterial.orient(prior,current.orientation):null;
+        const provenance={id:current.id,index,orientation:current.orientation,inputMaterialFingerprint:input?AccessDesignMaterial.fingerprint(input):null,outputMaterialFingerprint:null};
+        result=previewManual(current.training,{initialMaterial:input,setupProvenance:provenance});
+        if(!result.accepted){const error=Error('Setup '+current.id+' did not pass its material and workholding checks.');error.diagnostics=result.diagnostics;throw error;}
+        if(!result.materialSnapshot.complete)throw Error('Setup '+current.id+' did not complete. Later setups cannot use partial material.');
+        if(provenance.inputMaterialFingerprint&&result.inputMaterialFingerprint!==provenance.inputMaterialFingerprint)throw Error('The material measured at the start of setup '+current.id+' differs from the preceding setup output.');
+        prior=result.materialSnapshot;provenance.outputMaterialFingerprint=AccessDesignMaterial.fingerprint(prior);
+        if(!provenance.inputMaterialFingerprint)provenance.inputMaterialFingerprint=result.inputMaterialFingerprint;
+        Scene3D.M.setupProvenance=Object.assign({},provenance);currentProg().setupProvenance=Object.assign({},provenance);
+        completed.push({id:current.id,index,orientation:current.orientation,accepted:true,simulated:true,inputMaterialFingerprint:provenance.inputMaterialFingerprint,outputMaterialFingerprint:provenance.outputMaterialFingerprint,diagnostics:result.diagnostics,workholding:result.workholding,removedVolumeIn3:result.removedVolumeIn3,stepCount:result.stepCount});
+      }
+      const setup=Object.assign({},Scene3D.M.setupProvenance),canonical=AccessDesignMaterial.orient(prior,prior.machine==='mill'?'top':'front');canonical.setup=setup;
+      return Object.assign({},result,{setup,completedSetups:completed,materialSnapshot:canonical,setupMaterialSnapshot:prior,diagnostics:completed.flatMap(s=>s.diagnostics.map(d=>Object.assign({},d,{setupId:s.id}))),workholding:completed.map(s=>({id:s.id,...s.workholding}))});
+    }catch(error){restoreSetupTransaction(before);return{accepted:false,diagnostics:(error.diagnostics||[{level:'error',code:'SETUP-CHAIN',line:null,message:error.message}]).map(d=>Object.assign({},d,current?{setupId:current.id}:{})),failedSetupId:current&&current.id,completedSetups:[],snapshot:window.Trainer.trainingSnapshot()};}
+  }
+  function validateSetups(raw){
+    const before=captureSetupTransaction();try{
+      const result=previewSetups(raw);return{accepted:result.accepted,diagnostics:result.diagnostics,failedSetupId:result.failedSetupId,workholding:result.workholding||[],completedSetups:(result.completedSetups||[]).map(s=>Object.assign({},s,{simulated:false,inputMaterialFingerprint:null,outputMaterialFingerprint:null})),setup:result.setup?Object.assign({},result.setup,{inputMaterialFingerprint:null,outputMaterialFingerprint:null}):undefined};
+    }finally{restoreSetupTransaction(before);}
+  }
+  function loadSetupPlayback(raw,index){
+    const chain=setupChain(raw),n=index===undefined?chain.setups.length-1:index;
+    if(!Number.isInteger(n)||n<0||n>=chain.setups.length)throw Error('Choose a setup within this chain.');
+    const result=previewSetups({version:1,setups:chain.setups.slice(0,n+1)});if(!result.accepted)return result;
+    resetRun();Scene3D.M.stock.refresh();S.manualPlayback=false;updateReadouts();Scene3D.render();return Object.assign({},result,{snapshot:window.Trainer.trainingSnapshot()});
   }
 
   /* ---------------- API for the file and tool dialogs (workshop.js) ---------------- */
@@ -7021,6 +6238,8 @@ const Scene3D = (() => {
     validateManual: project => checkManual(project).public,
     previewManual,
     replayManual: previewManual,
+    previewSetups,validateSetups,loadSetupPlayback,
+    simulatedMaterial: () => {const s=Scene3D.materialSnapshot({complete:S.finished&&!S.alarm,alarm:S.alarm,program:S.progKey});if(Scene3D.M.setupProvenance)s.setup=Object.assign({},Scene3D.M.setupProvenance,{outputMaterialFingerprint:s.complete?AccessDesignMaterial.fingerprint(s):null});return s;},
 
     loadTrainingProject(e) {
       if (!e || !/^CNC-\d{3}$/.test(e.id) || !['mill','lathe'].includes(e.machine) || !e.tools || !e.stock || typeof e.text !== 'string') throw Error('Invalid training project');
@@ -7639,5 +6858,13 @@ const Scene3D = (() => {
 <script src="access-brand.js"></script>
 <script src="manual-engine.js"></script>
 <script src="manual-builder.js"></script>
+<script src="design-workholding.js"></script>
+<script src="../design/design-workflow.js"></script>
+<script src="../design/design-geometry.js"></script>
+<script src="../design/design-model.js"></script>
+<script src="../../source/canvas/src/vendor/shapes-engine.js"></script>
+<script src="design-cam.js"></script>
+<script src="design-comparison.js"></script>
+<script src="design-bridge.js"></script>
 </body>
 </html>
