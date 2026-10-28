@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="en-CA">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Lecture quiz generator · Carpentry math</title>
+<meta name="theme-color" content="#9E1217"><link rel="icon" href="../../../brand/is4s-badge.svg" type="image/svg+xml">
+<link rel="stylesheet" href="generator.css">
+</head>
+<body>
+<a class="skip" href="#generator">Skip to quiz generator</a>
+<header class="site-head wrap">
+ <a class="brand" href="../../../index.html"><img src="../../../brand/is4s-badge.svg" alt="Indigenous Skills4Success" width="120" height="110"><span>Carpentry foundation<br><strong>Intake 142</strong></span></a>
+ <nav aria-label="Learning resources"><a href="index.html">Quiz game</a><a href="../../../numeracy-hub/index.html">Numeracy Hub</a><a href="../../../books/ACCESS-Trades-Numeracy-Textbook.pdf" target="_blank" rel="noopener">The textbook</a></nav>
+</header>
+<main class="wrap" id="generator">
+ <section class="intro"><div><p class="eyebrow">Lecture quiz generator</p><h1>Fresh questions.<br><span>Ready to teach.</span></h1></div><p>Choose a lecture, build a new quiz, and download a fillable learner copy with its matching worked answer key.</p></section>
+ <div class="workspace">
+  <aside class="settings" aria-labelledby="settings-title">
+   <h2 id="settings-title">Build your quiz</h2>
+   <label for="lecture-select">Lecture</label><select id="lecture-select"></select>
+   <p class="schedule" id="lecture-schedule"></p><p class="reading" id="lecture-reading"></p>
+   <div class="count-row"><label for="question-count">Questions</label><select id="question-count" aria-describedby="count-note"></select></div>
+   <p class="hint" id="count-note">Choose 10–25 questions. Each version mixes reviewed questions with fresh calculations.</p>
+   <button class="primary full" id="generate">New random quiz</button>
+   <p class="status" id="generator-status" role="status" aria-live="polite"></p>
+   <div class="export-block"><h3>Save this version</h3><p>Both PDFs use the version shown in the preview.</p><button class="dark full" id="download-quiz">Download fillable quiz</button><button class="outline full" id="download-key">Download answer key</button></div>
+   <details class="rebuild"><summary>Rebuild an existing version</summary><p>Paste the code printed on a quiz to recreate its questions and answer key.</p><label for="rebuild-code">Quiz code</label><input id="rebuild-code" type="text" placeholder="LQ1-W01L01-15-ABC123" autocomplete="off" spellcheck="false"><button class="outline full" id="rebuild">Rebuild quiz</button></details>
+   <p class="original"><a id="original-pdf" href="PDF/W01-L01.pdf" target="_blank" rel="noopener">Open original lecture PDF</a> · <a id="play-lecture" href="index.html">Play this lecture</a></p>
+  </aside>
+  <section class="preview" aria-labelledby="preview-title">
+   <div class="preview-toolbar"><h2 id="preview-title">Learner preview</h2><div><button class="outline small" id="toggle-key" aria-pressed="false">Show answer key</button><button class="outline small" id="print-quiz">Print preview</button></div></div>
+   <article class="paper" id="quiz-preview" aria-live="off">
+    <header class="paper-head"><img src="../../../brand/is4s-badge.svg" alt="Indigenous Skills4Success" width="120" height="110"><p class="eyebrow" id="paper-label">Lecture quiz</p><h2 id="quiz-title"></h2><p id="quiz-meta"></p><p class="version"><span>Version <strong id="quiz-code"></strong></span><button class="text-button" id="copy-code">Copy code</button></p><p id="quiz-instructions"></p><div class="name-row" id="name-row"><span>Name <i></i></span><span>Date <i></i></span></div></header>
+    <ol class="questions" id="quiz-questions"></ol>
+    <footer class="paper-foot"><span id="quiz-footer"></span><span>Use the textbook to review your method.</span></footer>
+   </article>
+  </section>
+ </div>
+</main>
+<footer class="site-foot wrap">50 lectures · 10–25 questions · Fillable quizzes and matched answer keys</footer>
+<script src="quiz-data.js"></script><script src="generator-engine.js"></script><script src="generator-pdf.js"></script><script src="generator-app.js"></script>
+</body>
+</html>

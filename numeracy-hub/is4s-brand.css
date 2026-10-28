@@ -1,0 +1,35 @@
+/* Official IS4S identity. Keep the badge proportions and its white circle. */
+img.is4s-badge,
+svg.is4s-badge {
+  width: 140px;
+  min-width: 120px;
+  height: auto;
+  aspect-ratio: 1800 / 1650;
+  flex: 0 0 auto;
+  object-fit: contain;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+}
+.app-head img.is4s-badge { width: 140px; padding: 0; }
+.foot-inner img.is4s-badge { width: 120px; padding: 0; }
+.app-head .head-text { flex-basis: 360px; }
+@media (max-width: 640px) {
+  .app-head .head-inner { gap: 14px 18px; }
+  .app-head img.is4s-badge { width: 120px; }
+  .app-head .head-text { flex: 1 1 160px; }
+  .app-head .eyebrow { font-size: 12px; letter-spacing: .035em; }
+  .app-head h1 { font-size: clamp(25px, 7vw, 32px); }
+  .app-head .calc-pick { position: static; flex: 1 1 100%; margin: 0; justify-content: space-between; gap: 8px; }
+  .app-head .calc-pick-t { position: static; width: auto; height: auto; margin: 0; overflow: visible; clip: auto; }
+}
+@media (max-width: 380px) {
+  .app-head .head-text { flex-basis: 132px; }
+}
+@media print {
+  img.is4s-badge,
+  svg.is4s-badge,
+  .app-head img.is4s-badge,
+  .foot-inner img.is4s-badge { width: 25.4mm; min-width: 25.4mm; padding: 0; }
+}

@@ -24,10 +24,13 @@ Everything runs in the browser. Once the folder is downloaded, the hub, the canv
 
 Your progress in the hub is saved in the browser you use. Using a different browser or computer starts a fresh record.
 
+The Hub's exam builder includes separate switches for all 13 textbook chapters and the optional Kitchen Math appendix. Select a chapter or combine chapters with the other trade topics. Each exam includes fresh questions, worked answers, and matching Word or PDF downloads.
+
 ## Carpentry Foundation — Intake 142
 
 - [PowerPoint slides with speaker notes](carpentry/intake-142/PowerPoint/)
 - [PDF slides](carpentry/intake-142/PDF/)
 - [After-lecture quiz game](carpentry/intake-142/Quizzes/index.html) — 50 lecture boards with random questions, worked solutions, team play and original quiz-show music.
+- [Lecture quiz generator](carpentry/intake-142/Quizzes/generator.html) — choose any of the 50 lectures and generate 10–25 questions, a fillable quiz PDF and its matching worked answer key. A version code rebuilds the same questions and key.
 - [Fillable lecture quizzes](carpentry/intake-142/Quizzes/PDF/) — 15 questions per lecture; 12 for the readiness check. Type answers and working, then save a filled copy.
 - [Instructor quiz answer key](carpentry/intake-142/Quizzes/Instructor/Answer-Key.pdf)

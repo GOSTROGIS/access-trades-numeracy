@@ -1,5 +1,8 @@
-<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
-<title>ACCESS Trades Numeracy Hub</title>
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style><link rel="icon" type="image/svg+xml" href="../brand/is4s-badge.svg">
+<link rel="stylesheet" href="is4s-brand.css">
+<script src="is4s-brand.js"></script>
+</head><body>
+<title>Numeracy Hub</title>
 <style>
 
 /* Layout: shop workbook. Lockup header over a 4px gold rule, a progress and instructor bar,
@@ -1068,10 +1071,10 @@ main.wrap { padding-block: 28px 56px; display: grid; gap: 48px; }
 <div class="page">
 <header class="site-head app-head">
   <div class="head-inner">
-    <svg class="lockup" viewBox="35 30 205.2 102.9" role="img" aria-label="ACCESS"><g style="color:#FFBC00"><use href="#acc-gold"/></g><g style="color:#C60016"><use href="#acc-fig"/></g><g style="color:#D2181F"><use href="#acc-word"/></g></svg>
+    <img class="lockup is4s-badge" src="../brand/is4s-badge.svg" width="1800" height="1650" alt="IS4S · Indigenous Skills4Success">
     <div class="head-text">
-      <p class="eyebrow">Essential Skills for Aboriginal Futures · Skills for Success: Numeracy</p>
-      <h1>ACCESS Trades Numeracy Hub</h1>
+      <p class="eyebrow">Indigenous Skills4Success · Numeracy</p>
+      <h1>Numeracy Hub</h1>
       <p class="lede">Every worked example shows the calculator keys. Open the calculator any time with the button at the bottom right.</p>
     </div>
     <div class="calc-pick">
@@ -1250,7 +1253,7 @@ main.wrap { padding-block: 28px 56px; display: grid; gap: 48px; }
     </section>
   </div>
   <footer class="site-foot">
-  <div class="foot-inner"><svg class="lockup-sm" viewBox="35 30 205.2 102.9" role="img" aria-label="ACCESS"><g style="color:#FFBC00"><use href="#acc-gold"/></g><g style="color:#C60016"><use href="#acc-fig"/></g><g style="color:#D2181F"><use href="#acc-word"/></g></svg><p>ACCESS Trades · Essential Skills for Aboriginal Futures · Skills for Success: Numeracy</p></div>
+  <div class="foot-inner"><img class="lockup-sm is4s-badge" src="../brand/is4s-badge.svg" width="1800" height="1650" alt="IS4S · Indigenous Skills4Success"><p>Indigenous Skills4Success · Numeracy</p></div>
 </footer>
 </section>
 </div>
@@ -17198,7 +17201,7 @@ https://github.com/nodeca/pako/blob/main/LICENSE
     var cx = Math.round(fig.w * emuPerPx), cy = Math.round(fig.h * emuPerPx);
     if (cx > maxW) { cy = Math.round(cy * maxW / cx); cx = Math.round(maxW); }
     return '<w:r><w:drawing><wp:inline distT="0" distB="0" distL="0" distR="0"><wp:extent cx="' + cx + '" cy="' + cy + '"/>' +
-      '<wp:docPr id="' + id + '" name="Figure ' + id + '" descr="Diagram for question ' + id + '"/>' +
+      '<wp:docPr id="' + id + '" name="' + x(fig.alt || 'Figure ' + id) + '" descr="' + x(fig.alt || 'Diagram for question ' + id) + '"/>' +
       '<wp:cNvGraphicFramePr><a:graphicFrameLocks noChangeAspect="1"/></wp:cNvGraphicFramePr>' +
       '<a:graphic><a:graphicData uri="http://schemas.openxmlformats.org/drawingml/2006/picture"><pic:pic>' +
       '<pic:nvPicPr><pic:cNvPr id="' + id + '" name="figure' + id + '.png"/><pic:cNvPicPr/></pic:nvPicPr>' +
@@ -17210,6 +17213,10 @@ https://github.com/nodeca/pako/blob/main/LICENSE
 
   function body(m, media) {
     var s = '';
+    if (m.logo && m.logo.data) {
+      media.push({ name: 'is4s-badge.png', rid: 'rIdIS4S', data: b64(m.logo.data) });
+      s += para(picture({ w: 96, h: 88, alt: 'IS4S · Indigenous Skills4Success' }, 0, 'rIdIS4S'), { keepNext: true, after: 80 });
+    }
     s += para(run(m.title, {}), { style: 'Title' });
     s += para(run(m.withAns ? 'Answer key: complete with worked answers' : 'Exam paper: answers not shown', { bold: true, color: m.withAns ? 'B4321E' : '3C4046' }), { after: 60 });
     s += para(run('Level: ', { bold: true }) + run(m.level) + run('   Questions: ', { bold: true }) + run(String(m.questions.length)) +
@@ -17301,7 +17308,7 @@ https://github.com/nodeca/pako/blob/main/LICENSE
       '<Relationship Id="rId2" Type="http://schemas.openxmlformats.org/package/2006/relationships/metadata/core-properties" Target="docProps/core.xml"/></Relationships>';
     var now = new Date().toISOString().replace(/\.\d+Z$/, 'Z');
     var core = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><cp:coreProperties xmlns:cp="http://schemas.openxmlformats.org/package/2006/metadata/core-properties" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:dcterms="http://purl.org/dc/terms/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">' +
-      '<dc:title>' + x(m.title) + '</dc:title><dc:subject>' + x(m.level + ' ' + m.code) + '</dc:subject><dc:creator>ACCESS Trades Numeracy Hub</dc:creator>' +
+      '<dc:title>' + x(m.title) + '</dc:title><dc:subject>' + x(m.level + ' ' + m.code) + '</dc:subject><dc:creator>IS4S Numeracy Hub</dc:creator>' +
       '<dcterms:created xsi:type="dcterms:W3CDTF">' + now + '</dcterms:created><dcterms:modified xsi:type="dcterms:W3CDTF">' + now + '</dcterms:modified></cp:coreProperties>';
     var z = new G.JSZip();
     z.file('[Content_Types].xml', types);
@@ -17461,6 +17468,18 @@ https://github.com/nodeca/pako/blob/main/LICENSE
   /* ---------- content ---------- */
   function groups(m) {
     var head = [];
+    if (m.logo && m.logo.img) head.push({
+      h: 102,
+      draw: function (pg, y) {
+        pg.ctx.drawImage(m.logo.img, M, y, 96, 88);
+        pg.ctx.font = font(14, true); pg.ctx.fillStyle = INK;
+        pg.ctx.fillText('Indigenous Skills4Success', M + 112, y + 35);
+        pg.ctx.font = font(13); pg.ctx.fillStyle = MUTED;
+        pg.ctx.fillText('Numeracy Hub', M + 112, y + 56);
+        pg.text.push({ x: M + 112, y: y + 35, size: 14, text: 'Indigenous Skills4Success', w: width('Indigenous Skills4Success', font(14, true)) });
+        pg.text.push({ x: M + 112, y: y + 56, size: 13, text: 'Numeracy Hub', w: width('Numeracy Hub', font(13)) });
+      }
+    });
     head.push(textBlock([{ text: m.title, bold: true }], 26, { after: 6 }));
     head.push(textBlock([{ text: m.withAns ? 'Answer key: complete with worked answers' : 'Exam paper: answers not shown', bold: true, red: m.withAns, color: m.withAns ? null : MUTED }], 14, { after: 4 }));
     head.push(textBlock([{ text: 'Level: ', bold: true }, { text: m.level + '    ' }, { text: 'Questions: ', bold: true }, { text: m.questions.length + '    ' }, { text: 'Exam code: ', bold: true }, { text: m.code, mono: true }, { text: '    ' }, { text: 'Date: ', bold: true }, { text: m.date }], 13, { after: 4 }));
@@ -17599,7 +17618,7 @@ https://github.com/nodeca/pako/blob/main/LICENSE
     obj(1, function () { put('<< /Type /Catalog /Pages 2 0 R >>'); });
     obj(2, function () { put('<< /Type /Pages /Count ' + nPages + ' /Kids [' + kids.join(' ') + '] >>'); });
     obj(3, function () { put('<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding >>'); });
-    obj(4, function () { put('<< /Title ' + utf16(m.title + ' ' + m.level + ' ' + m.code) + ' /Creator (ACCESS Trades Numeracy Hub) /Producer (ACCESS Trades Numeracy Hub) >>'); });
+    obj(4, function () { put('<< /Title ' + utf16(m.title + ' ' + m.level + ' ' + m.code) + ' /Creator (IS4S Numeracy Hub) /Producer (IS4S Numeracy Hub) >>'); });
     pages.forEach(function (p, i) {
       var pn = first + i * 3, cn = pn + 1, inm = pn + 2;
       var jpg = dataToBytes(p.canvas.toDataURL('image/jpeg', 0.9));
@@ -20420,6 +20439,10 @@ if (typeof module !== 'undefined' && module.exports) module.exports = CalcKit;
   G.ExamBanks = { shapesAdapter: shapesAdapter, oooAdapter: oooAdapter, shapeTopics: SHAPE_TOPICS };
 })(window);
 
+</script>
+<script src="exam-textbook-geometry.js"></script>
+<script src="exam-textbook.js"></script>
+<script>
 /* Exam builder: topic switches, level, question count, a fresh random exam each time,
    on-screen checking, worked answers, and Word / PDF export (blank or with answers). */
 (function (G) {
@@ -20445,7 +20468,7 @@ if (typeof module !== 'undefined' && module.exports) module.exports = CalcKit;
     var tabs = Array.prototype.map.call(doc.querySelectorAll('.tabs .tab'), function (t) { return t.id.replace(/^t-/, ''); });
     var list = [], by = {};
     bank.modules.forEach(function (m, i) { if (!by[m.group]) { by[m.group] = []; list.push({ m: m, i: i }); } by[m.group].push(m); });
-    function rank(x) { var k = tabs.indexOf(x.m.tab); return (k < 0 ? 1000 : k) * 10000 + x.i; }
+    function rank(x) { if (x.m.group === 'textbook') return -1; var k = tabs.indexOf(x.m.tab); return (k < 0 ? 1000 : k) * 10000 + x.i; }
     list.sort(function (a, b) { return rank(a) - rank(b); });
     return list.map(function (x) { return { id: x.m.group, title: x.m.groupTitle, modules: by[x.m.group] }; });
   }
@@ -20453,8 +20476,10 @@ if (typeof module !== 'undefined' && module.exports) module.exports = CalcKit;
     var h = '';
     groups().forEach(function (g) {
       var count = bank.tasks.filter(function (t) { return t.group === g.id; }).length;
-      h += '<div class="eb-hub"><div class="eb-hub-head"><h3>' + esc(g.title) + '</h3><span class="eb-hub-n">' + count + ' task types</span>' +
-        '<button type="button" class="btn btn-quiet eb-mini" data-hub-all="' + esc(g.id) + '" aria-label="All on: ' + esc(g.title) + '">All on</button><button type="button" class="btn btn-quiet eb-mini" data-hub-none="' + esc(g.id) + '" aria-label="All off: ' + esc(g.title) + '">All off</button></div><ul class="eb-list">';
+      h += '<div class="eb-hub"' + (g.id === 'textbook' ? ' id="eb-textbook"' : '') + '><div class="eb-hub-head"><h3>' + esc(g.title) + '</h3><span class="eb-hub-n">' + count + ' task types</span>' +
+        '<button type="button" class="btn btn-quiet eb-mini" data-hub-all="' + esc(g.id) + '" aria-label="All on: ' + esc(g.title) + '">All on</button><button type="button" class="btn btn-quiet eb-mini" data-hub-none="' + esc(g.id) + '" aria-label="All off: ' + esc(g.title) + '">All off</button></div>';
+      if (g.id === 'textbook') h += '<p class="ctl-help">Build from any of the textbook’s 13 chapters. Appendix A is optional. <a href="../books/ACCESS-Trades-Numeracy-Textbook-web.html" target="_blank" rel="noopener">Open the textbook</a>.</p><div class="btn-row" style="margin-block:10px"><button type="button" class="btn btn-primary eb-mini" id="eb-textbook-only">Textbook only · all 13 chapters</button><span class="ctl-help">Then switch off any chapters you do not need.</span></div>';
+      h += '<ul class="eb-list">';
       g.modules.forEach(function (m) {
         var on = !!st.on[m.id];
         h += '<li><button type="button" class="eb-sw" role="switch" aria-checked="' + on + '" data-mod="' + esc(m.id) + '"><span class="eb-track" aria-hidden="true"></span><span class="eb-name">' + esc(m.title) + '</span><span class="eb-state" aria-hidden="true">' + (on ? 'On' : 'Off') + '</span></button></li>';
@@ -20711,9 +20736,13 @@ if (typeof module !== 'undefined' && module.exports) module.exports = CalcKit;
   }
   function buildModel(withAns) {
     var figs = Array.prototype.map.call(doc.querySelectorAll('#eb-qs .eb-q'), function (li) { return li.querySelector('.eb-fig svg'); });
-    return Promise.all(figs.map(function (s) { return s ? svgToPng(s, 2.5) : Promise.resolve(null); })).then(function (pngs) {
+    return Promise.all([
+      Promise.all(figs.map(function (s) { return s ? svgToPng(s, 2.5) : Promise.resolve(null); })),
+      G.HubBrand ? G.HubBrand.image() : Promise.resolve(null)
+    ]).then(function (assets) {
+      var pngs = assets[0];
       return {
-        title: st.title || 'Trades Math Exam', level: exam.level.name, code: exam.code, withAns: withAns,
+        title: st.title || 'Trades Math Exam', level: exam.level.name, code: exam.code, withAns: withAns, logo: assets[1],
         date: exam.created.toLocaleDateString('en-CA', { year: 'numeric', month: 'long', day: 'numeric' }),
         topics: exam.modules.map(function (m) { return m.title; }).join(', '),
         intro: 'Show your work. Keep every calculator digit until the last step, then round to the places each question asks for. ' + (G.CalcKit ? G.CalcKit.examIntro() : 'Use the TI-30Xa in DEG mode.'),
@@ -20777,6 +20806,10 @@ if (typeof module !== 'undefined' && module.exports) module.exports = CalcKit;
     if (!$('eb-topics')) return;
     renderTopics(); renderLevels(); paintOptions();
     $('eb-topics').addEventListener('click', function (e) {
+      if (e.target.closest('#eb-textbook-only')) {
+        bank.modules.forEach(function (m) { setMod(m.id, m.hub === 'textbook' && m.id !== 'textbook:A'); });
+        paintCount(); save(); return;
+      }
       var b = e.target.closest('.eb-sw');
       if (b) { setMod(b.dataset.mod, b.getAttribute('aria-checked') !== 'true'); paintCount(); save(); return; }
       var all = e.target.closest('[data-hub-all]'), none = e.target.closest('[data-hub-none]');
@@ -20857,7 +20890,9 @@ if (typeof module !== 'undefined' && module.exports) module.exports = CalcKit;
     var data = doc.getElementById(fr.getAttribute('data-src'));
     /* A srcdoc page takes the Hub's address as its base, so a jump link such as #m1 would load the whole Hub
        inside the tab. Its own base keeps #m1 a jump within the page. */
-    fr.setAttribute('srcdoc', JSON.parse(data.textContent).replace('<head>', '<head><base href="about:srcdoc">'));
+    var page = JSON.parse(data.textContent);
+    if (G.HubBrand) page = G.HubBrand.frameHTML(page);
+    fr.setAttribute('srcdoc', page.replace('<head>', '<head><base href="about:srcdoc">'));
     var w = p.querySelector('.frame-wait');
     fr.addEventListener('load', function () { if (w) w.hidden = true; });
   }
