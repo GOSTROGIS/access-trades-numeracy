@@ -225,6 +225,11 @@ if (!WEB) (async () => {
   await page.pdf({ path: path.join(OUT, name + '.pdf'), preferCSSPageSize: true, printBackground: true, timeout: 15 * 60 * 1000 });
   await br.close();
   srv.close();
+  if (bookKind === 'exercise') {
+    cp.execFileSync('python3', [path.join(__dirname, 'fillable-pdf.py'),
+      '--pdf', path.join(OUT, name + '.pdf'), '--html', path.join(OUT, name + '.html'),
+      '--report', path.join(OUT, name + '-forms.json')], { stdio: 'inherit' });
+  }
   rep.errors = errs; rep.seconds = Math.round((Date.now() - t0) / 1000);
   fs.writeFileSync(path.join(OUT, name + '-report.json'), JSON.stringify(rep, null, 1));
   console.log('PDF: ' + rep.total + ' pages (' + rep.blank + ' blank), ' + rep.over.length + ' overflowing items, ' + errs.length + ' errors, ' + rep.seconds + ' s')

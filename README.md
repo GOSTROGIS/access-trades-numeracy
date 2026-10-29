@@ -26,6 +26,8 @@ Your progress in the hub is saved in the browser you use. Using a different brow
 
 The Hub's exam builder includes separate switches for all 13 textbook chapters and the optional Kitchen Math appendix. Select a chapter or combine chapters with the other trade topics. Each exam includes fresh questions, worked answers, and matching Word or PDF downloads.
 
+The [Exercise Book web edition](books/ACCESS-Trades-Numeracy-Exercise-Book-web.html) saves typed answers, working, names and dates in the current browser. Return to the same file or address in that browser to continue. Download a response backup to keep a separate copy or transfer your work to another browser. The [fillable Exercise Book PDF](books/ACCESS-Trades-Numeracy-Exercise-Book.pdf) keeps the same 141 pages: enter your responses, then use your PDF reader's Save or Download command to save the filled copy.
+
 ## Carpentry Foundation — Intake 142
 
 - [PowerPoint slides with speaker notes](carpentry/intake-142/PowerPoint/)

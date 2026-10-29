@@ -195,7 +195,7 @@ module.exports = function (o) {
     '<div class="wnav-hd"><span>Contents</span><button class="wbtn navclose" type="button" aria-label="Close the contents">' + icon('close') + '</button></div>' +
     '<ol class="nroot"><li class="nc"><div class="nrow"><a class="nl c b" href="#main"><span class="tx">Start of the ' + meta.kind.toLowerCase() + '</span></a></div></li></ol>' +
     navHtml(B.toc) + '</div></nav>'
-  return '<!doctype html><html lang="en-CA"><head><meta charset="utf-8">' +
+  const html = '<!doctype html><html lang="en-CA"><head><meta charset="utf-8">' +
     '<meta name="viewport" content="width=device-width, initial-scale=1">' +
     '<meta name="color-scheme" content="light dark">' +
     '<meta name="description" content="' + desc + '">' +
@@ -208,4 +208,5 @@ module.exports = function (o) {
     '<main class="wmain" id="main" tabindex="-1"><div class="paper">' + webBody(body) + '</div></main></div>' +
     '<div class="scrim" aria-hidden="true"></div>' +
     '<script>(' + uiScript.toString() + ')()</script></body></html>'
+  return kind === 'exercise' ? require('./exercise-fillable.js')(html) : html
 }
